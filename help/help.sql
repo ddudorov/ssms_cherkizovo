@@ -1,34 +1,34 @@
 
-select FORMAT(123456666789,'0-00-0')
+select FORMAT(123456666789,'0-00-0') 123
 select convert(dec(4,3),0.02)
 select ISNUMERIC('134')
 select ORIGINAL_LOGIN()					
 
-select FLOOR(1.256)						-- округление вниз / отбрасывает дробную часть
-select CEILING(1.256)					-- округление вверх
-select UPPER('БоЛьШаЯ БуКвА')			-- верхний регистр
-select LOWER('МаЛеНьКаЯ БуКвА')			-- нижний регистр
+select FLOOR(1.256)						-- Г®ГЄГ°ГіГЈГ«ГҐГ­ГЁГҐ ГўГ­ГЁГ§ / Г®ГІГЎГ°Г Г±Г»ГўГ ГҐГІ Г¤Г°Г®ГЎГ­ГіГѕ Г·Г Г±ГІГј
+select CEILING(1.256)					-- Г®ГЄГ°ГіГЈГ«ГҐГ­ГЁГҐ ГўГўГҐГ°Гµ
+select UPPER('ГЃГ®Г‹ГјГГ Гџ ГЃГіГЉГўГЂ')			-- ГўГҐГ°ГµГ­ГЁГ© Г°ГҐГЈГЁГ±ГІГ°
+select LOWER('ГЊГ Г‹ГҐГЌГјГЉГ Гџ ГЃГіГЉГўГЂ')			-- Г­ГЁГ¦Г­ГЁГ© Г°ГҐГЈГЁГ±ГІГ°
 
 
 
-select @@version						-- версия сервера Microsoft SQL Server 2017 (RTM-CU13-OD) (KB4483666) - 14.0.3049.1 (X64)  on Windows Server 2016 Standard 10.0 <X64> (Build 14393: ) (Hypervisor) 
-use cherkizovo;							-- подключение к БД
-kill 800								-- завершить № сессию
-select ROUND(15.123456789, 0, 1)        -- округление
+select @@version						-- ГўГҐГ°Г±ГЁГї Г±ГҐГ°ГўГҐГ°Г  Microsoft SQL Server 2017 (RTM-CU13-OD) (KB4483666) - 14.0.3049.1 (X64)  on Windows Server 2016 Standard 10.0 <X64> (Build 14393: ) (Hypervisor) 
+use cherkizovo;							-- ГЇГ®Г¤ГЄГ«ГѕГ·ГҐГ­ГЁГҐ ГЄ ГЃГ„
+kill 800								-- Г§Г ГўГҐГ°ГёГЁГІГј В№ Г±ГҐГ±Г±ГЁГѕ
+select ROUND(15.123456789, 0, 1)        -- Г®ГЄГ°ГіГЈГ«ГҐГ­ГЁГҐ
 
 
 
 --------------------
--- РАБОТА С ТАБЛИЦЕЙ
+-- ГђГЂГЃГЋГ’ГЂ Г‘ Г’ГЂГЃГ‹Г€Г–Г…Г‰
 --------------------
 begin 
 
 			
-			-- проверка и удаление таблицы
+			-- ГЇГ°Г®ГўГҐГ°ГЄГ  ГЁ ГіГ¤Г Г«ГҐГ­ГЁГҐ ГІГ ГЎГ«ГЁГ¶Г»
 			IF OBJECT_ID('tempdb..#table','U')	is not null drop table #table;
 			IF OBJECT_ID('db.dbo.table','U')	is not null drop table db.dbo.[table];
 
-			-- создание таблицы
+			-- Г±Г®Г§Г¤Г Г­ГЁГҐ ГІГ ГЎГ«ГЁГ¶Г»
 			create table #test	
 			(	
 				 id								int					not	null	IDENTITY(1,1)		
@@ -39,13 +39,13 @@ begin
 				,UNIQUE (id_text) 
 			);
 			
-			TRUNCATE TABLE #table											-- очистить таблицу
+			TRUNCATE TABLE #table											-- Г®Г·ГЁГ±ГІГЁГІГј ГІГ ГЎГ«ГЁГ¶Гі
 
-			ALTER TABLE #test ADD			column_name smallint not null;	-- добавление стобца
-			ALTER TABLE #test DROP COLUMN	column_name;					-- удаление стобца
+			ALTER TABLE #test ADD			column_name smallint not null;	-- Г¤Г®ГЎГ ГўГ«ГҐГ­ГЁГҐ Г±ГІГ®ГЎГ¶Г 
+			ALTER TABLE #test DROP COLUMN	column_name;					-- ГіГ¤Г Г«ГҐГ­ГЁГҐ Г±ГІГ®ГЎГ¶Г 
 
-			ALTER INDEX ALL ON #table DISABLE;								-- отключить все индексы
-			ALTER INDEX ALL ON #table REBUILD;								-- включить  все индексы
+			ALTER INDEX ALL ON #table DISABLE;								-- Г®ГІГЄГ«ГѕГ·ГЁГІГј ГўГ±ГҐ ГЁГ­Г¤ГҐГЄГ±Г»
+			ALTER INDEX ALL ON #table REBUILD;								-- ГўГЄГ«ГѕГ·ГЁГІГј  ГўГ±ГҐ ГЁГ­Г¤ГҐГЄГ±Г»
 
 			DISABLE TRIGGER Products_INSERT_UPDATE ON Products				
 			ENABLE TRIGGER Products_INSERT_UPDATE ON Products				
@@ -58,26 +58,26 @@ end;
 
 
 -----------------------
--- РАБОТА С ПЕРЕМЕНННОЙ
+-- ГђГЂГЃГЋГ’ГЂ Г‘ ГЏГ…ГђГ…ГЊГ…ГЌГЌГЌГЋГ‰
 -----------------------
 begin 
 
-			declare @v varchar(10)					-- объявление переменных
-				set @v='Леша'						-- присвоение значений
-			print @v								-- результат
-			select @v='Леша1'						-- присвоение значений в запросе
-			select @v								-- результат
+			declare @v varchar(10)					-- Г®ГЎГєГїГўГ«ГҐГ­ГЁГҐ ГЇГҐГ°ГҐГ¬ГҐГ­Г­Г»Гµ
+				set @v='Г‹ГҐГёГ '						-- ГЇГ°ГЁГ±ГўГ®ГҐГ­ГЁГҐ Г§Г­Г Г·ГҐГ­ГЁГ©
+			print @v								-- Г°ГҐГ§ГіГ«ГјГІГ ГІ
+			select @v='Г‹ГҐГёГ 1'						-- ГЇГ°ГЁГ±ГўГ®ГҐГ­ГЁГҐ Г§Г­Г Г·ГҐГ­ГЁГ© Гў Г§Г ГЇГ°Г®Г±ГҐ
+			select @v								-- Г°ГҐГ§ГіГ«ГјГІГ ГІ
 
 end;
 
 
 
 -------------------------
--- ОБРАБОТКА ОШИБОК В SQL
+-- ГЋГЃГђГЂГЃГЋГ’ГЉГЂ ГЋГГ€ГЃГЋГЉ Г‚ SQL
 -------------------------
 begin 
 
-			-- обработка ошибок в SQL
+			-- Г®ГЎГ°Г ГЎГ®ГІГЄГ  Г®ГёГЁГЎГ®ГЄ Гў SQL
 			BEGIN TRY  
 						SELECT 1/1;  
 						SELECT 1/0;  
