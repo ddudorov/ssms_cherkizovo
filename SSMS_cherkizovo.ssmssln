@@ -8,6 +8,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "help", "help", "{40B9C307-E
 		help\help.sql = help\help.sql
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "monitoring", "monitoring", "{D5677127-6173-41C5-868B-0C1EC37A25A6}"
+	ProjectSection(SolutionItems) = preProject
+		monitoring\dbo.user_activity.sql = monitoring\dbo.user_activity.sql
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Default|Default = Default|Default
