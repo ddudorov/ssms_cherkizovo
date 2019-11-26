@@ -1,5 +1,5 @@
 
-select FORMAT(123456666789,'0-00-0')
+select FORMAT(123456666789,'0-00-0') ываывавыа
 select convert(dec(4,3),0.02)
 select ISNUMERIC('134')
 select ORIGINAL_LOGIN()					
