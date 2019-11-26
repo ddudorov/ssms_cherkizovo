@@ -1,4 +1,4 @@
-use project_plan_production_finished_products
+п»їuse project_plan_production_finished_products
 
 go
 
@@ -29,16 +29,16 @@ as
 BEGIN
 			SET NOCOUNT ON;
 						
-			-- удаляем данные
+			-- СѓРґР°Р»СЏРµРј РґР°РЅРЅС‹Рµ
 			delete project_plan_production_finished_products.data_import.info_excel
 			where name_table = @name_table;
 			
-			-- добавляем данные
+			-- РґРѕР±Р°РІР»СЏРµРј РґР°РЅРЅС‹Рµ
 			insert into project_plan_production_finished_products.data_import.info_excel
 				   ( path_file,  date_file,  name_table)
 			values (@path_file, @date_file, @name_table);
 
-							exec('TRUNCATE TABLE project_plan_production_finished_products.data_import.' + @name_table); -- очищаем таблицу
+							exec('TRUNCATE TABLE project_plan_production_finished_products.data_import.' + @name_table); -- РѕС‡РёС‰Р°РµРј С‚Р°Р±Р»РёС†Сѓ
 			if @select = 1	exec( 'select * from project_plan_production_finished_products.data_import.' + @name_table);
 
 end;

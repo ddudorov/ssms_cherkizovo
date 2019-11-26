@@ -1,4 +1,4 @@
-use project_plan_production_finished_products
+п»їuse project_plan_production_finished_products
 
 go
 
@@ -30,7 +30,7 @@ create table project_plan_production_finished_products.data_import.marking
 		,marking_KOS_in_day				as case when marking_production_date >= marking_expiration_date then null	
 												when marking_production_date >  marking_on_date			then null
 												else 1.0 / DATEDIFF(day, marking_production_date, marking_expiration_date) end	
-		-- расчетные поля
+		-- СЂР°СЃС‡РµС‚РЅС‹Рµ РїРѕР»СЏ
 		,marking_kg						dec(11,5)			NOT NULL
 		,marking_shipment_kg			dec(11,5)				NULL
 		,marking_after_shipment_kg		as nullif(marking_kg - isnull(marking_shipment_kg, 0), 0)
@@ -41,7 +41,7 @@ create table project_plan_production_finished_products.data_import.marking
 
 
 
---- логи остатки
+--- Р»РѕРіРё РѕСЃС‚Р°С‚РєРё
 select * from project_plan_production_finished_products.data_import.marking_log_calculation
 create table project_plan_production_finished_products.data_import.marking_log_calculation
 ( 

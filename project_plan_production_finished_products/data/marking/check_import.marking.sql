@@ -1,4 +1,4 @@
-use project_plan_production_finished_products
+п»їuse project_plan_production_finished_products
 
 --exec project_plan_production_finished_products.check_import.marking
 
@@ -10,7 +10,7 @@ BEGIN
 			SET NOCOUNT ON;
 			
 
-			-- подтягиваем набивку
+			-- РїРѕРґС‚СЏРіРёРІР°РµРј РЅР°Р±РёРІРєСѓ
 			update c
 			set  c.stuffing_id		= sm.stuffing_id
 			from project_plan_production_finished_products.data_import.marking as c
@@ -18,20 +18,20 @@ BEGIN
 
 
 
-			-- пишем ошибки ---------------------------------------------------------------
+			-- РїРёС€РµРј РѕС€РёР±РєРё ---------------------------------------------------------------
 			update project_plan_production_finished_products.data_import.marking
 			Set reason_ignore_in_calculate = 
 				nullif(
-						  case when sap_id is null then 'Не найден sap id | ' else '' end
-						+ case when stuffing_id is null then 'Код набивки отсутствует | ' else '' end
-						+ case when marking_current_KOS is null then 'КОС некорректный | ' else '' end
-						+ case when marking_current_KOS < 0.1 then 'КОС меньше 10% | ' else '' end
+						  case when sap_id is null then 'РќРµ РЅР°Р№РґРµРЅ sap id | ' else '' end
+						+ case when stuffing_id is null then 'РљРѕРґ РЅР°Р±РёРІРєРё РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚ | ' else '' end
+						+ case when marking_current_KOS is null then 'РљРћРЎ РЅРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ | ' else '' end
+						+ case when marking_current_KOS < 0.1 then 'РљРћРЎ РјРµРЅСЊС€Рµ 10% | ' else '' end
 						, '');
 
 
 
 
-			-- выгружаем данные в excel
+			-- РІС‹РіСЂСѓР¶Р°РµРј РґР°РЅРЅС‹Рµ РІ excel
 			select 
 				 h.reason_ignore_in_calculate
 				,h.sap_id_text
@@ -41,10 +41,10 @@ BEGIN
 				,h.marking_expiration_date
 				,h.marking_current_KOS
 				,h.marking_kg
-				,'Путь/Имя файла' = ie.path_file
-				,'Данные на дату' = ie.date_file
-				,'Кто загрузил' = ie.user_insert
-				,'Дата и время загрузки' = ie.dt_tm_insert
+				,'РџСѓС‚СЊ/РРјСЏ С„Р°Р№Р»Р°' = ie.path_file
+				,'Р”Р°РЅРЅС‹Рµ РЅР° РґР°С‚Сѓ' = ie.date_file
+				,'РљС‚Рѕ Р·Р°РіСЂСѓР·РёР»' = ie.user_insert
+				,'Р”Р°С‚Р° Рё РІСЂРµРјСЏ Р·Р°РіСЂСѓР·РєРё' = ie.dt_tm_insert
 			from project_plan_production_finished_products.data_import.marking as h
 			join project_plan_production_finished_products.data_import.info_excel as ie on h.name_table = ie.name_table;
 		
