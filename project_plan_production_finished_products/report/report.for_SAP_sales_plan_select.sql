@@ -1,4 +1,4 @@
-use project_plan_production_finished_products
+п»їuse project_plan_production_finished_products 
 
 go
 
@@ -15,35 +15,35 @@ as
 BEGIN
 			SET NOCOUNT ON;
 			
-			-- выгрузка списка заводов
+			-- РІС‹РіСЂСѓР·РєР° СЃРїРёСЃРєР° Р·Р°РІРѕРґРѕРІ
 			if @type_report = 'list_production_name'
 			begin
 
 					select sp.production_name
 					from (
-							select isnull(f.production_name, 'Завод не указан') as production_name
+							select isnull(f.production_name, 'Р—Р°РІРѕРґ РЅРµ СѓРєР°Р·Р°РЅ') as production_name
 							from project_plan_production_finished_products.data_import.shipments_SAP as sp
 							join project_plan_production_finished_products.info.stuffing as f on sp.stuffing_id = f.stuffing_id	
 							where sp.reason_ignore_in_calculate is null
 
 							union
 
-							select isnull(f.production_name, 'Завод не указан') as production_name
+							select isnull(f.production_name, 'Р—Р°РІРѕРґ РЅРµ СѓРєР°Р·Р°РЅ') as production_name
 							from project_plan_production_finished_products.data_import.shipments_sales_plan as sp
 							join project_plan_production_finished_products.info.stuffing as f on sp.stuffing_id = f.stuffing_id	
 							where sp.reason_ignore_in_calculate is null
 						 ) as sp
 					order by case 
-									when sp.production_name = 'Завод не указан'	then 1
-									when sp.production_name = 'Кашира'			then 2
-									when sp.production_name = 'ЧМПЗ'			then 3
-									when sp.production_name = 'ОП'				then 4
+									when sp.production_name = 'Р—Р°РІРѕРґ РЅРµ СѓРєР°Р·Р°РЅ'	then 1
+									when sp.production_name = 'РљР°С€РёСЂР°'			then 2
+									when sp.production_name = 'Р§РњРџР—'			then 3
+									when sp.production_name = 'РћРџ'				then 4
 									else 5
 							 end;
 					
 			end;
 
-			-- выгрузка данных для отчета
+			-- РІС‹РіСЂСѓР·РєР° РґР°РЅРЅС‹С… РґР»СЏ РѕС‚С‡РµС‚Р°
 			if @type_report = 'main'
 			begin
 
@@ -52,7 +52,7 @@ BEGIN
 					declare @sql varchar(max);
 					declare @yyyyMMdd varchar(8);
 
-					begin -- создаем таблицу из заявок SAP и плана продаж
+					begin -- СЃРѕР·РґР°РµРј С‚Р°Р±Р»РёС†Сѓ РёР· Р·Р°СЏРІРѕРє SAP Рё РїР»Р°РЅР° РїСЂРѕРґР°Р¶
 
 							IF OBJECT_ID('tempdb..#union_shipment','U') is not null drop table #union_shipment;
 					
@@ -64,7 +64,7 @@ BEGIN
 									,s.product_1C_full_name
 									,convert(varchar(24), FORMAT(sp.sap_id, '000000000000000000000000')) as sap_id
 									,sp.shipment_customer_name
-									,isnull(sp.shipment_customer_id, 'Код клиента не указан') as shipment_customer_id  
+									,isnull(sp.shipment_customer_id, 'РљРѕРґ РєР»РёРµРЅС‚Р° РЅРµ СѓРєР°Р·Р°РЅ') as shipment_customer_id  
 									,sp.shipment_date
 									,sp.shipment_kg
 							into #union_shipment
@@ -72,7 +72,7 @@ BEGIN
 									select 
 											 sp.row_id
 											,sp.name_table
-											,isnull(f.production_name, 'Завод не указан') as production_name
+											,isnull(f.production_name, 'Р—Р°РІРѕРґ РЅРµ СѓРєР°Р·Р°РЅ') as production_name
 											,sp.shipment_delete
 											,sp.sap_id
 											,sp.shipment_customer_id
@@ -90,7 +90,7 @@ BEGIN
 									select 
 											 sp.row_id
 											,sp.name_table
-											,isnull(f.production_name, 'Завод не указан') as production_name
+											,isnull(f.production_name, 'Р—Р°РІРѕРґ РЅРµ СѓРєР°Р·Р°РЅ') as production_name
 											,sp.shipment_delete
 											,sp.sap_id
 											,sp.shipment_customer_id
@@ -100,7 +100,7 @@ BEGIN
 									from project_plan_production_finished_products.data_import.shipments_sales_plan as sp
 									join project_plan_production_finished_products.info.stuffing as f on sp.stuffing_id = f.stuffing_id
 									where sp.shipment_date between @dt_from and @dt_to
-									  and sp.shipment_branch_name = 'ЧМПЗ Москва'
+									  and sp.shipment_branch_name = 'Р§РњРџР— РњРѕСЃРєРІР°'
 									  and sp.reason_ignore_in_calculate is null
 
 								 ) as sp
@@ -108,7 +108,7 @@ BEGIN
 							where sp.production_name like iif(@production_name = '','%',@production_name) ;
 					end;
 
-					begin -- создаем окончательную таблицу из заявок SAP и плана продаж
+					begin -- СЃРѕР·РґР°РµРј РѕРєРѕРЅС‡Р°С‚РµР»СЊРЅСѓСЋ С‚Р°Р±Р»РёС†Сѓ РёР· Р·Р°СЏРІРѕРє SAP Рё РїР»Р°РЅР° РїСЂРѕРґР°Р¶
 
 							IF OBJECT_ID('tempdb..#shipment','U') is not null drop table #shipment;
 
@@ -160,7 +160,7 @@ BEGIN
 					end;
 					
 
-					-- индекс 
+					-- РёРЅРґРµРєСЃ 
 					--CREATE NONCLUSTERED INDEX NoCl_1 ON #shipment (sap_id, shipment_customer_name, shipment_customer_id)
 					--include(row_id); 
 
@@ -206,11 +206,11 @@ BEGIN
 																										case 
 																											when max(iif(''' + @yyyyMMdd + ''' = s.shipment_date, s.SAP_del, null)) = 0
 																											 and max(iif(''' + @yyyyMMdd + ''' = s.shipment_date, s.SP_del, null)) = 0
-																											then ''SAP и План!!!''
+																											then ''SAP Рё РџР»Р°РЅ!!!''
 
 																											when max(iif(''' + @yyyyMMdd + ''' = s.shipment_date, s.SAP_del, null)) = 1
 																											 and max(iif(''' + @yyyyMMdd + ''' = s.shipment_date, s.SP_del, null)) = 1
-																											then ''SAP и План!!!''
+																											then ''SAP Рё РџР»Р°РЅ!!!''
 
 																											when max(iif(''' + @yyyyMMdd + ''' = s.shipment_date, s.SAP_del, null)) = 0
 																											  or max(iif(''' + @yyyyMMdd + ''' = s.shipment_date, s.SP_del, null)) = 1
@@ -218,7 +218,7 @@ BEGIN
 
 																											when max(iif(''' + @yyyyMMdd + ''' = s.shipment_date, s.SAP_del, null)) = 1
 																											  or max(iif(''' + @yyyyMMdd + ''' = s.shipment_date, s.SP_del, null)) = 0
-																											then ''План продаж''
+																											then ''РџР»Р°РЅ РїСЂРѕРґР°Р¶''
 																										end																			, null) as listbox_'	+ @yyyyMMdd
 																											
 																											

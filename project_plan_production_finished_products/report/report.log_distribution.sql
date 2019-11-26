@@ -1,4 +1,4 @@
-use project_plan_production_finished_products
+п»їuse project_plan_production_finished_products 
 
 --exec project_plan_production_finished_products.report.log_distribution @log_type = 'stuffing_plan'
 
@@ -8,25 +8,25 @@ alter procedure report.log_distribution @log_type varchar(50)
 as
 BEGIN
 
-			if @log_type = 'stock' -- остатки
+			if @log_type = 'stock' -- РѕСЃС‚Р°С‚РєРё
 			begin
 
 						SELECT 
-								 'Порядок'				= l.sort_id
-								,'Источник остатка'		= l.stock_name_table
-								,'Остатки ID'			= l.stock_row_id
+								 'РџРѕСЂСЏРґРѕРє'				= l.sort_id
+								,'РСЃС‚РѕС‡РЅРёРє РѕСЃС‚Р°С‚РєР°'		= l.stock_name_table
+								,'РћСЃС‚Р°С‚РєРё ID'			= l.stock_row_id
 								,'SAP ID'				= convert(varchar(24),FORMAT(COALESCE(sp.sap_id, c1.sap_id, sl.sap_id, st.sap_id, tr.sap_id), '000000000000000000000000'))
-								,'Ост на дату'			= COALESCE(st.stock_on_date, tr.stock_on_date)
-								,'КОС на дату'			= COALESCE(st.stock_current_KOS, tr.stock_current_KOS)
-								,'Ост на дату отгрузки' = l.stock_kg
+								,'РћСЃС‚ РЅР° РґР°С‚Сѓ'			= COALESCE(st.stock_on_date, tr.stock_on_date)
+								,'РљРћРЎ РЅР° РґР°С‚Сѓ'			= COALESCE(st.stock_current_KOS, tr.stock_current_KOS)
+								,'РћСЃС‚ РЅР° РґР°С‚Сѓ РѕС‚РіСЂСѓР·РєРё' = l.stock_kg
 							
-								,'Источник потребности' = l.shipment_name_table
+								,'РСЃС‚РѕС‡РЅРёРє РїРѕС‚СЂРµР±РЅРѕСЃС‚Рё' = l.shipment_name_table
 								,COALESCE(sp.reason_ignore_in_calculate, c1.reason_ignore_in_calculate, sl.reason_ignore_in_calculate) as reason_ignore_in_calculate
-								,'Дата отгрузки'		= COALESCE(sp.shipment_date, c1.shipment_date, sl.shipment_date)
-								,'Пр отг'				= COALESCE(sp.shipment_priority, c1.shipment_priority, sl.shipment_priority)
-								,'Мин КОС отгрузки'		= COALESCE(sp.shipment_min_KOS, c1.shipment_min_KOS, sl.shipment_min_KOS)
-								,'Потреность в отг'		= l.shipment_kg
-								,'Отг из остатков'		=l.stock_shipment_kg
+								,'Р”Р°С‚Р° РѕС‚РіСЂСѓР·РєРё'		= COALESCE(sp.shipment_date, c1.shipment_date, sl.shipment_date)
+								,'РџСЂ РѕС‚Рі'				= COALESCE(sp.shipment_priority, c1.shipment_priority, sl.shipment_priority)
+								,'РњРёРЅ РљРћРЎ РѕС‚РіСЂСѓР·РєРё'		= COALESCE(sp.shipment_min_KOS, c1.shipment_min_KOS, sl.shipment_min_KOS)
+								,'РџРѕС‚СЂРµРЅРѕСЃС‚СЊ РІ РѕС‚Рі'		= l.shipment_kg
+								,'РћС‚Рі РёР· РѕСЃС‚Р°С‚РєРѕРІ'		=l.stock_shipment_kg
 
 						FROM project_plan_production_finished_products.data_import.stock_log_calculation		as l
 						left join project_plan_production_finished_products.data_import.stock					as st on l.stock_row_id = st.row_id		and l.stock_name_table = st.name_table
@@ -41,28 +41,28 @@ BEGIN
 
 
 
-			if @log_type = 'stuffing_fact' -- распределение фактических набивок
+			if @log_type = 'stuffing_fact' -- СЂР°СЃРїСЂРµРґРµР»РµРЅРёРµ С„Р°РєС‚РёС‡РµСЃРєРёС… РЅР°Р±РёРІРѕРє
 			begin
 
 						SELECT 
-								 'sort_id'								= l.sort_id																						--'Порядок расчетов'				
-								,'shipment_name_table'					= l.shipment_name_table																			--'Источник потребности'			
-								,'stuffing_row_id'						= l.stuffing_row_id																				--'id набивки'					
+								 'sort_id'								= l.sort_id																						--'РџРѕСЂСЏРґРѕРє СЂР°СЃС‡РµС‚РѕРІ'				
+								,'shipment_name_table'					= l.shipment_name_table																			--'РСЃС‚РѕС‡РЅРёРє РїРѕС‚СЂРµР±РЅРѕСЃС‚Рё'			
+								,'stuffing_row_id'						= l.stuffing_row_id																				--'id РЅР°Р±РёРІРєРё'					
 								,'sap_id'								= convert(varchar(24),FORMAT(l.shipment_sap_id, '000000000000000000000000')) 					--'sap id'						
-								,'product_1C_full_name'					= sa.product_1C_full_name																		--'Название SKU 1С'				
-								,'stuffing_id'							= COALESCE(st.stuffing_id, sp.stuffing_id, c1.stuffing_id, sl.stuffing_id)						--'Код набивки'					
-								,'stuffing_id_box'						= COALESCE(sp.stuffing_id_box , c1.stuffing_id_box, sl.stuffing_id_box)							--'Коробка'						
-								,'stuffing_production_date_to'			= st.stuffing_production_date_to																--'Дата выхода набивки'			
-								,'stuffing_before_next_available_date'	= nullif(st.stuffing_before_next_available_date,'29990101')										--'Дата выхода след набивки'		
-								,'stuffing_kg'							= l.stuffing_kg																					--'Остаток набивки'				
-								,'stuffing_marking_kg'					= l.stuffing_marking_kg																			--'Остаток маркировки'			
-								,'stuffing_shipment_kg'					= l.stuffing_shipment_kg																		--'Отгружено из маркировки'		
+								,'product_1C_full_name'					= sa.product_1C_full_name																		--'РќР°Р·РІР°РЅРёРµ SKU 1РЎ'				
+								,'stuffing_id'							= COALESCE(st.stuffing_id, sp.stuffing_id, c1.stuffing_id, sl.stuffing_id)						--'РљРѕРґ РЅР°Р±РёРІРєРё'					
+								,'stuffing_id_box'						= COALESCE(sp.stuffing_id_box , c1.stuffing_id_box, sl.stuffing_id_box)							--'РљРѕСЂРѕР±РєР°'						
+								,'stuffing_production_date_to'			= st.stuffing_production_date_to																--'Р”Р°С‚Р° РІС‹С…РѕРґР° РЅР°Р±РёРІРєРё'			
+								,'stuffing_before_next_available_date'	= nullif(st.stuffing_before_next_available_date,'29990101')										--'Р”Р°С‚Р° РІС‹С…РѕРґР° СЃР»РµРґ РЅР°Р±РёРІРєРё'		
+								,'stuffing_kg'							= l.stuffing_kg																					--'РћСЃС‚Р°С‚РѕРє РЅР°Р±РёРІРєРё'				
+								,'stuffing_marking_kg'					= l.stuffing_marking_kg																			--'РћСЃС‚Р°С‚РѕРє РјР°СЂРєРёСЂРѕРІРєРё'			
+								,'stuffing_shipment_kg'					= l.stuffing_shipment_kg																		--'РћС‚РіСЂСѓР¶РµРЅРѕ РёР· РјР°СЂРєРёСЂРѕРІРєРё'		
 																																		
-								,'shipment_customer_name'				= COALESCE(sp.shipment_customer_name, c1.shipment_customer_name, sl.shipment_customer_name)		--'Название контрагента'			
-								,'shipment_date'						= COALESCE(sp.shipment_date, c1.shipment_date, sl.shipment_date)								--'Дата отгрузки потребности'	 
-								,'shipment_priority'					= COALESCE(sp.shipment_priority, c1.shipment_priority, sl.shipment_priority)					--'Приоритет отгрузки'			
-								,'shipment_min_KOS'						= COALESCE(sp.shipment_min_KOS, c1.shipment_min_KOS, sl.shipment_min_KOS)						--'КОС отгрузки'					
-								,'shipment_kg'							= l.shipment_kg																					--'Потребность'		
+								,'shipment_customer_name'				= COALESCE(sp.shipment_customer_name, c1.shipment_customer_name, sl.shipment_customer_name)		--'РќР°Р·РІР°РЅРёРµ РєРѕРЅС‚СЂР°РіРµРЅС‚Р°'			
+								,'shipment_date'						= COALESCE(sp.shipment_date, c1.shipment_date, sl.shipment_date)								--'Р”Р°С‚Р° РѕС‚РіСЂСѓР·РєРё РїРѕС‚СЂРµР±РЅРѕСЃС‚Рё'	 
+								,'shipment_priority'					= COALESCE(sp.shipment_priority, c1.shipment_priority, sl.shipment_priority)					--'РџСЂРёРѕСЂРёС‚РµС‚ РѕС‚РіСЂСѓР·РєРё'			
+								,'shipment_min_KOS'						= COALESCE(sp.shipment_min_KOS, c1.shipment_min_KOS, sl.shipment_min_KOS)						--'РљРћРЎ РѕС‚РіСЂСѓР·РєРё'					
+								,'shipment_kg'							= l.shipment_kg																					--'РџРѕС‚СЂРµР±РЅРѕСЃС‚СЊ'		
 
 						FROM project_plan_production_finished_products.data_import.stuffing_fact_log_calculation	as l
 						left join project_plan_production_finished_products.data_import.stuffing_fact				as st on l.stuffing_row_id = st.stuffing_row_id and l.shipment_sap_id = st.sap_id
@@ -75,28 +75,28 @@ BEGIN
 			end;
 
 
-			if @log_type = 'stuffing_plan' -- распределение плановых набивок
+			if @log_type = 'stuffing_plan' -- СЂР°СЃРїСЂРµРґРµР»РµРЅРёРµ РїР»Р°РЅРѕРІС‹С… РЅР°Р±РёРІРѕРє
 			begin
 
 						SELECT 
-								 'sort_id'								= l.sort_id																						--'Порядок расчетов'				
-								,'shipment_name_table'					= l.shipment_name_table																			--'Источник потребности'			
-								,'stuffing_row_id'						= l.stuffing_row_id																				--'id набивки'					
+								 'sort_id'								= l.sort_id																						--'РџРѕСЂСЏРґРѕРє СЂР°СЃС‡РµС‚РѕРІ'				
+								,'shipment_name_table'					= l.shipment_name_table																			--'РСЃС‚РѕС‡РЅРёРє РїРѕС‚СЂРµР±РЅРѕСЃС‚Рё'			
+								,'stuffing_row_id'						= l.stuffing_row_id																				--'id РЅР°Р±РёРІРєРё'					
 								,'sap_id'								= convert(varchar(24),FORMAT(l.shipment_sap_id, '000000000000000000000000')) 					--'sap id'						
-								,'product_1C_full_name'					= sa.product_1C_full_name																		--'Название SKU 1С'				
-								,'stuffing_id'							= COALESCE(st.stuffing_id, sp.stuffing_id, c1.stuffing_id, sl.stuffing_id)						--'Код набивки'					
-								,'stuffing_id_box'						= COALESCE(sp.stuffing_id_box , c1.stuffing_id_box, sl.stuffing_id_box)							--'Коробка'						
-								,'stuffing_production_date_to'			= st.stuffing_production_date_to																--'Дата выхода набивки'			
-								,'stuffing_before_next_available_date'	= nullif(st.stuffing_before_next_available_date,'29990101')										--'Дата выхода след набивки'		
-								,'stuffing_kg'							= l.stuffing_kg																					--'Остаток набивки'				
-								,'stuffing_marking_kg'					= l.stuffing_marking_kg																			--'Остаток маркировки'			
-								,'stuffing_shipment_kg'					= l.stuffing_shipment_kg																		--'Отгружено из маркировки'		
+								,'product_1C_full_name'					= sa.product_1C_full_name																		--'РќР°Р·РІР°РЅРёРµ SKU 1РЎ'				
+								,'stuffing_id'							= COALESCE(st.stuffing_id, sp.stuffing_id, c1.stuffing_id, sl.stuffing_id)						--'РљРѕРґ РЅР°Р±РёРІРєРё'					
+								,'stuffing_id_box'						= COALESCE(sp.stuffing_id_box , c1.stuffing_id_box, sl.stuffing_id_box)							--'РљРѕСЂРѕР±РєР°'						
+								,'stuffing_production_date_to'			= st.stuffing_production_date_to																--'Р”Р°С‚Р° РІС‹С…РѕРґР° РЅР°Р±РёРІРєРё'			
+								,'stuffing_before_next_available_date'	= nullif(st.stuffing_before_next_available_date,'29990101')										--'Р”Р°С‚Р° РІС‹С…РѕРґР° СЃР»РµРґ РЅР°Р±РёРІРєРё'		
+								,'stuffing_kg'							= l.stuffing_kg																					--'РћСЃС‚Р°С‚РѕРє РЅР°Р±РёРІРєРё'				
+								,'stuffing_marking_kg'					= l.stuffing_marking_kg																			--'РћСЃС‚Р°С‚РѕРє РјР°СЂРєРёСЂРѕРІРєРё'			
+								,'stuffing_shipment_kg'					= l.stuffing_shipment_kg																		--'РћС‚РіСЂСѓР¶РµРЅРѕ РёР· РјР°СЂРєРёСЂРѕРІРєРё'		
 																																		
-								,'shipment_customer_name'				= COALESCE(sp.shipment_customer_name, c1.shipment_customer_name, sl.shipment_customer_name)		--'Название контрагента'			
-								,'shipment_date'						= COALESCE(sp.shipment_date, c1.shipment_date, sl.shipment_date)								--'Дата отгрузки потребности'	 
-								,'shipment_priority'					= COALESCE(sp.shipment_priority, c1.shipment_priority, sl.shipment_priority)					--'Приоритет отгрузки'			
-								,'shipment_min_KOS'						= COALESCE(sp.shipment_min_KOS, c1.shipment_min_KOS, sl.shipment_min_KOS)						--'КОС отгрузки'					
-								,'shipment_kg'							= l.shipment_kg																					--'Потребность'					
+								,'shipment_customer_name'				= COALESCE(sp.shipment_customer_name, c1.shipment_customer_name, sl.shipment_customer_name)		--'РќР°Р·РІР°РЅРёРµ РєРѕРЅС‚СЂР°РіРµРЅС‚Р°'			
+								,'shipment_date'						= COALESCE(sp.shipment_date, c1.shipment_date, sl.shipment_date)								--'Р”Р°С‚Р° РѕС‚РіСЂСѓР·РєРё РїРѕС‚СЂРµР±РЅРѕСЃС‚Рё'	 
+								,'shipment_priority'					= COALESCE(sp.shipment_priority, c1.shipment_priority, sl.shipment_priority)					--'РџСЂРёРѕСЂРёС‚РµС‚ РѕС‚РіСЂСѓР·РєРё'			
+								,'shipment_min_KOS'						= COALESCE(sp.shipment_min_KOS, c1.shipment_min_KOS, sl.shipment_min_KOS)						--'РљРћРЎ РѕС‚РіСЂСѓР·РєРё'					
+								,'shipment_kg'							= l.shipment_kg																					--'РџРѕС‚СЂРµР±РЅРѕСЃС‚СЊ'					
 																																		
 						FROM project_plan_production_finished_products.data_import.stuffing_plan_log_calculation	as l
 						left join project_plan_production_finished_products.data_import.stuffing_fact				as st on l.stuffing_row_id = st.stuffing_row_id and l.shipment_sap_id = st.sap_id

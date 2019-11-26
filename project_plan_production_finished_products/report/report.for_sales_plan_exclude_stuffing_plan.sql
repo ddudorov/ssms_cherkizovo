@@ -1,11 +1,11 @@
-use project_plan_production_finished_products
+п»їuse project_plan_production_finished_products 
 
 go
 
 
 -- exec project_plan_production_finished_products.report.for_sales_plan_exclude_stuffing_plan @type_run = 'select_sum_shipment_kg'
 -- exec project_plan_production_finished_products.report.for_sales_plan_exclude_stuffing_plan @type_run = 'select'
--- exec project_plan_production_finished_products.report.for_sales_plan_exclude_stuffing_plan @type_run = 'update', @where = ' isnull(shipment_sales_channel_name,'не указан') in ('Розница','Сети')'
+-- exec project_plan_production_finished_products.report.for_sales_plan_exclude_stuffing_plan @type_run = 'update', @where = ' isnull(shipment_sales_channel_name,'РЅРµ СѓРєР°Р·Р°РЅ') in ('Р РѕР·РЅРёС†Р°','РЎРµС‚Рё')'
 
 ALTER PROCEDURE report.for_sales_plan_exclude_stuffing_plan @type_run varchar(50), @where varchar(7000) = ''
 											
@@ -15,7 +15,7 @@ BEGIN
 			
 			declare @sql varchar(max);
 			
-			-- применить исключения
+			-- РїСЂРёРјРµРЅРёС‚СЊ РёСЃРєР»СЋС‡РµРЅРёСЏ
 			if @type_run = 'update'
 			begin
 
@@ -32,32 +32,32 @@ BEGIN
 
 								exec(@sql);
 						end;
-						-- выгружаем данные в excel
+						-- РІС‹РіСЂСѓР¶Р°РµРј РґР°РЅРЅС‹Рµ РІ excel
 						select 
 
-								 'Ошибки'							= h.reason_ignore_in_calculate
+								 'РћС€РёР±РєРё'							= h.reason_ignore_in_calculate
 								,'SAP ID'							= h.sap_id_text
-								,'Код набивки'						= h.stuffing_id
+								,'РљРѕРґ РЅР°Р±РёРІРєРё'						= h.stuffing_id
 								
-								,'Статус промо'						= h.shipment_promo_status 
-								,'Промо/не промо'					= h.shipment_promo 
-								,'Промо/не промо/ОСГ/Листинг'		= h.shipment_promo_kos_listing 
+								,'РЎС‚Р°С‚СѓСЃ РїСЂРѕРјРѕ'						= h.shipment_promo_status 
+								,'РџСЂРѕРјРѕ/РЅРµ РїСЂРѕРјРѕ'					= h.shipment_promo 
+								,'РџСЂРѕРјРѕ/РЅРµ РїСЂРѕРјРѕ/РћРЎР“/Р›РёСЃС‚РёРЅРі'		= h.shipment_promo_kos_listing 
 
-								,'Код зависимой позиции'			= h.position_dependent_id
-								,'Код индивидуальной маркировки'	= h.individual_marking_id
-								,'Артикул тары'						= h.article_packaging
-								,'Артикул номенклатуры'				= h.article_nomenclature
+								,'РљРѕРґ Р·Р°РІРёСЃРёРјРѕР№ РїРѕР·РёС†РёРё'			= h.position_dependent_id
+								,'РљРѕРґ РёРЅРґРёРІРёРґСѓР°Р»СЊРЅРѕР№ РјР°СЂРєРёСЂРѕРІРєРё'	= h.individual_marking_id
+								,'РђСЂС‚РёРєСѓР» С‚Р°СЂС‹'						= h.article_packaging
+								,'РђСЂС‚РёРєСѓР» РЅРѕРјРµРЅРєР»Р°С‚СѓСЂС‹'				= h.article_nomenclature
 
-								,'Код филиала'						= h.shipment_branch_id	
-								,'Название филиала'					= h.shipment_branch_name
-								,'Название канала сбыта'			= h.shipment_sales_channel_name
-								,'Код контрагента'					= h.shipment_customer_id
-								,'Название контрагента'				= h.shipment_customer_name
-								,'Приоритет отгрузки'				= h.shipment_priority
-								,'КОС отгрузки'						= h.shipment_min_KOS
-								,'Дата отгрузки с филиала'			= h.shipment_with_branch_date
-								,'Дата отгрузки'					= h.shipment_date
-								,'План продаж, кг'					= h.shipment_kg
+								,'РљРѕРґ С„РёР»РёР°Р»Р°'						= h.shipment_branch_id	
+								,'РќР°Р·РІР°РЅРёРµ С„РёР»РёР°Р»Р°'					= h.shipment_branch_name
+								,'РќР°Р·РІР°РЅРёРµ РєР°РЅР°Р»Р° СЃР±С‹С‚Р°'			= h.shipment_sales_channel_name
+								,'РљРѕРґ РєРѕРЅС‚СЂР°РіРµРЅС‚Р°'					= h.shipment_customer_id
+								,'РќР°Р·РІР°РЅРёРµ РєРѕРЅС‚СЂР°РіРµРЅС‚Р°'				= h.shipment_customer_name
+								,'РџСЂРёРѕСЂРёС‚РµС‚ РѕС‚РіСЂСѓР·РєРё'				= h.shipment_priority
+								,'РљРћРЎ РѕС‚РіСЂСѓР·РєРё'						= h.shipment_min_KOS
+								,'Р”Р°С‚Р° РѕС‚РіСЂСѓР·РєРё СЃ С„РёР»РёР°Р»Р°'			= h.shipment_with_branch_date
+								,'Р”Р°С‚Р° РѕС‚РіСЂСѓР·РєРё'					= h.shipment_date
+								,'РџР»Р°РЅ РїСЂРѕРґР°Р¶, РєРі'					= h.shipment_kg
 								
 						from project_plan_production_finished_products.data_import.shipments_sales_plan as h
 						where h.stuffing_id_box_type in (0, 1)
@@ -67,7 +67,7 @@ BEGIN
 			end;
 
 
-			-- выгрузка для формы
+			-- РІС‹РіСЂСѓР·РєР° РґР»СЏ С„РѕСЂРјС‹
 			if @type_run = 'select'
 			begin
 							
@@ -88,7 +88,7 @@ BEGIN
 							
 
 						select	 'shipment_promo_status'		as ComboBoxSelectColumn
-								,'Статус промо'					as ComboBoxSelectColumnValue
+								,'РЎС‚Р°С‚СѓСЃ РїСЂРѕРјРѕ'					as ComboBoxSelectColumnValue
 								,(	select	 shipment_promo_status + '||' from #sales_plan 
 									group by shipment_promo_status		   
 									order by shipment_promo_status FOR XML PATH('')		  ) as ListBoxSelectData
@@ -101,7 +101,7 @@ BEGIN
 						union all
 
 						select	 'shipment_promo'				as ComboBoxSelectColumn
-								,'Промо/не промо'				as ComboBoxSelectColumnValue
+								,'РџСЂРѕРјРѕ/РЅРµ РїСЂРѕРјРѕ'				as ComboBoxSelectColumnValue
 								,(	select	 shipment_promo + '||' from #sales_plan 
 									group by shipment_promo		   
 									order by shipment_promo 
@@ -115,7 +115,7 @@ BEGIN
 						union all
 
 						select	 'shipment_promo_kos_listing'	as ComboBoxSelectColumn
-								,'Промо/не промо/ОСГ/Листинг'	as ComboBoxSelectColumnValue
+								,'РџСЂРѕРјРѕ/РЅРµ РїСЂРѕРјРѕ/РћРЎР“/Р›РёСЃС‚РёРЅРі'	as ComboBoxSelectColumnValue
 								,(	select	 shipment_promo_kos_listing + '||' from #sales_plan 
 									group by shipment_promo_kos_listing		   
 									order by shipment_promo_kos_listing 
@@ -129,7 +129,7 @@ BEGIN
 						union all
 
 						select	 'shipment_sales_channel_name'	as ComboBoxSelectColumn
-								,'Название канала сбыта'		as ComboBoxSelectColumnValue
+								,'РќР°Р·РІР°РЅРёРµ РєР°РЅР°Р»Р° СЃР±С‹С‚Р°'		as ComboBoxSelectColumnValue
 								,(	select	 shipment_sales_channel_name + '||' from #sales_plan 
 									group by shipment_sales_channel_name		   
 									order by shipment_sales_channel_name 
@@ -143,7 +143,7 @@ BEGIN
 						union all
 
 						select	 'shipment_customer_name'		as ComboBoxSelectColumn
-								,'Название контрагента'			as ComboBoxSelectColumnValue
+								,'РќР°Р·РІР°РЅРёРµ РєРѕРЅС‚СЂР°РіРµРЅС‚Р°'			as ComboBoxSelectColumnValue
 								,(	select	 shipment_customer_name + '||' from #sales_plan 
 									group by shipment_customer_name		   
 									order by shipment_customer_name 
@@ -157,7 +157,7 @@ BEGIN
 						IF OBJECT_ID('tempdb..#sales_plan','U') is not null drop table #sales_plan; 
 			end;
 			
-			-- выгрузка для формы
+			-- РІС‹РіСЂСѓР·РєР° РґР»СЏ С„РѕСЂРјС‹
 			if @type_run = 'select_sum_shipment_kg'
 			begin
 					select FORMAT(isnull(SUM(shipment_kg),0),'#,###') as shipment_kg

@@ -1,4 +1,4 @@
-use project_plan_production_finished_products
+п»їuse project_plan_production_finished_products 
 
 go
 
@@ -9,7 +9,7 @@ as
 BEGIN
 			SET NOCOUNT ON;
 			
-			-- для теста
+			-- РґР»СЏ С‚РµСЃС‚Р°
 			--declare @type_report varchar(50); set @type_report = 'report_main'
 			
 			declare @report_dt_from datetime;	set @report_dt_from =	(select top 1 dt 
@@ -24,10 +24,10 @@ BEGIN
 			declare @sql_iif			varchar(500);
 			declare @sql_name_column	varchar(500);
 			--------------------
-			-- ПОДГОТОВКА ДАННЫХ
+			-- РџРћР”Р“РћРўРћР’РљРђ Р”РђРќРќР«РҐ
 			--------------------
 
-			-- НАБИВКИ
+			-- РќРђР‘РР’РљР
 			begin
 					IF OBJECT_ID('tempdb..#stuffing','U') is not null drop table #stuffing;
 					select 
@@ -69,7 +69,7 @@ BEGIN
 
 			end;
 
-			-- ПОТРЕБНОСТЬ К ОТГРУЗКЕ
+			-- РџРћРўР Р•Р‘РќРћРЎРўР¬ Рљ РћРўР“Р РЈР—РљР•
 			begin
 
 						IF OBJECT_ID('tempdb..#shipments','U') is not null drop table #shipments;
@@ -101,7 +101,7 @@ BEGIN
 								 and not p.sap_id is null 
 								 and not p.stuffing_id is null 
 								 and not p.sap_id_expiration_date_in_days is null						 
-								 and not isnull(p.product_status,'') in ('БлокирДляЗаготов/Склада','Устаревший')
+								 and not isnull(p.product_status,'') in ('Р‘Р»РѕРєРёСЂР”Р»СЏР—Р°РіРѕС‚РѕРІ/РЎРєР»Р°РґР°','РЈСЃС‚Р°СЂРµРІС€РёР№')
 
 								union all
 
@@ -119,7 +119,7 @@ BEGIN
 								 and not p.sap_id is null 
 								 and not p.stuffing_id is null 
 								 and not p.sap_id_expiration_date_in_days is null						 
-								 and not isnull(p.product_status,'') in ('БлокирДляЗаготов/Склада','Устаревший')
+								 and not isnull(p.product_status,'') in ('Р‘Р»РѕРєРёСЂР”Р»СЏР—Р°РіРѕС‚РѕРІ/РЎРєР»Р°РґР°','РЈСЃС‚Р°СЂРµРІС€РёР№')
 
 								union all
 
@@ -137,7 +137,7 @@ BEGIN
 								 and not p.sap_id is null 
 								 and not p.stuffing_id is null 
 								 and not p.sap_id_expiration_date_in_days is null						 
-								 and not isnull(p.product_status,'') in ('БлокирДляЗаготов/Склада','Устаревший')
+								 and not isnull(p.product_status,'') in ('Р‘Р»РѕРєРёСЂР”Р»СЏР—Р°РіРѕС‚РѕРІ/РЎРєР»Р°РґР°','РЈСЃС‚Р°СЂРµРІС€РёР№')
 
 							) as p join project_plan_production_finished_products.info.stuffing as st on p.stuffing_id = st.stuffing_id
 						where not st.transit_from_production_days is null and not st.maturation_and_packaging_days is null and not st.maturation_days is null
@@ -152,7 +152,7 @@ BEGIN
 
 			end;
 		
-			-- СТОЛБЦЫ ДЛЯ ОТЧЕТА
+			-- РЎРўРћР›Р‘Р¦Р« Р”Р›РЇ РћРўР§Р•РўРђ
 			begin
 
 						IF OBJECT_ID('tempdb..#columns','U') is not null drop table #columns;				
@@ -170,7 +170,7 @@ BEGIN
 								join project_plan_production_finished_products.info.finished_products_sap_id_manual as sm1 on s1.sap_id = sm1.sap_id
 								join cherkizovo.info.products_sap													as s2  on isnull(sm1.SAP_id_correct_manual, sm1.SAP_id) = s2.sap_id 
 								join project_plan_production_finished_products.info.finished_products_sap_id_manual as sm2 on s2.sap_id = sm2.sap_id
-								where not isnull(s2.product_status,'') in ('БлокирДляЗаготов/Склада','Устаревший')
+								where not isnull(s2.product_status,'') in ('Р‘Р»РѕРєРёСЂР”Р»СЏР—Р°РіРѕС‚РѕРІ/РЎРєР»Р°РґР°','РЈСЃС‚Р°СЂРµРІС€РёР№')
 								  and ISNUMERIC(LEFT(sm2.stuffing_id, 5)) = 1
 								 
 						)
@@ -213,13 +213,13 @@ BEGIN
 						left join cherkizovo.info.products_sap as p on c.sap_id = p.SAP_id
 			end;
 			
-			-- ОСНОВНОЙ ОТЧЕТ
+			-- РћРЎРќРћР’РќРћР™ РћРўР§Р•Рў
 			if @type_report = 'report_main'
 			begin
 
-						begin -- создаем временную таблицу и добавляем туда данные
+						begin -- СЃРѕР·РґР°РµРј РІСЂРµРјРµРЅРЅСѓСЋ С‚Р°Р±Р»РёС†Сѓ Рё РґРѕР±Р°РІР»СЏРµРј С‚СѓРґР° РґР°РЅРЅС‹Рµ
 
-									-- СОЗДАЕМ ТАБЛИЦУ ДЛЯ НАБИВОК
+									-- РЎРћР—Р”РђР•Рњ РўРђР‘Р›РР¦РЈ Р”Р›РЇ РќРђР‘РР’РћРљ
 									IF OBJECT_ID('tempdb..#stuffing_pivot','U') is not null drop table #stuffing_pivot;
 
 									create table #stuffing_pivot
@@ -228,7 +228,7 @@ BEGIN
 											,sap_id			BIGINT			NULL
 									);
 
-									-- СОЗДАЕМ СТОЛБЦЫ
+									-- РЎРћР—Р”РђР•Рњ РЎРўРћР›Р‘Р¦Р«
 									set @dt_while = @report_dt_from;
 									while @dt_while <= @report_dt_to
 									begin
@@ -242,7 +242,7 @@ BEGIN
 											set @dt_while = @dt_while + 1;
 									end;
 									
-									-- НАПОЛНЯЕМ ДАННЫМИ
+									-- РќРђРџРћР›РќРЇР•Рњ Р”РђРќРќР«РњР
 											set @sql = ''
 											set @sql = @sql + char(10) + 'insert into #stuffing_pivot
 																		  select st.stuffing_id, st.sap_id'
@@ -263,9 +263,9 @@ BEGIN
 						end;
 
 
-						begin -- создаем временную таблицу и добавляем туда данные
+						begin -- СЃРѕР·РґР°РµРј РІСЂРµРјРµРЅРЅСѓСЋ С‚Р°Р±Р»РёС†Сѓ Рё РґРѕР±Р°РІР»СЏРµРј С‚СѓРґР° РґР°РЅРЅС‹Рµ
 
-									-- СОЗДАЕМ ТАБЛИЦУ ДЛЯ НАБИВОК
+									-- РЎРћР—Р”РђР•Рњ РўРђР‘Р›РР¦РЈ Р”Р›РЇ РќРђР‘РР’РћРљ
 									IF OBJECT_ID('tempdb..#shipments_pivot','U') is not null drop table #shipments_pivot;
 									create table #shipments_pivot
 									(	
@@ -274,7 +274,7 @@ BEGIN
 
 									);
 
-									-- СОЗДАЕМ СТОЛБЦЫ
+									-- РЎРћР—Р”РђР•Рњ РЎРўРћР›Р‘Р¦Р«
 									set @dt_while = @report_dt_from;
 									while @dt_while <= @report_dt_to
 									begin
@@ -284,7 +284,7 @@ BEGIN
 											set @dt_while = @dt_while + 1;
 									end;
 									
-									-- НАПОЛНЯЕМ ДАННЫМИ
+									-- РќРђРџРћР›РќРЇР•Рњ Р”РђРќРќР«РњР
 											set @sql = ''
 											set @sql = @sql + char(10) + 'insert into #shipments_pivot
 																		  select st.stuffing_id, st.sap_id'
@@ -317,17 +317,17 @@ BEGIN
 																		 end as frm_id'
 								set @sql = @sql + char(10) + '			,case		
 																				when GROUPING_ID(c.stuffing_production_name) = 1	then null
-																				when GROUPING_ID(c.stuffing_type) = 1				then isnull(c.stuffing_production_name, ''Завод не указан'')
-																				when GROUPING_ID(c.stuffing_id) = 1					then isnull(c.stuffing_production_name, ''Завод не указан'') + ''|'' + isnull(c.stuffing_type , ''Тип набивки не указан'')
-																				when GROUPING_ID(c.sap_id) = 1						then isnull(c.stuffing_production_name, ''Завод не указан'') + ''|'' + isnull(c.stuffing_type , ''Тип набивки не указан'') + ''|'' + isnull(c.stuffing_id , ''Код набивки не указан'')
-																				when GROUPING_ID(c.sap_id) = 0						then isnull(c.stuffing_production_name, ''Завод не указан'') + ''|'' + isnull(c.stuffing_type , ''Тип набивки не указан'') + ''|'' + isnull(c.stuffing_id , ''Код набивки не указан'') + ''|'' + FORMAT(c.sap_id, ''000000000000000000000000'')
+																				when GROUPING_ID(c.stuffing_type) = 1				then isnull(c.stuffing_production_name, ''Р—Р°РІРѕРґ РЅРµ СѓРєР°Р·Р°РЅ'')
+																				when GROUPING_ID(c.stuffing_id) = 1					then isnull(c.stuffing_production_name, ''Р—Р°РІРѕРґ РЅРµ СѓРєР°Р·Р°РЅ'') + ''|'' + isnull(c.stuffing_type , ''РўРёРї РЅР°Р±РёРІРєРё РЅРµ СѓРєР°Р·Р°РЅ'')
+																				when GROUPING_ID(c.sap_id) = 1						then isnull(c.stuffing_production_name, ''Р—Р°РІРѕРґ РЅРµ СѓРєР°Р·Р°РЅ'') + ''|'' + isnull(c.stuffing_type , ''РўРёРї РЅР°Р±РёРІРєРё РЅРµ СѓРєР°Р·Р°РЅ'') + ''|'' + isnull(c.stuffing_id , ''РљРѕРґ РЅР°Р±РёРІРєРё РЅРµ СѓРєР°Р·Р°РЅ'')
+																				when GROUPING_ID(c.sap_id) = 0						then isnull(c.stuffing_production_name, ''Р—Р°РІРѕРґ РЅРµ СѓРєР°Р·Р°РЅ'') + ''|'' + isnull(c.stuffing_type , ''РўРёРї РЅР°Р±РёРІРєРё РЅРµ СѓРєР°Р·Р°РЅ'') + ''|'' + isnull(c.stuffing_id , ''РљРѕРґ РЅР°Р±РёРІРєРё РЅРµ СѓРєР°Р·Р°РЅ'') + ''|'' + FORMAT(c.sap_id, ''000000000000000000000000'')
 																		 end as data_hierarchy'
 
 								set @sql = @sql + char(10) + '			,case		
-																				when GROUPING_ID(c.stuffing_production_name) = 1	then ''Общий итог''
-																				when GROUPING_ID(c.stuffing_type) = 1				then isnull(c.stuffing_production_name, ''Завод не указан'')
-																				when GROUPING_ID(c.stuffing_id) = 1					then isnull(c.stuffing_type , ''Тип набивки не указан'')
-																				when GROUPING_ID(c.sap_id) = 1						then isnull(c.stuffing_id , ''Код набивки не указан'')
+																				when GROUPING_ID(c.stuffing_production_name) = 1	then ''РћР±С‰РёР№ РёС‚РѕРі''
+																				when GROUPING_ID(c.stuffing_type) = 1				then isnull(c.stuffing_production_name, ''Р—Р°РІРѕРґ РЅРµ СѓРєР°Р·Р°РЅ'')
+																				when GROUPING_ID(c.stuffing_id) = 1					then isnull(c.stuffing_type , ''РўРёРї РЅР°Р±РёРІРєРё РЅРµ СѓРєР°Р·Р°РЅ'')
+																				when GROUPING_ID(c.sap_id) = 1						then isnull(c.stuffing_id , ''РљРѕРґ РЅР°Р±РёРІРєРё РЅРµ СѓРєР°Р·Р°РЅ'')
 																				when GROUPING_ID(c.sap_id) = 0						then FORMAT(c.sap_id, ''000000000000000000000000'')
 																		 end as data_id'	
 																		 	
@@ -356,34 +356,34 @@ BEGIN
 																		,(select top 1 s.marking_line_productivity_kg				from #columns as s where c.stuffing_id = s.stuffing_id) as marking_line_productivity_kg'
 
 
-						--set @report_dt_to = @dt_while + 3; -- для теста
+						--set @report_dt_to = @dt_while + 3; -- РґР»СЏ С‚РµСЃС‚Р°
 						set @dt_while = @report_dt_from;
 						while @dt_while <= @report_dt_to
 						begin
-								-- дата доступности
+								-- РґР°С‚Р° РґРѕСЃС‚СѓРїРЅРѕСЃС‚Рё
 								set @sql = @sql + char(10) + ',DATEADD(day, max(c.maturation_and_packaging_days - c.maturation_days + transit_from_production_days), ''' + format(@dt_while, 'yyyyMMdd') + ''') as stuffing_available_date_' + format(@dt_while, 'yyyyMMdd')
 					
-								-- выход набивки
+								-- РІС‹С…РѕРґ РЅР°Р±РёРІРєРё
 								set @sql = @sql + char(10) + ',sum(nullif(
 																			isnull(st.stuffing_surplus_kg_' + format(@dt_while, 'yyyyMMdd') + ', 0) +
 																			isnull(st.stuffing_marking_kg_' + format(@dt_while, 'yyyyMMdd') + ', 0)
 																		 , 0)) as stuffing_kg_'	+ format(@dt_while, 'yyyyMMdd')
-								-- нераспределенная набивка
+								-- РЅРµСЂР°СЃРїСЂРµРґРµР»РµРЅРЅР°СЏ РЅР°Р±РёРІРєР°
 								set @sql = @sql + char(10) + ',sum(st.stuffing_surplus_kg_'		+ format(@dt_while, 'yyyyMMdd') + ') as stuffing_surplus_kg_'	+ format(@dt_while, 'yyyyMMdd')
 					
-								-- маркировка набивки
+								-- РјР°СЂРєРёСЂРѕРІРєР° РЅР°Р±РёРІРєРё
 								set @sql = @sql + char(10) + ',sum(st.stuffing_marking_kg_'		+ format(@dt_while, 'yyyyMMdd') + ') as stuffing_marking_kg_'	+ format(@dt_while, 'yyyyMMdd')					
 					
-								-- потребность изначальная
+								-- РїРѕС‚СЂРµР±РЅРѕСЃС‚СЊ РёР·РЅР°С‡Р°Р»СЊРЅР°СЏ
 								set @sql = @sql + char(10) + ',sum(sh.shipment_kg_'				+ format(@dt_while, 'yyyyMMdd') + ') as shipment_kg_'			+ format(@dt_while, 'yyyyMMdd')
 
-								-- потребность после остатков
+								-- РїРѕС‚СЂРµР±РЅРѕСЃС‚СЊ РїРѕСЃР»Рµ РѕСЃС‚Р°С‚РєРѕРІ
 								set @sql = @sql + char(10) + ',sum(sh.stock_net_need_kg_'		+ format(@dt_while, 'yyyyMMdd') + ') as stock_net_need_kg_'		+ format(@dt_while, 'yyyyMMdd')
 								
-								-- маркировка
+								-- РјР°СЂРєРёСЂРѕРІРєР°
 								set @sql = @sql + char(10) + ',null as marking_kg_'				+ format(@dt_while, 'yyyyMMdd')
 
-								-- остаток после маркировки и отгрузки
+								-- РѕСЃС‚Р°С‚РѕРє РїРѕСЃР»Рµ РјР°СЂРєРёСЂРѕРІРєРё Рё РѕС‚РіСЂСѓР·РєРё
 								set @sql = @sql + char(10) + ',null as stock_marking_kg_'		+ format(@dt_while, 'yyyyMMdd')
 
 								set @dt_while = @dt_while + 1;
@@ -393,10 +393,10 @@ BEGIN
 								set @sql = @sql + char(10) + 'from #columns as c'
 			
 
-								---- НАБИВКИ ----------------------------------------------------------------------
+								---- РќРђР‘РР’РљР ----------------------------------------------------------------------
 								set @sql = @sql + char(10) + 'left join #stuffing_pivot as st on c.stuffing_id = st.stuffing_id and isnull(c.sap_id, 0) = isnull(st.sap_id, 0)'
 
-								-- ПОТРЕБНОСТЬ ----------------------------------------------------------------------
+								-- РџРћРўР Р•Р‘РќРћРЎРўР¬ ----------------------------------------------------------------------
 								set @sql = @sql + char(10) + 'left join #shipments_pivot as sh on c.stuffing_id = sh.stuffing_id and isnull(c.sap_id, 0) = isnull(sh.sap_id, 0)'
 
 								set @sql = @sql + char(10) + 'group by rollup(   c.stuffing_production_name
@@ -418,33 +418,33 @@ BEGIN
 
 			end;
 
-			-- ДОПОЛНИТЕЛЬНЫЙ ОТЧЕТ
+			-- Р”РћРџРћР›РќРРўР•Р›Р¬РќР«Р™ РћРўР§Р•Рў
 			if @type_report = 'report_for_pivot'
 			begin
 					
 					select 
-							 'для впр' = isnull(c.stuffing_production_name, 'Завод не указан') + '|' + isnull(c.stuffing_type , 'Тип набивки не указан') + '|' + isnull(c.stuffing_id , 'Код набивки не указан') + '|' + FORMAT(c.sap_id, '000000000000000000000000') 
-							,'Код набивки' = c.stuffing_id
+							 'РґР»СЏ РІРїСЂ' = isnull(c.stuffing_production_name, 'Р—Р°РІРѕРґ РЅРµ СѓРєР°Р·Р°РЅ') + '|' + isnull(c.stuffing_type , 'РўРёРї РЅР°Р±РёРІРєРё РЅРµ СѓРєР°Р·Р°РЅ') + '|' + isnull(c.stuffing_id , 'РљРѕРґ РЅР°Р±РёРІРєРё РЅРµ СѓРєР°Р·Р°РЅ') + '|' + FORMAT(c.sap_id, '000000000000000000000000') 
+							,'РљРѕРґ РЅР°Р±РёРІРєРё' = c.stuffing_id
 							,'MML' = c.mml
-							,'Название набивки' = c.stuffing_name
-							,'Производитель' = c.stuffing_production_name
-							,'Тип набивки' = c.stuffing_type
-							,'Цикл созревания' = c.maturation_days
-							,'Цикл созревания + упаковка' = c.maturation_and_packaging_days
-							,'Транзит с производства' = c.transit_from_production_days
-							,'Минимальный квант маркировки' = c.minimum_volume_for_marking_kg
-							,'Кратность маркировки' = c.step_marking_kg
-							,'Упаковочная линия кг в час' = c.marking_line_productivity_kg
-							,'Тип упаковочной линии' = c.marking_line_type
+							,'РќР°Р·РІР°РЅРёРµ РЅР°Р±РёРІРєРё' = c.stuffing_name
+							,'РџСЂРѕРёР·РІРѕРґРёС‚РµР»СЊ' = c.stuffing_production_name
+							,'РўРёРї РЅР°Р±РёРІРєРё' = c.stuffing_type
+							,'Р¦РёРєР» СЃРѕР·СЂРµРІР°РЅРёСЏ' = c.maturation_days
+							,'Р¦РёРєР» СЃРѕР·СЂРµРІР°РЅРёСЏ + СѓРїР°РєРѕРІРєР°' = c.maturation_and_packaging_days
+							,'РўСЂР°РЅР·РёС‚ СЃ РїСЂРѕРёР·РІРѕРґСЃС‚РІР°' = c.transit_from_production_days
+							,'РњРёРЅРёРјР°Р»СЊРЅС‹Р№ РєРІР°РЅС‚ РјР°СЂРєРёСЂРѕРІРєРё' = c.minimum_volume_for_marking_kg
+							,'РљСЂР°С‚РЅРѕСЃС‚СЊ РјР°СЂРєРёСЂРѕРІРєРё' = c.step_marking_kg
+							,'РЈРїР°РєРѕРІРѕС‡РЅР°СЏ Р»РёРЅРёСЏ РєРі РІ С‡Р°СЃ' = c.marking_line_productivity_kg
+							,'РўРёРї СѓРїР°РєРѕРІРѕС‡РЅРѕР№ Р»РёРЅРёРё' = c.marking_line_type
 							,'SAP ID' = '''' + FORMAT(c.sap_id, '000000000000000000000000')
-							,'Код зависимой позиции' = c.position_dependent_id
-							,'Название SKU 1С' = c.product_1C_full_name
-							,'Общий срок годности' = c.expiration_date_in_days
-							,'Дата производства' = cl.dt_tm
-							,'Дата доступности' = cl.dt_tm + transit_from_production_days + 1
-							,'Годен до' = cl.dt_tm + c.expiration_date_in_days
-							,'Закладка (замес)' = convert(dec(15,5), null)
-							,'Итог' = convert(dec(15,5), null)
+							,'РљРѕРґ Р·Р°РІРёСЃРёРјРѕР№ РїРѕР·РёС†РёРё' = c.position_dependent_id
+							,'РќР°Р·РІР°РЅРёРµ SKU 1РЎ' = c.product_1C_full_name
+							,'РћР±С‰РёР№ СЃСЂРѕРє РіРѕРґРЅРѕСЃС‚Рё' = c.expiration_date_in_days
+							,'Р”Р°С‚Р° РїСЂРѕРёР·РІРѕРґСЃС‚РІР°' = cl.dt_tm
+							,'Р”Р°С‚Р° РґРѕСЃС‚СѓРїРЅРѕСЃС‚Рё' = cl.dt_tm + transit_from_production_days + 1
+							,'Р“РѕРґРµРЅ РґРѕ' = cl.dt_tm + c.expiration_date_in_days
+							,'Р—Р°РєР»Р°РґРєР° (Р·Р°РјРµСЃ)' = convert(dec(15,5), null)
+							,'РС‚РѕРі' = convert(dec(15,5), null)
 					from #columns as c
 					cross join cherkizovo.info.calendar as cl
 					where cl.dt_tm between @report_dt_from and @report_dt_to

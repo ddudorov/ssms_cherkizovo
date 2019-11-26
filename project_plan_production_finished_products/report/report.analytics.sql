@@ -1,4 +1,4 @@
-use project_plan_production_finished_products
+п»їuse project_plan_production_finished_products
 
 -- exec project_plan_production_finished_products.report.analytics		
 
@@ -9,7 +9,7 @@ as
 BEGIN
 			SET NOCOUNT ON;
 			
-			begin -- ТАБЛИЦА ДЛЯ ОТЧЕТА 
+			begin -- РўРђР‘Р›РР¦Рђ Р”Р›РЇ РћРўР§Р•РўРђ 
 
 						IF OBJECT_ID('tempdb..#analytics_total','U') is not null drop table #analytics_total; 
 
@@ -17,42 +17,42 @@ BEGIN
 						(
 								 year_week_number								int			null
 								 
-								,stock_on_monday_total							dec(15,5)	null	-- итого остатков на понедельник			
-								,stock_on_monday_for_shipment					dec(15,5)	null	-- остаток к отгрузке на понедельник	
-								,stock_on_monday_unclaimed						dec(15,5)	null	-- остаток невостребованный на понедельник
-								--,transit_on_monday_total						dec(15,5)	null	-- итого транзитов на понедельник			
-								--,transit_on_monday_for_shipment					dec(15,5)	null	-- транзитов к отгрузке на понедельник	
-								--,transit_on_monday_unclaimed					dec(15,5)	null	-- транзитов невостребованный на понедельник
-								,transit_received								dec(15,5)	null	-- транзит приход
-								,shipment_from_stock							dec(15,5)	null	-- отгружено из остатков и транзита
+								,stock_on_monday_total							dec(15,5)	null	-- РёС‚РѕРіРѕ РѕСЃС‚Р°С‚РєРѕРІ РЅР° РїРѕРЅРµРґРµР»СЊРЅРёРє			
+								,stock_on_monday_for_shipment					dec(15,5)	null	-- РѕСЃС‚Р°С‚РѕРє Рє РѕС‚РіСЂСѓР·РєРµ РЅР° РїРѕРЅРµРґРµР»СЊРЅРёРє	
+								,stock_on_monday_unclaimed						dec(15,5)	null	-- РѕСЃС‚Р°С‚РѕРє РЅРµРІРѕСЃС‚СЂРµР±РѕРІР°РЅРЅС‹Р№ РЅР° РїРѕРЅРµРґРµР»СЊРЅРёРє
+								--,transit_on_monday_total						dec(15,5)	null	-- РёС‚РѕРіРѕ С‚СЂР°РЅР·РёС‚РѕРІ РЅР° РїРѕРЅРµРґРµР»СЊРЅРёРє			
+								--,transit_on_monday_for_shipment					dec(15,5)	null	-- С‚СЂР°РЅР·РёС‚РѕРІ Рє РѕС‚РіСЂСѓР·РєРµ РЅР° РїРѕРЅРµРґРµР»СЊРЅРёРє	
+								--,transit_on_monday_unclaimed					dec(15,5)	null	-- С‚СЂР°РЅР·РёС‚РѕРІ РЅРµРІРѕСЃС‚СЂРµР±РѕРІР°РЅРЅС‹Р№ РЅР° РїРѕРЅРµРґРµР»СЊРЅРёРє
+								,transit_received								dec(15,5)	null	-- С‚СЂР°РЅР·РёС‚ РїСЂРёС…РѕРґ
+								,shipment_from_stock							dec(15,5)	null	-- РѕС‚РіСЂСѓР¶РµРЅРѕ РёР· РѕСЃС‚Р°С‚РєРѕРІ Рё С‚СЂР°РЅР·РёС‚Р°
 
-								,marking_total									dec(15,5)	null	-- итого маркировка (набивка факт + план) выход
-								,marking_on_monday_total						dec(15,5)	null	-- итого маркировка (набивка факт + план) на понедельник			
-								,marking_on_monday_for_shipment					dec(15,5)	null	-- маркировка (набивка факт + план) к отгрузке на понедельник	
-								,marking_on_monday_unclaimed					dec(15,5)	null	-- маркировка (набивка факт + план) невостребованный на понедельник
-								,shipment_from_marking							dec(15,5)	null	-- отгружено из набивок
+								,marking_total									dec(15,5)	null	-- РёС‚РѕРіРѕ РјР°СЂРєРёСЂРѕРІРєР° (РЅР°Р±РёРІРєР° С„Р°РєС‚ + РїР»Р°РЅ) РІС‹С…РѕРґ
+								,marking_on_monday_total						dec(15,5)	null	-- РёС‚РѕРіРѕ РјР°СЂРєРёСЂРѕРІРєР° (РЅР°Р±РёРІРєР° С„Р°РєС‚ + РїР»Р°РЅ) РЅР° РїРѕРЅРµРґРµР»СЊРЅРёРє			
+								,marking_on_monday_for_shipment					dec(15,5)	null	-- РјР°СЂРєРёСЂРѕРІРєР° (РЅР°Р±РёРІРєР° С„Р°РєС‚ + РїР»Р°РЅ) Рє РѕС‚РіСЂСѓР·РєРµ РЅР° РїРѕРЅРµРґРµР»СЊРЅРёРє	
+								,marking_on_monday_unclaimed					dec(15,5)	null	-- РјР°СЂРєРёСЂРѕРІРєР° (РЅР°Р±РёРІРєР° С„Р°РєС‚ + РїР»Р°РЅ) РЅРµРІРѕСЃС‚СЂРµР±РѕРІР°РЅРЅС‹Р№ РЅР° РїРѕРЅРµРґРµР»СЊРЅРёРє
+								,shipment_from_marking							dec(15,5)	null	-- РѕС‚РіСЂСѓР¶РµРЅРѕ РёР· РЅР°Р±РёРІРѕРє
 								
-								,stuffing_fact_output							dec(11,5)	null	-- выход фактических набивок
-								,stuffing_plan_output							dec(11,5)	null	-- выход плановых набивок
+								,stuffing_fact_output							dec(11,5)	null	-- РІС‹С…РѕРґ С„Р°РєС‚РёС‡РµСЃРєРёС… РЅР°Р±РёРІРѕРє
+								,stuffing_plan_output							dec(11,5)	null	-- РІС‹С…РѕРґ РїР»Р°РЅРѕРІС‹С… РЅР°Р±РёРІРѕРє
 								
 
-								,shipment_total									dec(15,5)	null	-- потребность всего				
-								,shipment_SAP									dec(15,5)	null	-- потребность SAP	
-								,shipment_1C									dec(15,5)	null	-- потребность 1C	
-								,shipment_sales_plan							dec(15,5)	null	-- потребность план продаж	
+								,shipment_total									dec(15,5)	null	-- РїРѕС‚СЂРµР±РЅРѕСЃС‚СЊ РІСЃРµРіРѕ				
+								,shipment_SAP									dec(15,5)	null	-- РїРѕС‚СЂРµР±РЅРѕСЃС‚СЊ SAP	
+								,shipment_1C									dec(15,5)	null	-- РїРѕС‚СЂРµР±РЅРѕСЃС‚СЊ 1C	
+								,shipment_sales_plan							dec(15,5)	null	-- РїРѕС‚СЂРµР±РЅРѕСЃС‚СЊ РїР»Р°РЅ РїСЂРѕРґР°Р¶	
 																
 
-								,deficit_total									dec(15,5)	null	-- потребность всего				
-								,deficit_SAP									dec(15,5)	null	-- потребность SAP	
-								,deficit_1C										dec(15,5)	null	-- потребность 1C	
-								,deficit_sales_plan								dec(15,5)	null	-- потребность план продаж	
+								,deficit_total									dec(15,5)	null	-- РїРѕС‚СЂРµР±РЅРѕСЃС‚СЊ РІСЃРµРіРѕ				
+								,deficit_SAP									dec(15,5)	null	-- РїРѕС‚СЂРµР±РЅРѕСЃС‚СЊ SAP	
+								,deficit_1C										dec(15,5)	null	-- РїРѕС‚СЂРµР±РЅРѕСЃС‚СЊ 1C	
+								,deficit_sales_plan								dec(15,5)	null	-- РїРѕС‚СЂРµР±РЅРѕСЃС‚СЊ РїР»Р°РЅ РїСЂРѕРґР°Р¶	
 
 						);
 
 
 			end;
 
-			begin -- ТРАНЗИТ ПРИХОДЫ 
+			begin -- РўР РђРќР—РРў РџР РРҐРћР”Р« 
 
 						insert into #analytics_total 
 						(
@@ -67,9 +67,9 @@ BEGIN
 						group by cl.year_week_number
 			end;
 
-			begin -- ВЫХОД ПО ДАТУ ДОСТУПНОСТИ НАБИВКИ ФАКТ И ПЛАН И МАРКИРОВКА ВЫХОД ИТОГ ГП
+			begin -- Р’Р«РҐРћР” РџРћ Р”РђРўРЈ Р”РћРЎРўРЈРџРќРћРЎРўР РќРђР‘РР’РљР Р¤РђРљРў Р РџР›РђРќ Р РњРђР РљРР РћР’РљРђ Р’Р«РҐРћР” РРўРћР“ Р“Рџ
 
-						-- набивки выход факт
+						-- РЅР°Р±РёРІРєРё РІС‹С…РѕРґ С„Р°РєС‚
 						insert into #analytics_total (year_week_number, stuffing_fact_output)
 						select 
 								cl.year_week_number as year_week_number
@@ -78,7 +78,7 @@ BEGIN
 						join cherkizovo.info.calendar as cl on o.stuffing_available_date = cl.dt_tm
 						group by cl.year_week_number;
 
-						-- набивки выход план
+						-- РЅР°Р±РёРІРєРё РІС‹С…РѕРґ РїР»Р°РЅ
 						insert into #analytics_total (year_week_number, stuffing_plan_output)
 						select 
 								cl.year_week_number as year_week_number
@@ -87,7 +87,7 @@ BEGIN
 						join cherkizovo.info.calendar as cl on o.stuffing_available_date = cl.dt_tm
 						group by cl.year_week_number;
 
-						-- ВЫХОД ИТОГО ГП
+						-- Р’Р«РҐРћР” РРўРћР“Рћ Р“Рџ
 						insert into #analytics_total (year_week_number, marking_total)
 						select 
 								cl.year_week_number as year_week_number
@@ -98,7 +98,7 @@ BEGIN
 
 			end;
 
-			begin -- ПОТРЕБНОСТЬ И ДЕФИЦИТ
+			begin -- РџРћРўР Р•Р‘РќРћРЎРўР¬ Р Р”Р•Р¤РР¦РРў
 
 						insert into #analytics_total 
 						(
@@ -159,7 +159,7 @@ BEGIN
 
 			end;
 
-			begin -- ОСТАТКИ 
+			begin -- РћРЎРўРђРўРљР 
 
 						declare @dt_min_stock as datetime; set @dt_min_stock = (select MIN(stock_on_date) from project_plan_production_finished_products.data_import.stock);
 						declare @dt_max_stock as datetime; set @dt_max_stock = (select MAX(shipment_date) from project_plan_production_finished_products.data_import.shipments_sales_plan);
@@ -236,7 +236,7 @@ BEGIN
 																l.stock_row_id
 															,l.stock_name_table
 															,COALESCE(s.shipment_date, c.shipment_date, p.shipment_date)
-													) as l on st.row_id = l.stock_row_id and st.name_table = l.stock_name_table and cl.dt_tm = l.shipment_date + 1 -- сдвигаем на день, что бы получить остатки на утро
+													) as l on st.row_id = l.stock_row_id and st.name_table = l.stock_name_table and cl.dt_tm = l.shipment_date + 1 -- СЃРґРІРёРіР°РµРј РЅР° РґРµРЅСЊ, С‡С‚Рѕ Р±С‹ РїРѕР»СѓС‡РёС‚СЊ РѕСЃС‚Р°С‚РєРё РЅР° СѓС‚СЂРѕ
 										) as st
 								--order by  st.row_id, st.name_table, st.dt_tm
 								) as st	
@@ -247,7 +247,7 @@ BEGIN
 						IF OBJECT_ID('tempdb..#calendar_stock','U') is not null drop table #calendar_stock; 
 			end;
 
-			begin -- НАБИВКИ МАРКИРОВКА
+			begin -- РќРђР‘РР’РљР РњРђР РљРР РћР’РљРђ
 
 						declare @dt_min_marking as datetime; set @dt_min_marking = (select MIN(marking_on_date) from project_plan_production_finished_products.data_import.marking);
 						declare @dt_max_marking as datetime; set @dt_max_marking = (select MAX(shipment_date)	from project_plan_production_finished_products.data_import.shipments_sales_plan);
@@ -314,7 +314,7 @@ BEGIN
 														group by 
 																 l.marking_row_id
 																,COALESCE(s.shipment_date, c.shipment_date, p.shipment_date)
-														) as l on st.row_id = l.marking_row_id and cl.dt_tm = l.shipment_date + 1 -- сдвигаем на день, что бы получить остатки на утро
+														) as l on st.row_id = l.marking_row_id and cl.dt_tm = l.shipment_date + 1 -- СЃРґРІРёРіР°РµРј РЅР° РґРµРЅСЊ, С‡С‚Рѕ Р±С‹ РїРѕР»СѓС‡РёС‚СЊ РѕСЃС‚Р°С‚РєРё РЅР° СѓС‚СЂРѕ
 											--order by  st.row_id, cl.dt_tm
 									 ) as st
 								--order by  st.row_id, st.dt_tm
@@ -329,41 +329,41 @@ BEGIN
 
 
 
-			begin -- ВЫГРУЖАЕМ ОТЧЕТ
+			begin -- Р’Р«Р“Р РЈР–РђР•Рњ РћРўР§Р•Рў
 
 
 					select 
-							 left(o.year_week_number, 4) + '|' + RIGHT(o.year_week_number, 2) as [Год|№ недели]
+							 left(o.year_week_number, 4) + '|' + RIGHT(o.year_week_number, 2) as [Р“РѕРґ|в„– РЅРµРґРµР»Рё]
 																											
-							--,'Итого остатков на понедельник'				= sum(o.stock_on_monday_total)			
-							--,'Остатки для отгрузки на понедельник'			= sum(o.stock_on_monday_for_shipment)		
-							--,'Невостребованный остаток на понедельник'		= sum(o.stock_on_monday_unclaimed)		
-							,'Итого остатков на понедельник'				= nullif(   sum(   isnull(o.stock_on_monday_total,0)		+ ISNULL(o.marking_on_monday_total,0)			)   ,0)
-							,'Остатки для отгрузки на понедельник'			= nullif(   sum(   isnull(o.stock_on_monday_for_shipment,0) + ISNULL(o.marking_on_monday_for_shipment,0)	)   ,0)
-							,'Невостребованный остаток на понедельник'		= nullif(   sum(   isnull(o.stock_on_monday_unclaimed,0)	+ ISNULL(o.marking_on_monday_unclaimed,0)		)   ,0)
+							--,'РС‚РѕРіРѕ РѕСЃС‚Р°С‚РєРѕРІ РЅР° РїРѕРЅРµРґРµР»СЊРЅРёРє'				= sum(o.stock_on_monday_total)			
+							--,'РћСЃС‚Р°С‚РєРё РґР»СЏ РѕС‚РіСЂСѓР·РєРё РЅР° РїРѕРЅРµРґРµР»СЊРЅРёРє'			= sum(o.stock_on_monday_for_shipment)		
+							--,'РќРµРІРѕСЃС‚СЂРµР±РѕРІР°РЅРЅС‹Р№ РѕСЃС‚Р°С‚РѕРє РЅР° РїРѕРЅРµРґРµР»СЊРЅРёРє'		= sum(o.stock_on_monday_unclaimed)		
+							,'РС‚РѕРіРѕ РѕСЃС‚Р°С‚РєРѕРІ РЅР° РїРѕРЅРµРґРµР»СЊРЅРёРє'				= nullif(   sum(   isnull(o.stock_on_monday_total,0)		+ ISNULL(o.marking_on_monday_total,0)			)   ,0)
+							,'РћСЃС‚Р°С‚РєРё РґР»СЏ РѕС‚РіСЂСѓР·РєРё РЅР° РїРѕРЅРµРґРµР»СЊРЅРёРє'			= nullif(   sum(   isnull(o.stock_on_monday_for_shipment,0) + ISNULL(o.marking_on_monday_for_shipment,0)	)   ,0)
+							,'РќРµРІРѕСЃС‚СЂРµР±РѕРІР°РЅРЅС‹Р№ РѕСЃС‚Р°С‚РѕРє РЅР° РїРѕРЅРµРґРµР»СЊРЅРёРє'		= nullif(   sum(   isnull(o.stock_on_monday_unclaimed,0)	+ ISNULL(o.marking_on_monday_unclaimed,0)		)   ,0)
 								
-							,'Приход транзита'								= sum(o.transit_received)	
-							,'Отгружено из остатков'						= sum(o.shipment_from_stock)	
+							,'РџСЂРёС…РѕРґ С‚СЂР°РЅР·РёС‚Р°'								= sum(o.transit_received)	
+							,'РћС‚РіСЂСѓР¶РµРЅРѕ РёР· РѕСЃС‚Р°С‚РєРѕРІ'						= sum(o.shipment_from_stock)	
 		
-							,'Итого выход ГП'								= sum(o.marking_total)			
-							,'Итого ГП на понедельник'						= sum(o.marking_on_monday_total)			
-							,'ГП для отгрузки на понедельник'				= sum(o.marking_on_monday_for_shipment)			
-							,'Невостребованный ГП на понедельник'			= sum(o.marking_on_monday_unclaimed)	
-							,'Отгружено из набивок'							= sum(o.shipment_from_marking)	
+							,'РС‚РѕРіРѕ РІС‹С…РѕРґ Р“Рџ'								= sum(o.marking_total)			
+							,'РС‚РѕРіРѕ Р“Рџ РЅР° РїРѕРЅРµРґРµР»СЊРЅРёРє'						= sum(o.marking_on_monday_total)			
+							,'Р“Рџ РґР»СЏ РѕС‚РіСЂСѓР·РєРё РЅР° РїРѕРЅРµРґРµР»СЊРЅРёРє'				= sum(o.marking_on_monday_for_shipment)			
+							,'РќРµРІРѕСЃС‚СЂРµР±РѕРІР°РЅРЅС‹Р№ Р“Рџ РЅР° РїРѕРЅРµРґРµР»СЊРЅРёРє'			= sum(o.marking_on_monday_unclaimed)	
+							,'РћС‚РіСЂСѓР¶РµРЅРѕ РёР· РЅР°Р±РёРІРѕРє'							= sum(o.shipment_from_marking)	
 									
-							,'Выход (в камерах)'							= sum(o.stuffing_fact_output)																			
-							,'Выход (план)'									= sum(o.stuffing_plan_output)								
+							,'Р’С‹С…РѕРґ (РІ РєР°РјРµСЂР°С…)'							= sum(o.stuffing_fact_output)																			
+							,'Р’С‹С…РѕРґ (РїР»Р°РЅ)'									= sum(o.stuffing_plan_output)								
 																																
-							,'План отгрузки'								= sum(o.shipment_total)	
-							,'Заявки SAP'									= sum(o.shipment_SAP)																			
-							,'Заявки 1С'									= sum(o.shipment_1C)					
-							,'План продаж'									= sum(o.shipment_sales_plan)
+							,'РџР»Р°РЅ РѕС‚РіСЂСѓР·РєРё'								= sum(o.shipment_total)	
+							,'Р—Р°СЏРІРєРё SAP'									= sum(o.shipment_SAP)																			
+							,'Р—Р°СЏРІРєРё 1РЎ'									= sum(o.shipment_1C)					
+							,'РџР»Р°РЅ РїСЂРѕРґР°Р¶'									= sum(o.shipment_sales_plan)
 																									
-							,'Дефицит'										= sum(o.deficit_total)													
-							,'Дефицит SAP'									= sum(o.deficit_SAP)													
-							,'Дефицит 1С'									= sum(o.deficit_1C)	
-							,'Дефицит План продаж'							= sum(o.deficit_sales_plan)	
-							,'Доля дефицита'								= sum(o.deficit_total) / sum(o.shipment_total)								
+							,'Р”РµС„РёС†РёС‚'										= sum(o.deficit_total)													
+							,'Р”РµС„РёС†РёС‚ SAP'									= sum(o.deficit_SAP)													
+							,'Р”РµС„РёС†РёС‚ 1РЎ'									= sum(o.deficit_1C)	
+							,'Р”РµС„РёС†РёС‚ РџР»Р°РЅ РїСЂРѕРґР°Р¶'							= sum(o.deficit_sales_plan)	
+							,'Р”РѕР»СЏ РґРµС„РёС†РёС‚Р°'								= sum(o.deficit_total) / sum(o.shipment_total)								
 																 																																		
 																																									
 					from #analytics_total as o group by o.year_week_number

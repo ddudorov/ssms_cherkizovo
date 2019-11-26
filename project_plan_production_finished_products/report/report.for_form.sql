@@ -1,4 +1,4 @@
-use project_plan_production_finished_products
+п»їuse project_plan_production_finished_products 
 
 go
 
@@ -9,7 +9,7 @@ as
 BEGIN
 			SET NOCOUNT ON;
 			
-			-- подготовка таблицы для формы
+			-- РїРѕРґРіРѕС‚РѕРІРєР° С‚Р°Р±Р»РёС†С‹ РґР»СЏ С„РѕСЂРјС‹
 			begin
 
 					IF OBJECT_ID('tempdb..#for_form','U') is not null drop table #for_form;
@@ -25,7 +25,7 @@ BEGIN
 
 
 
-			-- остатки
+			-- РѕСЃС‚Р°С‚РєРё
 			begin
 					
 					insert into #for_form (label_name, label_caption)
@@ -45,7 +45,7 @@ BEGIN
 			end;
 			
 
-			-- маркировка
+			-- РјР°СЂРєРёСЂРѕРІРєР°
 			begin		
 						
 					insert into #for_form (label_name, label_caption)
@@ -66,7 +66,7 @@ BEGIN
 			end;
 
 
-			-- набифка факт
+			-- РЅР°Р±РёС„РєР° С„Р°РєС‚
 			begin		
 						
 					insert into #for_form (label_name, label_caption)
@@ -87,7 +87,7 @@ BEGIN
 			end;
 
 
-			-- набифка план
+			-- РЅР°Р±РёС„РєР° РїР»Р°РЅ
 			begin		
 						
 					insert into #for_form (label_name, label_caption)
@@ -171,7 +171,7 @@ BEGIN
 					
 			end;
 
-			-- план продаж
+			-- РїР»Р°РЅ РїСЂРѕРґР°Р¶
 			begin
 
 					insert into #for_form (label_name, label_caption)
@@ -202,7 +202,7 @@ BEGIN
 			end;
 		
 		
-			-- ИТОГ SAP + 1C + план продаж
+			-- РРўРћР“ SAP + 1C + РїР»Р°РЅ РїСЂРѕРґР°Р¶
 			begin
 
 					insert into #for_form (label_name, label_caption)

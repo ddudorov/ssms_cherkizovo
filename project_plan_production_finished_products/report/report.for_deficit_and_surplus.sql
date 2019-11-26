@@ -1,4 +1,4 @@
-use project_plan_production_finished_products
+п»їuse project_plan_production_finished_products 
 
 go
 
@@ -11,7 +11,7 @@ BEGIN
 			
 			declare @max_dt_shipment datetime;
 
-			-- создаем таблицу куда будут загружены все данные
+			-- СЃРѕР·РґР°РµРј С‚Р°Р±Р»РёС†Сѓ РєСѓРґР° Р±СѓРґСѓС‚ Р·Р°РіСЂСѓР¶РµРЅС‹ РІСЃРµ РґР°РЅРЅС‹Рµ
 			begin
 					IF OBJECT_ID('tempdb..#union_data','U') is not null drop table #union_data; 
 					
@@ -40,7 +40,7 @@ BEGIN
 
 			end;
 
-			-- отгрузки в одну таблицу и добавляем в основную
+			-- РѕС‚РіСЂСѓР·РєРё РІ РѕРґРЅСѓ С‚Р°Р±Р»РёС†Сѓ Рё РґРѕР±Р°РІР»СЏРµРј РІ РѕСЃРЅРѕРІРЅСѓСЋ
 			begin
 					IF OBJECT_ID('tempdb..#shipments_union','U') is not null drop table #shipments_union; 
 
@@ -79,7 +79,7 @@ BEGIN
 
 					set @max_dt_shipment = (select max(shipment_date) from #shipments_union)
 
-					-- добавляем данные
+					-- РґРѕР±Р°РІР»СЏРµРј РґР°РЅРЅС‹Рµ
 					insert into #union_data
 					(
 							 sap_id															
@@ -114,7 +114,7 @@ BEGIN
 			end;
 			
 
-			-- остатки по дням
+			-- РѕСЃС‚Р°С‚РєРё РїРѕ РґРЅСЏРј
 			begin
 
 					IF OBJECT_ID('tempdb..#stock','U') is not null drop table #stock; 
@@ -176,7 +176,7 @@ BEGIN
 
 			end;
 
-			-- маркировка по дням
+			-- РјР°СЂРєРёСЂРѕРІРєР° РїРѕ РґРЅСЏРј
 			begin
 
 					IF OBJECT_ID('tempdb..#marking','U') is not null drop table #marking; 
@@ -224,7 +224,7 @@ BEGIN
 
 			end;
 
-			-- остатки + маркировка - вставляем в основную
+			-- РѕСЃС‚Р°С‚РєРё + РјР°СЂРєРёСЂРѕРІРєР° - РІСЃС‚Р°РІР»СЏРµРј РІ РѕСЃРЅРѕРІРЅСѓСЋ
 			begin
 
 					insert into #union_data
@@ -309,36 +309,36 @@ BEGIN
 
 
 
-			--выгружаем отчет
+			--РІС‹РіСЂСѓР¶Р°РµРј РѕС‚С‡РµС‚
 			begin
 
 					select 
-							 'Общий итог' = 'Общий итог'
-							,'Код набивки' = ud.stuffing_id
+							 'РћР±С‰РёР№ РёС‚РѕРі' = 'РћР±С‰РёР№ РёС‚РѕРі'
+							,'РљРѕРґ РЅР°Р±РёРІРєРё' = ud.stuffing_id
 							,'SAP ID' = convert(varchar(24),FORMAT(ud.sap_id, '000000000000000000000000')) 
-							,'Наименование SKU' = ps.product_1C_full_name
-							,'Контрагент' = ud.shipment_customer_name
-							,'Канал сбыта' = ud.shipment_sales_channel_name
+							,'РќР°РёРјРµРЅРѕРІР°РЅРёРµ SKU' = ps.product_1C_full_name
+							,'РљРѕРЅС‚СЂР°РіРµРЅС‚' = ud.shipment_customer_name
+							,'РљР°РЅР°Р» СЃР±С‹С‚Р°' = ud.shipment_sales_channel_name
 
-							,'Наименование SKU ->' = ps.product_1C_full_name
-							,'Контрагент ->' = ud.shipment_customer_name
-							,'Канал сбыта ->' = ud.shipment_sales_channel_name
+							,'РќР°РёРјРµРЅРѕРІР°РЅРёРµ SKU ->' = ps.product_1C_full_name
+							,'РљРѕРЅС‚СЂР°РіРµРЅС‚ ->' = ud.shipment_customer_name
+							,'РљР°РЅР°Р» СЃР±С‹С‚Р° ->' = ud.shipment_sales_channel_name
 
-							,'ДТ' = ud.dt
+							,'Р”Рў' = ud.dt
 
-							,'Тек ост' = ud.stock_total_kg	
-							,'Набивка ост' = ud.stock_marking_total_kg	
+							,'РўРµРє РѕСЃС‚' = ud.stock_total_kg	
+							,'РќР°Р±РёРІРєР° РѕСЃС‚' = ud.stock_marking_total_kg	
 
-							,'Ост КОС 0%-49%'	= ud.stock_KOS__0_49_kg													
-							,'Ост КОС 50%-59%'	= ud.stock_KOS_50_59_kg													
-							,'Ост КОС 60%-69%'	= ud.stock_KOS_60_69_kg													
-							,'Ост КОС 70%-79%'	= ud.stock_KOS_70_79_kg													
-							,'Ост КОС 80%-99%'	= ud.stock_KOS_80_99_kg														
-							,'Ост КОС 100%'		= ud.stock_KOS___100_kg				
+							,'РћСЃС‚ РљРћРЎ 0%-49%'	= ud.stock_KOS__0_49_kg													
+							,'РћСЃС‚ РљРћРЎ 50%-59%'	= ud.stock_KOS_50_59_kg													
+							,'РћСЃС‚ РљРћРЎ 60%-69%'	= ud.stock_KOS_60_69_kg													
+							,'РћСЃС‚ РљРћРЎ 70%-79%'	= ud.stock_KOS_70_79_kg													
+							,'РћСЃС‚ РљРћРЎ 80%-99%'	= ud.stock_KOS_80_99_kg														
+							,'РћСЃС‚ РљРћРЎ 100%'		= ud.stock_KOS___100_kg				
 								
-							,'Заявка/план' = ud.shipment_kg																
-							,'Дефицит' = ud.net_need_kg																	
-							,'Профицит' = ud.stock_after_shipment_kg																
+							,'Р—Р°СЏРІРєР°/РїР»Р°РЅ' = ud.shipment_kg																
+							,'Р”РµС„РёС†РёС‚' = ud.net_need_kg																	
+							,'РџСЂРѕС„РёС†РёС‚' = ud.stock_after_shipment_kg																
 					from #union_data as ud
 					left join cherkizovo.info.products_sap as ps on ud.sap_id = ps.sap_id;
 					--left join cherkizovo.info.stuffing as st on u.stuffing_id = st.stuffing_id

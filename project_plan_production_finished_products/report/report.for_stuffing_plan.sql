@@ -1,4 +1,4 @@
-use project_plan_production_finished_products
+п»їuse project_plan_production_finished_products 
 
 go
 
@@ -11,7 +11,7 @@ as
 BEGIN
 			SET NOCOUNT ON;
 			
-			-- для теста
+			-- РґР»СЏ С‚РµСЃС‚Р°
 			--declare @ProductionDateFrom_Kashira datetime;	set @ProductionDateFrom_Kashira = '20191127'
 			--declare @ProductionDateFrom_CHMPZ datetime;		set @ProductionDateFrom_CHMPZ = '20191125'
 			--declare @type_report varchar(50);				set @type_report = 'report_main'
@@ -28,10 +28,10 @@ BEGIN
 			declare @sql_name_column	varchar(500);
 
 			--------------------
-			-- ПОДГОТОВКА ДАННЫХ
+			-- РџРћР”Р“РћРўРћР’РљРђ Р”РђРќРќР«РҐ
 			--------------------
 
-			-- НОРМАТИВ ОСТАТКОВ --- ПЕРВЫЕ 45 ДНЕЙ 
+			-- РќРћР РњРђРўРР’ РћРЎРўРђРўРљРћР’ --- РџР•Р Р’Р«Р• 45 Р”РќР•Р™ 
 			begin
 
 						IF OBJECT_ID('tempdb..#normative_stock','U') is not null drop table #normative_stock;
@@ -58,7 +58,7 @@ BEGIN
 
 			end;
 			
-			-- ПОТРЕБНОСТЬ К ОТГРУЗКЕ
+			-- РџРћРўР Р•Р‘РќРћРЎРўР¬ Рљ РћРўР“Р РЈР—РљР•
 			begin
 
 						IF OBJECT_ID('tempdb..#shipments','U') is not null drop table #shipments;
@@ -67,7 +67,7 @@ BEGIN
 								 s.stuffing_id
 								,s.sap_id
 								,st.production_name as stuffing_production_name
-								,s.shipment_date - st.transit_from_production_days - st.maturation_and_packaging_days as stuffing_production_date_from -- 'это день закладки
+								,s.shipment_date - st.transit_from_production_days - st.maturation_and_packaging_days as stuffing_production_date_from -- 'СЌС‚Рѕ РґРµРЅСЊ Р·Р°РєР»Р°РґРєРё
 								,sum(s.stuffing_fact_net_need_kg) as stuffing_fact_net_need_kg
 						into #shipments
 						from (
@@ -79,7 +79,7 @@ BEGIN
 										,p.stuffing_fact_net_need_kg
 								from project_plan_production_finished_products.data_import.shipments_SAP as p				   
 								WHERE p.shipment_delete = 0
-								  and p.stuffing_id_box_type in (0, 2) -- берем не коробки
+								  and p.stuffing_id_box_type in (0, 2) -- Р±РµСЂРµРј РЅРµ РєРѕСЂРѕР±РєРё
 								  and p.stuffing_fact_net_need_kg > 0
 
 								union all
@@ -90,7 +90,7 @@ BEGIN
 										,p.shipment_date
 										,p.stuffing_fact_net_need_kg
 								from project_plan_production_finished_products.data_import.shipments_1C as p			   
-								WHERE p.stuffing_id_box_type in (0, 2) -- берем не коробки
+								WHERE p.stuffing_id_box_type in (0, 2) -- Р±РµСЂРµРј РЅРµ РєРѕСЂРѕР±РєРё
 								  and p.stuffing_fact_net_need_kg > 0
 								  
 								union all
@@ -102,7 +102,7 @@ BEGIN
 										,p.stuffing_fact_net_need_kg
 								from project_plan_production_finished_products.data_import.shipments_sales_plan as p			   
 								WHERE p.shipment_delete = 0
-								  and p.stuffing_id_box_type in (0, 2) -- берем не коробки
+								  and p.stuffing_id_box_type in (0, 2) -- Р±РµСЂРµРј РЅРµ РєРѕСЂРѕР±РєРё
 								  and p.stuffing_fact_net_need_kg > 0
 								  and p.shipment_exclude_for_stuffing_plan = 0
 
@@ -117,9 +117,9 @@ BEGIN
 								,s.shipment_date - st.transit_from_production_days - st.maturation_and_packaging_days;
 			end;
 			
-			-- НАБИВКИ ФАКТ + НАБИВКИ ФАКТ ОТГРУЗКА + ЧИСТАЯ ПОТРЕБНОСТЬ + ПЛАН НАБИВОК
+			-- РќРђР‘РР’РљР Р¤РђРљРў + РќРђР‘РР’РљР Р¤РђРљРў РћРўР“Р РЈР—РљРђ + Р§РРЎРўРђРЇ РџРћРўР Р•Р‘РќРћРЎРўР¬ + РџР›РђРќ РќРђР‘РР’РћРљ
 			begin
-						-- создаем таблицу с данными
+						-- СЃРѕР·РґР°РµРј С‚Р°Р±Р»РёС†Сѓ СЃ РґР°РЅРЅС‹РјРё
 						begin
 
 									IF OBJECT_ID('tempdb..#data','U') is not null drop table #data;
@@ -135,7 +135,7 @@ BEGIN
 													,sum(st.count_plan_stuffing)		as count_plan_stuffing
 									into #data
 									from (
-												-- ЭТО ИСХОДНЫЕ ДАННЫЕ НАБИВОК
+												-- Р­РўРћ РРЎРҐРћР”РќР«Р• Р”РђРќРќР«Р• РќРђР‘РР’РћРљ
 												select 
 														 st.sap_id
 														,st.stuffing_id
@@ -149,7 +149,7 @@ BEGIN
 									
 												union all
 									
-												-- ЭТО ОТГРУЗКА НАБИВОК
+												-- Р­РўРћ РћРўР“Р РЈР—РљРђ РќРђР‘РР’РћРљ
 												select   
 														 l.shipment_sap_id as sap_id
 														,st.stuffing_id
@@ -168,7 +168,7 @@ BEGIN
 
 												union all
 
-												-- ЧИСТАЯ ПОТРЕБНОСТЬ ---------------------------
+												-- Р§РРЎРўРђРЇ РџРћРўР Р•Р‘РќРћРЎРўР¬ ---------------------------
 												select 
 														 s.sap_id	
 														,s.stuffing_id	
@@ -182,7 +182,7 @@ BEGIN
 									
 												union all
 
-												-- ПЛАН НАБИВОК ---------------------------
+												-- РџР›РђРќ РќРђР‘РР’РћРљ ---------------------------
 												select 
 														 null as sap_id	
 														,st.stuffing_id	
@@ -203,10 +203,10 @@ BEGIN
 
 						end;
 
-						-- переворачиваем таблицу
+						-- РїРµСЂРµРІРѕСЂР°С‡РёРІР°РµРј С‚Р°Р±Р»РёС†Сѓ
 						begin
 						
-									-- СОЗДАЕМ ТАБЛИЦУ ДЛЯ НАБИВОК
+									-- РЎРћР—Р”РђР•Рњ РўРђР‘Р›РР¦РЈ Р”Р›РЇ РќРђР‘РР’РћРљ
 									IF OBJECT_ID('tempdb..#data_pivot','U') is not null drop table #data_pivot;
 									
 									create table #data_pivot
@@ -216,7 +216,7 @@ BEGIN
 									);
 
 
-									-- СОЗДАЕМ СТОЛБЦЫ
+									-- РЎРћР—Р”РђР•Рњ РЎРўРћР›Р‘Р¦Р«
 									set @while_dt_Kashira = @ProductionDateFrom_Kashira
 									set @while_dt_CHMPZ = @ProductionDateFrom_CHMPZ
 
@@ -234,7 +234,7 @@ BEGIN
 									end;
 
 
-									-- НАПОЛНЯЕМ ДАННЫМИ
+									-- РќРђРџРћР›РќРЇР•Рњ Р”РђРќРќР«РњР
 											set @sql = ''
 											set @sql = @sql + char(10) + 'insert into #data_pivot
 																		  select d.sap_id, d.stuffing_id'
@@ -245,24 +245,24 @@ BEGIN
 									begin
 
 											set @sql = @sql + char(10) + '		,sum(case 
-																						when d.stuffing_production_date_from <= ''' + format(@while_dt_Kashira, 'yyyyMMdd') + ''' and	  d.stuffing_production_name in (''Кашира'') then d.stuffing_surplus_kg
-																						when d.stuffing_production_date_from <= ''' + format(@while_dt_CHMPZ  , 'yyyyMMdd') + ''' and not d.stuffing_production_name in (''Кашира'') then d.stuffing_surplus_kg
+																						when d.stuffing_production_date_from <= ''' + format(@while_dt_Kashira, 'yyyyMMdd') + ''' and	  d.stuffing_production_name in (''РљР°С€РёСЂР°'') then d.stuffing_surplus_kg
+																						when d.stuffing_production_date_from <= ''' + format(@while_dt_CHMPZ  , 'yyyyMMdd') + ''' and not d.stuffing_production_name in (''РљР°С€РёСЂР°'') then d.stuffing_surplus_kg
 																					 end) as stuffing_surplus_kg'
 																					 
 									
 											set @sql = @sql + char(10) + '		,sum(case 
-																						when d.stuffing_production_date_from <= ''' + format(@while_dt_Kashira, 'yyyyMMdd') + ''' and	  d.stuffing_production_name in (''Кашира'') then d.stuffing_marking_kg
-																						when d.stuffing_production_date_from <= ''' + format(@while_dt_CHMPZ  , 'yyyyMMdd') + ''' and not d.stuffing_production_name in (''Кашира'') then d.stuffing_marking_kg
+																						when d.stuffing_production_date_from <= ''' + format(@while_dt_Kashira, 'yyyyMMdd') + ''' and	  d.stuffing_production_name in (''РљР°С€РёСЂР°'') then d.stuffing_marking_kg
+																						when d.stuffing_production_date_from <= ''' + format(@while_dt_CHMPZ  , 'yyyyMMdd') + ''' and not d.stuffing_production_name in (''РљР°С€РёСЂР°'') then d.stuffing_marking_kg
 																					 end) as stuffing_marking_kg'
 																					 
 											set @sql = @sql + char(10) + '		,sum(case 
-																						when d.stuffing_production_date_from =  ''' + format(@while_dt_Kashira, 'yyyyMMdd') + ''' and	  d.stuffing_production_name in (''Кашира'') then d.stuffing_fact_net_need_kg
-																						when d.stuffing_production_date_from =  ''' + format(@while_dt_CHMPZ  , 'yyyyMMdd') + ''' and not d.stuffing_production_name in (''Кашира'') then d.stuffing_fact_net_need_kg
+																						when d.stuffing_production_date_from =  ''' + format(@while_dt_Kashira, 'yyyyMMdd') + ''' and	  d.stuffing_production_name in (''РљР°С€РёСЂР°'') then d.stuffing_fact_net_need_kg
+																						when d.stuffing_production_date_from =  ''' + format(@while_dt_CHMPZ  , 'yyyyMMdd') + ''' and not d.stuffing_production_name in (''РљР°С€РёСЂР°'') then d.stuffing_fact_net_need_kg
 																					 end) as stuffing_fact_net_need_kg'
 																					 
 											set @sql = @sql + char(10) + '		,sum(case 
-																						when d.stuffing_production_date_from =  ''' + format(@while_dt_Kashira, 'yyyyMMdd') + ''' and	  d.stuffing_production_name in (''Кашира'') then d.count_plan_stuffing
-																						when d.stuffing_production_date_from =  ''' + format(@while_dt_CHMPZ  , 'yyyyMMdd') + ''' and not d.stuffing_production_name in (''Кашира'') then d.count_plan_stuffing
+																						when d.stuffing_production_date_from =  ''' + format(@while_dt_Kashira, 'yyyyMMdd') + ''' and	  d.stuffing_production_name in (''РљР°С€РёСЂР°'') then d.count_plan_stuffing
+																						when d.stuffing_production_date_from =  ''' + format(@while_dt_CHMPZ  , 'yyyyMMdd') + ''' and not d.stuffing_production_name in (''РљР°С€РёСЂР°'') then d.count_plan_stuffing
 																					 end) as count_plan_stuffing'
 						
 											set @while_dt_Kashira = @while_dt_Kashira + 1;
@@ -284,7 +284,7 @@ BEGIN
 					
 					
 										
-			-- СТОЛБЦЫ ДЛЯ ОТЧЕТА
+			-- РЎРўРћР›Р‘Р¦Р« Р”Р›РЇ РћРўР§Р•РўРђ
 			begin
 
 						IF OBJECT_ID('tempdb..#columns','U') is not null drop table #columns;				
@@ -328,11 +328,11 @@ BEGIN
 			end;
 			
 
-			-- ОСНОВНОЙ ОТЧЕТ
+			-- РћРЎРќРћР’РќРћР™ РћРўР§Р•Рў
 			if @type_report = 'report_main'
 			begin
 
-						-- ОТЧЕТ
+						-- РћРўР§Р•Рў
 								set @sql = ''
 								set @sql = @sql + char(10) + 'select '
 								set @sql = @sql + char(10) + '			 ROW_NUMBER() over(order by c.stuffing_production_name
@@ -346,16 +346,16 @@ BEGIN
 																			when GROUPING_ID(c.sap_id_text) = 0		then 4
 																		end as frm_id'
 								set @sql = @sql + char(10) + '			,case		
-																				when GROUPING_ID(c.stuffing_type) = 1	then isnull(c.stuffing_production_name, ''Завод не указан'')
-																				when GROUPING_ID(c.stuffing_id) = 1		then isnull(c.stuffing_production_name, ''Завод не указан'') + ''|'' + isnull(c.stuffing_type , ''Тип набивки не указан'')
-																				when GROUPING_ID(c.sap_id_text) = 1		then isnull(c.stuffing_production_name, ''Завод не указан'') + ''|'' + isnull(c.stuffing_type , ''Тип набивки не указан'') + ''|'' + isnull(c.stuffing_id , ''Код набивки не указан'')
-																				when GROUPING_ID(c.sap_id_text) = 0		then isnull(c.stuffing_production_name, ''Завод не указан'') + ''|'' + isnull(c.stuffing_type , ''Тип набивки не указан'') + ''|'' + isnull(c.stuffing_id , ''Код набивки не указан'') + ''|'' + c.sap_id_text
+																				when GROUPING_ID(c.stuffing_type) = 1	then isnull(c.stuffing_production_name, ''Р—Р°РІРѕРґ РЅРµ СѓРєР°Р·Р°РЅ'')
+																				when GROUPING_ID(c.stuffing_id) = 1		then isnull(c.stuffing_production_name, ''Р—Р°РІРѕРґ РЅРµ СѓРєР°Р·Р°РЅ'') + ''|'' + isnull(c.stuffing_type , ''РўРёРї РЅР°Р±РёРІРєРё РЅРµ СѓРєР°Р·Р°РЅ'')
+																				when GROUPING_ID(c.sap_id_text) = 1		then isnull(c.stuffing_production_name, ''Р—Р°РІРѕРґ РЅРµ СѓРєР°Р·Р°РЅ'') + ''|'' + isnull(c.stuffing_type , ''РўРёРї РЅР°Р±РёРІРєРё РЅРµ СѓРєР°Р·Р°РЅ'') + ''|'' + isnull(c.stuffing_id , ''РљРѕРґ РЅР°Р±РёРІРєРё РЅРµ СѓРєР°Р·Р°РЅ'')
+																				when GROUPING_ID(c.sap_id_text) = 0		then isnull(c.stuffing_production_name, ''Р—Р°РІРѕРґ РЅРµ СѓРєР°Р·Р°РЅ'') + ''|'' + isnull(c.stuffing_type , ''РўРёРї РЅР°Р±РёРІРєРё РЅРµ СѓРєР°Р·Р°РЅ'') + ''|'' + isnull(c.stuffing_id , ''РљРѕРґ РЅР°Р±РёРІРєРё РЅРµ СѓРєР°Р·Р°РЅ'') + ''|'' + c.sap_id_text
 																		 end as data_hierarchy'
 
 								set @sql = @sql + char(10) + '			,case		
-																				when GROUPING_ID(c.stuffing_type) = 1	then isnull(c.stuffing_production_name, ''Завод не указан'')
-																				when GROUPING_ID(c.stuffing_id) = 1		then isnull(c.stuffing_type , ''Тип набивки не указан'')
-																				when GROUPING_ID(c.sap_id_text) = 1		then isnull(c.stuffing_id , ''Код набивки не указан'')
+																				when GROUPING_ID(c.stuffing_type) = 1	then isnull(c.stuffing_production_name, ''Р—Р°РІРѕРґ РЅРµ СѓРєР°Р·Р°РЅ'')
+																				when GROUPING_ID(c.stuffing_id) = 1		then isnull(c.stuffing_type , ''РўРёРї РЅР°Р±РёРІРєРё РЅРµ СѓРєР°Р·Р°РЅ'')
+																				when GROUPING_ID(c.sap_id_text) = 1		then isnull(c.stuffing_id , ''РљРѕРґ РЅР°Р±РёРІРєРё РЅРµ СѓРєР°Р·Р°РЅ'')
 																				when GROUPING_ID(c.sap_id_text) = 0		then c.sap_id_text
 																		 end as data_id'		
 								set @sql = @sql + char(10) + '			,case		
@@ -381,23 +381,23 @@ BEGIN
 
 															'	
 
-						-- СТОЛБЦЫ с данными
+						-- РЎРўРћР›Р‘Р¦Р« СЃ РґР°РЅРЅС‹РјРё
 						set @while_dt_Kashira = @ProductionDateFrom_Kashira
 						set @while_dt_CHMPZ = @ProductionDateFrom_CHMPZ
-						--set  @report_dt_to =  @while_dt_CHMPZ +1  -- для текста
+						--set  @report_dt_to =  @while_dt_CHMPZ +1  -- РґР»СЏ С‚РµРєСЃС‚Р°
 						while @while_dt_CHMPZ <= @report_dt_to
 						begin
 
-								set @sql_iif = 'convert(datetime, iif(c.stuffing_production_name in (''Кашира''), ''' + format(@while_dt_Kashira, 'yyyyMMdd') + ''',''' + format(@while_dt_CHMPZ, 'yyyyMMdd')  + '''))'
+								set @sql_iif = 'convert(datetime, iif(c.stuffing_production_name in (''РљР°С€РёСЂР°''), ''' + format(@while_dt_Kashira, 'yyyyMMdd') + ''',''' + format(@while_dt_CHMPZ, 'yyyyMMdd')  + '''))'
 								set @sql_name_column = format(@while_dt_Kashira, 'yyyyMMdd')  + '_' + format(@while_dt_CHMPZ, 'yyyyMMdd')
 								
-								set @sql = @sql + char(10) + '		,' + @sql_iif + ' + max(c.maturation_and_packaging_days) + max(c.transit_from_production_days) + iif(not c.stuffing_id is null, 0, null) as stuffing_available_date_'	+ @sql_name_column -- дата доступности набивки
-								set @sql = @sql + char(10) + '		,sum( d.stuffing_surplus_kg_'		+ @sql_name_column + ') as stuffing_surplus_kg_'			+ @sql_name_column -- остаток нераспределенной набивки	
-								set @sql = @sql + char(10) + '		,sum( d.stuffing_marking_kg_'		+ @sql_name_column + ') as stuffing_marking_kg_'			+ @sql_name_column -- остаток маркировки
-								set @sql = @sql + char(10) + '		,sum( d.stuffing_fact_net_need_kg_'	+ @sql_name_column + ') as stuffing_fact_net_need_kg_'		+ @sql_name_column -- потребность после (чистая потребность)						
-								set @sql = @sql + char(10) + '		,sum( d.count_plan_stuffing_'		+ @sql_name_column + ') as count_plan_stuffing_'			+ @sql_name_column -- Закладка (замес)	
-								set @sql = @sql + char(10) + '		,convert(dec(15,5), null)									as formula_preparation_kg_'			+ @sql_name_column --  Закладка (кг ГП)
-								set @sql = @sql + char(10) + '		,convert(dec(15,5), null)									as formula_preparation_stock_kg_'	+ @sql_name_column -- Остаток после закладки
+								set @sql = @sql + char(10) + '		,' + @sql_iif + ' + max(c.maturation_and_packaging_days) + max(c.transit_from_production_days) + iif(not c.stuffing_id is null, 0, null) as stuffing_available_date_'	+ @sql_name_column -- РґР°С‚Р° РґРѕСЃС‚СѓРїРЅРѕСЃС‚Рё РЅР°Р±РёРІРєРё
+								set @sql = @sql + char(10) + '		,sum( d.stuffing_surplus_kg_'		+ @sql_name_column + ') as stuffing_surplus_kg_'			+ @sql_name_column -- РѕСЃС‚Р°С‚РѕРє РЅРµСЂР°СЃРїСЂРµРґРµР»РµРЅРЅРѕР№ РЅР°Р±РёРІРєРё	
+								set @sql = @sql + char(10) + '		,sum( d.stuffing_marking_kg_'		+ @sql_name_column + ') as stuffing_marking_kg_'			+ @sql_name_column -- РѕСЃС‚Р°С‚РѕРє РјР°СЂРєРёСЂРѕРІРєРё
+								set @sql = @sql + char(10) + '		,sum( d.stuffing_fact_net_need_kg_'	+ @sql_name_column + ') as stuffing_fact_net_need_kg_'		+ @sql_name_column -- РїРѕС‚СЂРµР±РЅРѕСЃС‚СЊ РїРѕСЃР»Рµ (С‡РёСЃС‚Р°СЏ РїРѕС‚СЂРµР±РЅРѕСЃС‚СЊ)						
+								set @sql = @sql + char(10) + '		,sum( d.count_plan_stuffing_'		+ @sql_name_column + ') as count_plan_stuffing_'			+ @sql_name_column -- Р—Р°РєР»Р°РґРєР° (Р·Р°РјРµСЃ)	
+								set @sql = @sql + char(10) + '		,convert(dec(15,5), null)									as formula_preparation_kg_'			+ @sql_name_column --  Р—Р°РєР»Р°РґРєР° (РєРі Р“Рџ)
+								set @sql = @sql + char(10) + '		,convert(dec(15,5), null)									as formula_preparation_stock_kg_'	+ @sql_name_column -- РћСЃС‚Р°С‚РѕРє РїРѕСЃР»Рµ Р·Р°РєР»Р°РґРєРё
 	
 								set @while_dt_Kashira = @while_dt_Kashira + 1;
 								set @while_dt_CHMPZ = @while_dt_CHMPZ + 1; 
@@ -419,29 +419,29 @@ BEGIN
 
 
 
-			-- ДОПОЛНИТЕЛЬНЫЙ ОТЧЕТ
+			-- Р”РћРџРћР›РќРРўР•Р›Р¬РќР«Р™ РћРўР§Р•Рў
 			if @type_report = 'report_for_pivot'
 			begin
 					select 
-						 'Код набивки'				= cl.stuffing_id
-						,'MML набивки'				= cl.mml
-						,'Название набивки'			= cl.stuffing_name
-						,'Площадка'					= cl.stuffing_production_name
-						,'Тип набивки'				= cl.stuffing_type
-						,'Группа набивки'			= cl.stuffing_group
-						,'Цикл'						= cl.maturation_days
-						,'Цикл + упаковка'			= cl.maturation_and_packaging_days
-						,'Транзит с Площадка'		= cl.transit_from_production_days
-						,'Ограничения по камерам'	= cl.count_chamber
-						,'Мин замес набивки кг'		= cl.minimum_preparation_materials_kg
-						,'Мин объем камеры кг'		= cl.minimum_volume_for_chamber_kg
-						,'Дата закладки'			= case when cl.stuffing_production_name = 'Кашира' then c.dt_tm else c.dt_tm - datediff(day, @ProductionDateFrom_CHMPZ, @ProductionDateFrom_Kashira) end					
-						,'Дата выхода'				= case when cl.stuffing_production_name = 'Кашира' then c.dt_tm else c.dt_tm - datediff(day, @ProductionDateFrom_CHMPZ, @ProductionDateFrom_Kashira) end + cl.maturation_days
-						,'Дата доступности'			= case when cl.stuffing_production_name = 'Кашира' then c.dt_tm else c.dt_tm - datediff(day, @ProductionDateFrom_CHMPZ, @ProductionDateFrom_Kashira) end + cl.maturation_and_packaging_days + cl.transit_from_production_days
+						 'РљРѕРґ РЅР°Р±РёРІРєРё'				= cl.stuffing_id
+						,'MML РЅР°Р±РёРІРєРё'				= cl.mml
+						,'РќР°Р·РІР°РЅРёРµ РЅР°Р±РёРІРєРё'			= cl.stuffing_name
+						,'РџР»РѕС‰Р°РґРєР°'					= cl.stuffing_production_name
+						,'РўРёРї РЅР°Р±РёРІРєРё'				= cl.stuffing_type
+						,'Р“СЂСѓРїРїР° РЅР°Р±РёРІРєРё'			= cl.stuffing_group
+						,'Р¦РёРєР»'						= cl.maturation_days
+						,'Р¦РёРєР» + СѓРїР°РєРѕРІРєР°'			= cl.maturation_and_packaging_days
+						,'РўСЂР°РЅР·РёС‚ СЃ РџР»РѕС‰Р°РґРєР°'		= cl.transit_from_production_days
+						,'РћРіСЂР°РЅРёС‡РµРЅРёСЏ РїРѕ РєР°РјРµСЂР°Рј'	= cl.count_chamber
+						,'РњРёРЅ Р·Р°РјРµСЃ РЅР°Р±РёРІРєРё РєРі'		= cl.minimum_preparation_materials_kg
+						,'РњРёРЅ РѕР±СЉРµРј РєР°РјРµСЂС‹ РєРі'		= cl.minimum_volume_for_chamber_kg
+						,'Р”Р°С‚Р° Р·Р°РєР»Р°РґРєРё'			= case when cl.stuffing_production_name = 'РљР°С€РёСЂР°' then c.dt_tm else c.dt_tm - datediff(day, @ProductionDateFrom_CHMPZ, @ProductionDateFrom_Kashira) end					
+						,'Р”Р°С‚Р° РІС‹С…РѕРґР°'				= case when cl.stuffing_production_name = 'РљР°С€РёСЂР°' then c.dt_tm else c.dt_tm - datediff(day, @ProductionDateFrom_CHMPZ, @ProductionDateFrom_Kashira) end + cl.maturation_days
+						,'Р”Р°С‚Р° РґРѕСЃС‚СѓРїРЅРѕСЃС‚Рё'			= case when cl.stuffing_production_name = 'РљР°С€РёСЂР°' then c.dt_tm else c.dt_tm - datediff(day, @ProductionDateFrom_CHMPZ, @ProductionDateFrom_Kashira) end + cl.maturation_and_packaging_days + cl.transit_from_production_days
 												
 						,c.dt_tm as for_formula
-						,'Закладка (замес)' = convert(dec(15,5), null)
-						,'Итог'				= convert(dec(15,5), null)
+						,'Р—Р°РєР»Р°РґРєР° (Р·Р°РјРµСЃ)' = convert(dec(15,5), null)
+						,'РС‚РѕРі'				= convert(dec(15,5), null)
 					from cherkizovo.info.calendar as c
 					cross join #columns as cl
 					where c.dt_tm between @ProductionDateFrom_Kashira and @report_dt_to
