@@ -1,4 +1,4 @@
-use monitoring;
+п»їuse monitoring;
 
 go
 
@@ -15,11 +15,15 @@ create table monitoring.dbo.user_activity
 		,project_action				varchar(250)		null
 		,project_details			varchar(350)		null
 
-)
+);
+
+
+
+go
 
 
 alter procedure dbo.user_activity_insert  @id				int			 = null
-										 ,@project_name		varchar(150) = 'отсутствует наименование'
+										 ,@project_name		varchar(150) = 'РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚ РЅР°РёРјРµРЅРѕРІР°РЅРёРµ'
 										 ,@project_action	varchar(250) = null
 										 ,@project_details	varchar(350) = null							
 as
@@ -46,7 +50,7 @@ BEGIN
 
 end;
 
-
+go
 
 
 exec  monitoring.dbo.user_activity_insert
