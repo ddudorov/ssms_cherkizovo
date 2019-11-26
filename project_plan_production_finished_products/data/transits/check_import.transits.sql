@@ -1,4 +1,4 @@
-use project_plan_production_finished_products
+п»їuse project_plan_production_finished_products
 
 --exec project_plan_production_finished_products.check_import.transits	
 
@@ -10,8 +10,8 @@ BEGIN
 
 			SET NOCOUNT ON;
 
-			-- по наименование 1С подтягиваем SAP ID
-			-- подтягиваем SAP ID к данным SAP
+			-- РїРѕ РЅР°РёРјРµРЅРѕРІР°РЅРёРµ 1РЎ РїРѕРґС‚СЏРіРёРІР°РµРј SAP ID
+			-- РїРѕРґС‚СЏРіРёРІР°РµРј SAP ID Рє РґР°РЅРЅС‹Рј SAP
 			IF OBJECT_ID('tempdb..#sap_id','U') is not null drop table #sap_id;
 
 			select *, count(s.sap_id) over (partition by s.product_1C_full_name) as check_double_sap_id
@@ -38,16 +38,16 @@ BEGIN
 			from project_plan_production_finished_products.data_import.transits as c
 			join #sap_id as s on c.product_1C_full_name = s.product_1C_full_name and s.check_double_sap_id = 1;
 
-			-- пишем ошибки ---------------------------------------------------------------
+			-- РїРёС€РµРј РѕС€РёР±РєРё ---------------------------------------------------------------
 			update project_plan_production_finished_products.data_import.transits
 			Set reason_ignore_in_calculate = 
 				nullif(
-						  case when sap_id is null then 'Не найден sap id | ' else '' end
-						+ case when stock_current_KOS is null then 'КОС некорректный | ' else '' end
-						+ case when stock_current_KOS < 0.1 then 'КОС меньше 10% | ' else '' end
+						  case when sap_id is null then 'РќРµ РЅР°Р№РґРµРЅ sap id | ' else '' end
+						+ case when stock_current_KOS is null then 'РљРћРЎ РЅРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ | ' else '' end
+						+ case when stock_current_KOS < 0.1 then 'РљРћРЎ РјРµРЅСЊС€Рµ 10% | ' else '' end
 						, '');
 
-			-- выгружаем данные ---------------------------------------------------------------
+			-- РІС‹РіСЂСѓР¶Р°РµРј РґР°РЅРЅС‹Рµ ---------------------------------------------------------------
 			select 
 					 s.reason_ignore_in_calculate	
 					,s.product_status

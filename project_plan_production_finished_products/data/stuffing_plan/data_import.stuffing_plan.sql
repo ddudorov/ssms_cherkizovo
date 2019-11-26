@@ -1,4 +1,4 @@
-use project_plan_production_finished_products
+п»їuse project_plan_production_finished_products
 
 go
 
@@ -39,7 +39,7 @@ create table project_plan_production_finished_products.data_import.stuffing_plan
 		,stuffing_kg							dec(11,5)				NULL
 		,stuffing_surplus_kg					as nullif(case when sap_id is null then stuffing_kg - isnull(stuffing_marking_kg, 0) - isnull(stuffing_shipment_kg, 0) end, 0)
 		,stuffing_marking_kg					dec(11,5)				NULL			   
-		,stuffing_shipment_kg					dec(11,5)				NULL	-- кол-во которое уже отгружено из набивки включая маркировку
+		,stuffing_shipment_kg					dec(11,5)				NULL	-- РєРѕР»-РІРѕ РєРѕС‚РѕСЂРѕРµ СѓР¶Рµ РѕС‚РіСЂСѓР¶РµРЅРѕ РёР· РЅР°Р±РёРІРєРё РІРєР»СЋС‡Р°СЏ РјР°СЂРєРёСЂРѕРІРєСѓ
 
 		,CONSTRAINT [UI stuffing_plan | sap_id, stuffing_id, stuffing_available_date] UNIQUE(sap_id, stuffing_id, stuffing_available_date)
 
@@ -52,7 +52,7 @@ create table project_plan_production_finished_products.data_import.stuffing_plan
 
 
 
---- логи распределения фактических набивок
+--- Р»РѕРіРё СЂР°СЃРїСЂРµРґРµР»РµРЅРёСЏ С„Р°РєС‚РёС‡РµСЃРєРёС… РЅР°Р±РёРІРѕРє
 select * from project_plan_production_finished_products.data_import.stuffing_plan_log_calculation
 -- drop table project_plan_production_finished_products.data_import.stuffing_plan_log_calculation
 create table project_plan_production_finished_products.data_import.stuffing_plan_log_calculation

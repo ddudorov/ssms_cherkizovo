@@ -1,4 +1,4 @@
-use project_plan_production_finished_products
+п»їuse project_plan_production_finished_products
 
 --exec project_plan_production_finished_products.check_import.shipments_SAP
 
@@ -9,27 +9,27 @@ as
 BEGIN
 			SET NOCOUNT ON;
 			
-			-- проставляем срок годности
+			-- РїСЂРѕСЃС‚Р°РІР»СЏРµРј СЃСЂРѕРє РіРѕРґРЅРѕСЃС‚Рё
 			Update h
 			Set h.stuffing_expiration_date = DateAdd(Day, i.expiration_date_in_days, h.stuffing_production_date_to)
 			from project_plan_production_finished_products.data_import.stuffing_plan as h
 			join project_plan_production_finished_products.info.stuffing as i on h.stuffing_id = i.stuffing_id;
 
 					
-			-- пишем ошибки
+			-- РїРёС€РµРј РѕС€РёР±РєРё
 			Update h
 			Set h.reason_ignore_in_calculate = 
 				nullif(
-							case when i.stuffing_id is null then 'Набивка отсутствует | ' else '' end 
+							case when i.stuffing_id is null then 'РќР°Р±РёРІРєР° РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚ | ' else '' end 
 						+ case when not h.stuffing_production_name is null and not i.production_name is null
 								and h.stuffing_production_name <> i.production_name
-															then 'Производитель отличается в справочнике | ' else '' end 
+															then 'РџСЂРѕРёР·РІРѕРґРёС‚РµР»СЊ РѕС‚Р»РёС‡Р°РµС‚СЃСЏ РІ СЃРїСЂР°РІРѕС‡РЅРёРєРµ | ' else '' end 
 						, '')
 			from project_plan_production_finished_products.data_import.stuffing_plan as h
 			left join project_plan_production_finished_products.info.stuffing as i on h.stuffing_id = i.stuffing_id;
 						
 
-			-- проставляем дату до выхода следующей набивки		
+			-- РїСЂРѕСЃС‚Р°РІР»СЏРµРј РґР°С‚Сѓ РґРѕ РІС‹С…РѕРґР° СЃР»РµРґСѓСЋС‰РµР№ РЅР°Р±РёРІРєРё		
 			update s
 			set s.stuffing_before_next_available_date = l.stuffing_before_next_available_date
 			from project_plan_production_finished_products.data_import.stuffing_plan as s
@@ -39,11 +39,11 @@ BEGIN
 					) as l on s.row_id = l.row_id;
 						 		
 
-			-- обновляем уникальный ключ набивки, который будет использоватся для расчетов
+			-- РѕР±РЅРѕРІР»СЏРµРј СѓРЅРёРєР°Р»СЊРЅС‹Р№ РєР»СЋС‡ РЅР°Р±РёРІРєРё, РєРѕС‚РѕСЂС‹Р№ Р±СѓРґРµС‚ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЃСЏ РґР»СЏ СЂР°СЃС‡РµС‚РѕРІ
 			update project_plan_production_finished_products.data_import.stuffing_plan
 			set stuffing_row_id = row_id;
 										
-			-- выгружаем данные в excel
+			-- РІС‹РіСЂСѓР¶Р°РµРј РґР°РЅРЅС‹Рµ РІ excel
 			select 
 				 h.reason_ignore_in_calculate
 				,h.stuffing_id

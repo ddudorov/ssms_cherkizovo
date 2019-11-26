@@ -1,4 +1,4 @@
-use project_plan_production_finished_products
+п»їuse project_plan_production_finished_products
 
 
 go
@@ -12,13 +12,13 @@ BEGIN
 			declare @dt_for_delete datetime;
 			
 
-			-- канал сбыта
+			-- РєР°РЅР°Р» СЃР±С‹С‚Р°
 			update #sales_plan
-			set shipment_sales_channel_name = 'Дистрибьютор'
-			where shipment_sales_channel_name = 'Дистрибьюторы';
+			set shipment_sales_channel_name = 'Р”РёСЃС‚СЂРёР±СЊСЋС‚РѕСЂ'
+			where shipment_sales_channel_name = 'Р”РёСЃС‚СЂРёР±СЊСЋС‚РѕСЂС‹';
 
 
-			-- вставляем данные
+			-- РІСЃС‚Р°РІР»СЏРµРј РґР°РЅРЅС‹Рµ
 			set @sql = ''
 			set @sql = @sql + char(10) + 'insert into project_plan_production_finished_products.data_import.shipments_sales_plan'
 			set @sql = @sql + char(10) + '('
@@ -71,39 +71,39 @@ BEGIN
 			exec( @sql);
 
 
-			-- корректируем название контрагента
+			-- РєРѕСЂСЂРµРєС‚РёСЂСѓРµРј РЅР°Р·РІР°РЅРёРµ РєРѕРЅС‚СЂР°РіРµРЅС‚Р°
 			update project_plan_production_finished_products.data_import.shipments_sales_plan
 			set  shipment_promo_status			= trim(shipment_promo_status)
 				,shipment_promo_kos_listing		= trim(shipment_promo_kos_listing)
 				,shipment_promo					= trim(shipment_promo)
 				,shipment_sales_channel_name	= trim(shipment_sales_channel_name)
 				,shipment_customer_name			= case trim(shipment_customer_name)
-													when 'Окей'					then 'О''КЕЙ ООО'
-													when 'О''кей'				then 'О''КЕЙ ООО'
+													when 'РћРєРµР№'					then 'Рћ''РљР•Р™ РћРћРћ'
+													when 'Рћ''РєРµР№'				then 'Рћ''РљР•Р™ РћРћРћ'
 											
-													when 'METRO Group'			then 'МЕТРО КЭШ ЭНД КЕРРИ ООО'
-													when 'Метро'				then 'МЕТРО КЭШ ЭНД КЕРРИ ООО'
+													when 'METRO Group'			then 'РњР•РўР Рћ РљР­РЁ Р­РќР” РљР•Р Р Р РћРћРћ'
+													when 'РњРµС‚СЂРѕ'				then 'РњР•РўР Рћ РљР­РЁ Р­РќР” РљР•Р Р Р РћРћРћ'
 											
-													when 'Lenta'				then 'ЛЕНТА ООО'
-													when 'Лента'				then 'ЛЕНТА ООО'
+													when 'Lenta'				then 'Р›Р•РќРўРђ РћРћРћ'
+													when 'Р›РµРЅС‚Р°'				then 'Р›Р•РќРўРђ РћРћРћ'
 											
-													when 'Билла'				then 'БИЛЛА ООО'											
-													when 'Billa'				then 'БИЛЛА ООО'
+													when 'Р‘РёР»Р»Р°'				then 'Р‘РР›Р›Рђ РћРћРћ'											
+													when 'Billa'				then 'Р‘РР›Р›Рђ РћРћРћ'
 													
-													when 'МИР КОЛБАС ТД'		then 'ТД МИР КОЛБАС ООО'
-													when 'Мир Колбас ТД ООО'	then 'ТД МИР КОЛБАС ООО'
+													when 'РњРР  РљРћР›Р‘РђРЎ РўР”'		then 'РўР” РњРР  РљРћР›Р‘РђРЎ РћРћРћ'
+													when 'РњРёСЂ РљРѕР»Р±Р°СЃ РўР” РћРћРћ'	then 'РўР” РњРР  РљРћР›Р‘РђРЎ РћРћРћ'
 
-													when 'Магнит'				then 'ТАНДЕР АО'
-													when 'Гиперглобус'			then 'ГИПЕРГЛОБУС ООО'
-													when 'ТОРГОВЫЙ ДОМ СМИТ'	then 'ТОРГОВЫЙ ДОМ СМИТ ООО'
-													when 'ТД Интерторг'			then 'ТД Интерторг ООО'
-													when 'АСПЕКТ НТ'			then 'АСПЕКТ НТ ООО'
-													when 'ВИНТОВКИН А. Г. ИП'	then 'ВИНТОВКИН А.Г. ИП'
-													when 'Зеон ОО'				then 'ЗЕОН ООО'
-													when 'Меркушев Д. В. ИП'	then 'МЕРКУШЕВ Д.В. ИП'
-													when 'ПРОДУКТОВАЯ МОЗАИКА'	then 'ПРОДУКТОВАЯ МОЗАИКА ООО'
-													when 'ТК СТАРТ'				then 'ТК СТАРТ ООО'
-													when 'ТОРГОВЫЙ ДОМ СМИТ'	then 'ТОРГОВЫЙ ДОМ СМИТ ООО'
+													when 'РњР°РіРЅРёС‚'				then 'РўРђРќР”Р•Р  РђРћ'
+													when 'Р“РёРїРµСЂРіР»РѕР±СѓСЃ'			then 'Р“РРџР•Р Р“Р›РћР‘РЈРЎ РћРћРћ'
+													when 'РўРћР Р“РћР’Р«Р™ Р”РћРњ РЎРњРРў'	then 'РўРћР Р“РћР’Р«Р™ Р”РћРњ РЎРњРРў РћРћРћ'
+													when 'РўР” РРЅС‚РµСЂС‚РѕСЂРі'			then 'РўР” РРЅС‚РµСЂС‚РѕСЂРі РћРћРћ'
+													when 'РђРЎРџР•РљРў РќРў'			then 'РђРЎРџР•РљРў РќРў РћРћРћ'
+													when 'Р’РРќРўРћР’РљРРќ Рђ. Р“. РРџ'	then 'Р’РРќРўРћР’РљРРќ Рђ.Р“. РРџ'
+													when 'Р—РµРѕРЅ РћРћ'				then 'Р—Р•РћРќ РћРћРћ'
+													when 'РњРµСЂРєСѓС€РµРІ Р”. Р’. РРџ'	then 'РњР•Р РљРЈРЁР•Р’ Р”.Р’. РРџ'
+													when 'РџР РћР”РЈРљРўРћР’РђРЇ РњРћР—РђРРљРђ'	then 'РџР РћР”РЈРљРўРћР’РђРЇ РњРћР—РђРРљРђ РћРћРћ'
+													when 'РўРљ РЎРўРђР Рў'				then 'РўРљ РЎРўРђР Рў РћРћРћ'
+													when 'РўРћР Р“РћР’Р«Р™ Р”РћРњ РЎРњРРў'	then 'РўРћР Р“РћР’Р«Р™ Р”РћРњ РЎРњРРў РћРћРћ'
 
 													else trim(shipment_customer_name)
 												 end;
@@ -111,7 +111,7 @@ BEGIN
 
 
 
-			-- кос и приоритет отгрузки
+			-- РєРѕСЃ Рё РїСЂРёРѕСЂРёС‚РµС‚ РѕС‚РіСЂСѓР·РєРё
 			update ts
 			set ts.shipment_priority = c.shipment_priority
 			   ,ts.shipment_min_KOS	 = c.manual_KOS
@@ -123,7 +123,7 @@ BEGIN
 				and not c.manual_KOS is null;
 
 
-			-- добавляем клиента и канал сбыта если нет в project_plan_production_finished_products.info.customers
+			-- РґРѕР±Р°РІР»СЏРµРј РєР»РёРµРЅС‚Р° Рё РєР°РЅР°Р» СЃР±С‹С‚Р° РµСЃР»Рё РЅРµС‚ РІ project_plan_production_finished_products.info.customers
 			insert into project_plan_production_finished_products.info.customers
 			(
 					 customer_id
@@ -135,7 +135,7 @@ BEGIN
 					 sp.shipment_customer_id			
 					,min(sp.shipment_customer_name)
 					,sp.shipment_sales_channel_name	
-					,'План продаж от ' + FORMAT(min(ie.date_file),'dd.MM.yyyy') as source_insert			
+					,'РџР»Р°РЅ РїСЂРѕРґР°Р¶ РѕС‚ ' + FORMAT(min(ie.date_file),'dd.MM.yyyy') as source_insert			
 			from project_plan_production_finished_products.data_import.shipments_sales_plan as sp
 			join project_plan_production_finished_products.data_import.info_excel as ie on sp.name_table = ie.name_table
 			where not sp.shipment_customer_id is null
@@ -149,7 +149,7 @@ BEGIN
 					,sp.shipment_sales_channel_name;	
 				
 
-			-- обновляем справочник
+			-- РѕР±РЅРѕРІР»СЏРµРј СЃРїСЂР°РІРѕС‡РЅРёРє
 			update c
 			set	 c.dt_tm_change = getdate()
 				,c.source_insert = d.source_insert	
@@ -159,7 +159,7 @@ BEGIN
 							 d.shipment_customer_id	
 							,d.shipment_customer_name
 							,d.shipment_sales_channel_name	
-							,'План продаж от ' + FORMAT(min(ie.date_file),'dd.MM.yyyy') as source_insert
+							,'РџР»Р°РЅ РїСЂРѕРґР°Р¶ РѕС‚ ' + FORMAT(min(ie.date_file),'dd.MM.yyyy') as source_insert
 					from project_plan_production_finished_products.data_import.shipments_sales_plan as d
 					join project_plan_production_finished_products.data_import.info_excel as ie on d.name_table = ie.name_table
 					where not d.shipment_customer_id is null
@@ -173,7 +173,7 @@ BEGIN
 
 
 
-			-- считаем дату отгрузки c филиала
+			-- СЃС‡РёС‚Р°РµРј РґР°С‚Сѓ РѕС‚РіСЂСѓР·РєРё c С„РёР»РёР°Р»Р°
 			update c
 			set c.shipment_date = DATEADD(day, -b.to_branch_days, c.shipment_with_branch_date)
 			from project_plan_production_finished_products.data_import.shipments_sales_plan as c
@@ -182,7 +182,7 @@ BEGIN
 
 
 			
-			-- удаляем отгрузки после даты отгрузки заявок 
+			-- СѓРґР°Р»СЏРµРј РѕС‚РіСЂСѓР·РєРё РїРѕСЃР»Рµ РґР°С‚С‹ РѕС‚РіСЂСѓР·РєРё Р·Р°СЏРІРѕРє 
 			select @dt_for_delete = max(date_file) + 1
 			from project_plan_production_finished_products.data_import.info_excel 
 			where name_table in ('shipments_SAP', 'shipments_1C');
@@ -194,7 +194,7 @@ BEGIN
 
 
 			
-			-- подтягиваем SAP ID к данным план продаж, article_packaging должен быть 1
+			-- РїРѕРґС‚СЏРіРёРІР°РµРј SAP ID Рє РґР°РЅРЅС‹Рј РїР»Р°РЅ РїСЂРѕРґР°Р¶, article_packaging РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ 1
 			IF OBJECT_ID('tempdb..#sap_id','U') is not null drop table #sap_id;
 
 			select *, count(s.sap_id) over (partition by s.article_packaging) as check_double_sap_id
@@ -223,7 +223,7 @@ BEGIN
 			where s.check_double_sap_id = 1;
 
 
-			-- разбиваем коробочки на набивки
+			-- СЂР°Р·Р±РёРІР°РµРј РєРѕСЂРѕР±РѕС‡РєРё РЅР° РЅР°Р±РёРІРєРё
 			begin
 
 					insert into project_plan_production_finished_products.data_import.shipments_sales_plan
@@ -298,7 +298,7 @@ BEGIN
 					
 
 					
-					--проставляем row_id у группа набивок
+					--РїСЂРѕСЃС‚Р°РІР»СЏРµРј row_id Сѓ РіСЂСѓРїРїР° РЅР°Р±РёРІРѕРє
 					update s
 					set s.stuffing_id_box_row_id = b.stuffing_id_box_row_id
 					from project_plan_production_finished_products.data_import.shipments_sales_plan as s
@@ -307,63 +307,63 @@ BEGIN
 						  where not stuffing_id_box is null) as b on s.row_id = b.stuffing_id_box_row_id;
 
 					
-					-- проставляем тип набивки
+					-- РїСЂРѕСЃС‚Р°РІР»СЏРµРј С‚РёРї РЅР°Р±РёРІРєРё
 					update project_plan_production_finished_products.data_import.shipments_sales_plan
 					set stuffing_id_box_type = case 
-													when stuffing_id_box_row_id is null then 0 -- набивка не коробка
-													when stuffing_id_box is null		then 1 -- набивка коробка
-													when not stuffing_id_box is null	then 2 -- набивка разбитая на коробки
+													when stuffing_id_box_row_id is null then 0 -- РЅР°Р±РёРІРєР° РЅРµ РєРѕСЂРѕР±РєР°
+													when stuffing_id_box is null		then 1 -- РЅР°Р±РёРІРєР° РєРѕСЂРѕР±РєР°
+													when not stuffing_id_box is null	then 2 -- РЅР°Р±РёРІРєР° СЂР°Р·Р±РёС‚Р°СЏ РЅР° РєРѕСЂРѕР±РєРё
 											   end;
 			end;
 
 
 
-			---- пишем ошибки ---------------------------------------------------------------
+			---- РїРёС€РµРј РѕС€РёР±РєРё ---------------------------------------------------------------
 			update d
 			Set reason_ignore_in_calculate = 
 				nullif(
 							case 
 								when (select top 1 c.check_double_sap_id from #sap_id as c where d.article_packaging = c.article_packaging)>1 
-																				then	'Артикул тары возрощает > 1 SAP ID | '
-								when d.sap_id is null							then	'Не найден sap id | '
-								when d.stuffing_id is null						then	'Код набивки отсутствует | '
-								when d.sap_id_expiration_date_in_days is null	then	'Отсутствует срок годности | '
+																				then	'РђСЂС‚РёРєСѓР» С‚Р°СЂС‹ РІРѕР·СЂРѕС‰Р°РµС‚ > 1 SAP ID | '
+								when d.sap_id is null							then	'РќРµ РЅР°Р№РґРµРЅ sap id | '
+								when d.stuffing_id is null						then	'РљРѕРґ РЅР°Р±РёРІРєРё РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚ | '
+								when d.sap_id_expiration_date_in_days is null	then	'РћС‚СЃСѓС‚СЃС‚РІСѓРµС‚ СЃСЂРѕРє РіРѕРґРЅРѕСЃС‚Рё | '
 								else ''
 							end
-						+ iif(shipment_min_KOS is null,						'Отсутствует КОС | ', '')
-						+ iif(isnull(shipment_sales_channel_name, '') = '',	'Канал сбыта не присвоен | ', '')
-						+ iif(shipment_with_branch_date is null,			'Дата отгрузки отсутствует  | ', '')
+						+ iif(shipment_min_KOS is null,						'РћС‚СЃСѓС‚СЃС‚РІСѓРµС‚ РљРћРЎ | ', '')
+						+ iif(isnull(shipment_sales_channel_name, '') = '',	'РљР°РЅР°Р» СЃР±С‹С‚Р° РЅРµ РїСЂРёСЃРІРѕРµРЅ | ', '')
+						+ iif(shipment_with_branch_date is null,			'Р”Р°С‚Р° РѕС‚РіСЂСѓР·РєРё РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚  | ', '')
 						, '')
 			from project_plan_production_finished_products.data_import.shipments_sales_plan as d;
 
-			-- выгружаем данные в excel
+			-- РІС‹РіСЂСѓР¶Р°РµРј РґР°РЅРЅС‹Рµ РІ excel
 			select 
 
-					 'Ошибки'							= h.reason_ignore_in_calculate
-					,'Статус блокировки SKU'			= h.product_status
+					 'РћС€РёР±РєРё'							= h.reason_ignore_in_calculate
+					,'РЎС‚Р°С‚СѓСЃ Р±Р»РѕРєРёСЂРѕРІРєРё SKU'			= h.product_status
 					,'SAP ID'							= h.sap_id_text
-					,'Код набивки'						= h.stuffing_id
+					,'РљРѕРґ РЅР°Р±РёРІРєРё'						= h.stuffing_id
 
-					,'Код зависимой позиции'			= h.position_dependent_id
-					,'Код индивидуальной маркировки'	= h.individual_marking_id
-					,'Артикул тары'						= h.article_packaging
-					,'Артикул номенклатуры'				= h.article_nomenclature
+					,'РљРѕРґ Р·Р°РІРёСЃРёРјРѕР№ РїРѕР·РёС†РёРё'			= h.position_dependent_id
+					,'РљРѕРґ РёРЅРґРёРІРёРґСѓР°Р»СЊРЅРѕР№ РјР°СЂРєРёСЂРѕРІРєРё'	= h.individual_marking_id
+					,'РђСЂС‚РёРєСѓР» С‚Р°СЂС‹'						= h.article_packaging
+					,'РђСЂС‚РёРєСѓР» РЅРѕРјРµРЅРєР»Р°С‚СѓСЂС‹'				= h.article_nomenclature
 
-					,'Код филиала'						= h.shipment_branch_id	
-					,'Название филиала'					= h.shipment_branch_name
-					,'Название канала сбыта'			= h.shipment_sales_channel_name
-					,'Код контрагента'					= h.shipment_customer_id
-					,'Название контрагента'				= h.shipment_customer_name
-					,'Приоритет отгрузки'				= h.shipment_priority
-					,'КОС отгрузки'						= h.shipment_min_KOS
-					,'Дата отгрузки с филиала'			= h.shipment_with_branch_date
-					,'Дата отгрузки'					= h.shipment_date
-					,'План продаж, кг'					= h.shipment_kg
+					,'РљРѕРґ С„РёР»РёР°Р»Р°'						= h.shipment_branch_id	
+					,'РќР°Р·РІР°РЅРёРµ С„РёР»РёР°Р»Р°'					= h.shipment_branch_name
+					,'РќР°Р·РІР°РЅРёРµ РєР°РЅР°Р»Р° СЃР±С‹С‚Р°'			= h.shipment_sales_channel_name
+					,'РљРѕРґ РєРѕРЅС‚СЂР°РіРµРЅС‚Р°'					= h.shipment_customer_id
+					,'РќР°Р·РІР°РЅРёРµ РєРѕРЅС‚СЂР°РіРµРЅС‚Р°'				= h.shipment_customer_name
+					,'РџСЂРёРѕСЂРёС‚РµС‚ РѕС‚РіСЂСѓР·РєРё'				= h.shipment_priority
+					,'РљРћРЎ РѕС‚РіСЂСѓР·РєРё'						= h.shipment_min_KOS
+					,'Р”Р°С‚Р° РѕС‚РіСЂСѓР·РєРё СЃ С„РёР»РёР°Р»Р°'			= h.shipment_with_branch_date
+					,'Р”Р°С‚Р° РѕС‚РіСЂСѓР·РєРё'					= h.shipment_date
+					,'РџР»Р°РЅ РїСЂРѕРґР°Р¶, РєРі'					= h.shipment_kg
 
-					,'Путь/Имя файла'					= ie.path_file
-					,'Данные на дату'					= ie.date_file
-					,'Кто загрузил'						= ie.user_insert
-					,'Дата и время загрузки'			= ie.dt_tm_insert
+					,'РџСѓС‚СЊ/РРјСЏ С„Р°Р№Р»Р°'					= ie.path_file
+					,'Р”Р°РЅРЅС‹Рµ РЅР° РґР°С‚Сѓ'					= ie.date_file
+					,'РљС‚Рѕ Р·Р°РіСЂСѓР·РёР»'						= ie.user_insert
+					,'Р”Р°С‚Р° Рё РІСЂРµРјСЏ Р·Р°РіСЂСѓР·РєРё'			= ie.dt_tm_insert
 
 			from project_plan_production_finished_products.data_import.shipments_sales_plan as h
 			join project_plan_production_finished_products.data_import.info_excel as ie on h.name_table = ie.name_table

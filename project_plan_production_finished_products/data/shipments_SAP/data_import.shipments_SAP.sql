@@ -1,4 +1,4 @@
-use project_plan_production_finished_products
+п»їuse project_plan_production_finished_products
 
 go
 
@@ -24,20 +24,20 @@ create table project_plan_production_finished_products.data_import.shipments_SAP
 		,position_dependent_id			INT						NULL	
 		,individual_marking_id			TINYINT					NULL	
 
-		-- заявки
+		-- Р·Р°СЏРІРєРё
 		,shipment_delete				tinyint					NOT NULL default 0
 		,shipment_sales_channel_id		TINYINT					NULL
 		,shipment_sales_channel_name	as	case shipment_sales_channel_id
-											when 10 then 'Внутрихолдинговый'
-											when 11 then 'Сети'
-											when 12 then 'Розница'
+											when 10 then 'Р’РЅСѓС‚СЂРёС…РѕР»РґРёРЅРіРѕРІС‹Р№'
+											when 11 then 'РЎРµС‚Рё'
+											when 12 then 'Р РѕР·РЅРёС†Р°'
 											when 13 then 'HoReCa'
-											when 14 then 'Опт'
-											when 15 then 'Экспорт'
-											when 16 then 'Прочие продажи'
-											when 17 then 'Дистрибьютор'
-											--when 98 then 'Фирменная розница'
-											--when 99 then 'Не указано'										
+											when 14 then 'РћРїС‚'
+											when 15 then 'Р­РєСЃРїРѕСЂС‚'
+											when 16 then 'РџСЂРѕС‡РёРµ РїСЂРѕРґР°Р¶Рё'
+											when 17 then 'Р”РёСЃС‚СЂРёР±СЊСЋС‚РѕСЂ'
+											--when 98 then 'Р¤РёСЂРјРµРЅРЅР°СЏ СЂРѕР·РЅРёС†Р°'
+											--when 99 then 'РќРµ СѓРєР°Р·Р°РЅРѕ'										
 											end	
 												
 		,shipment_customer_id			VARCHAR(20)				NULL
@@ -50,14 +50,14 @@ create table project_plan_production_finished_products.data_import.shipments_SAP
 		,shipment_date					DATETIME				NULL
 		,shipment_kg					dec(11,5)				NULL
 
-		-- расчетные поля
+		-- СЂР°СЃС‡РµС‚РЅС‹Рµ РїРѕР»СЏ
 		,stock_shipment_kg				dec(11,5)				NULL
 		,stock_net_need_kg				as nullif( shipment_kg - isnull(stock_shipment_kg, 0)   , 0)
 		   
-		,stuffing_fact_shipment_kg		dec(11,5)				NULL	-- кол-во которое уже отгружено из набивки включая маркировку
+		,stuffing_fact_shipment_kg		dec(11,5)				NULL	-- РєРѕР»-РІРѕ РєРѕС‚РѕСЂРѕРµ СѓР¶Рµ РѕС‚РіСЂСѓР¶РµРЅРѕ РёР· РЅР°Р±РёРІРєРё РІРєР»СЋС‡Р°СЏ РјР°СЂРєРёСЂРѕРІРєСѓ
 		,stuffing_fact_net_need_kg		as nullif( shipment_kg - isnull(stock_shipment_kg, 0) - isnull(stuffing_fact_shipment_kg, 0)   , 0)
 		   
-		,stuffing_plan_shipment_kg		dec(11,5)				NULL	-- кол-во которое уже отгружено из набивки включая маркировку
+		,stuffing_plan_shipment_kg		dec(11,5)				NULL	-- РєРѕР»-РІРѕ РєРѕС‚РѕСЂРѕРµ СѓР¶Рµ РѕС‚РіСЂСѓР¶РµРЅРѕ РёР· РЅР°Р±РёРІРєРё РІРєР»СЋС‡Р°СЏ РјР°СЂРєРёСЂРѕРІРєСѓ
 		,stuffing_plan_net_need_kg		as nullif( shipment_kg - isnull(stock_shipment_kg, 0) - isnull(stuffing_fact_shipment_kg, 0) - isnull(stuffing_plan_shipment_kg, 0)   , 0)
 		
 		,marking_shipment_kg			dec(11,5)				NULL

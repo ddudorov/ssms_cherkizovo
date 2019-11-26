@@ -1,4 +1,4 @@
-use project_plan_production_finished_products
+п»їuse project_plan_production_finished_products
 
 --exec project_plan_production_finished_products.check_import.stock @date_stock = '20190918'
 
@@ -15,7 +15,7 @@ BEGIN
                                                                                   ,@name_table = 'stock'
 																				  ,@select = 0;
 
-			-- вставляем данные
+			-- РІСЃС‚Р°РІР»СЏРµРј РґР°РЅРЅС‹Рµ
 			insert into project_plan_production_finished_products.data_import.stock
 			(		
 					 product_finished_id
@@ -28,32 +28,32 @@ BEGIN
 					,stock_kg										 
 			)
 			select 			
-					 product_finished_id		= st.[Код SAP MDG]
-					,stock_warehouse_name		= st.[Склад 2] 
-					,stock_storage_area_name	= st.[Склад] 
-					,stock_branch_name			= st.[Филиал]
-					,stock_production_date		= st.[Дата выработки]
-					,stock_on_date				= st.[Дата]
-					,stock_expiration_date		= st.[годен до]
-					,stock_kg					= sum(st.[Объем, кг] )
-			FROM [Stocks_Test].[dbo].[Остатки] as st
-			where st.Дата = @date_stock
-				and not st.[Склад]  like '%брак%'
-				and st.[Категория] in ('Колбасы сырокопченые')
-				and st.[Филиал] in ('Биком', 'ЧМПЗ', 'ТД Черкизово - БИКОМ', 'Кашира')
-			group by st.[Код SAP MDG]
-					,st.[Склад 2] 
-					,st.[Склад] 
-					,st.[Филиал]
-					,st.[Дата выработки]
-					,st.[Дата]
-					,st.[годен до];
+					 product_finished_id		= st.[РљРѕРґ SAP MDG]
+					,stock_warehouse_name		= st.[РЎРєР»Р°Рґ 2] 
+					,stock_storage_area_name	= st.[РЎРєР»Р°Рґ] 
+					,stock_branch_name			= st.[Р¤РёР»РёР°Р»]
+					,stock_production_date		= st.[Р”Р°С‚Р° РІС‹СЂР°Р±РѕС‚РєРё]
+					,stock_on_date				= st.[Р”Р°С‚Р°]
+					,stock_expiration_date		= st.[РіРѕРґРµРЅ РґРѕ]
+					,stock_kg					= sum(st.[РћР±СЉРµРј, РєРі] )
+			FROM [Stocks_Test].[dbo].[РћСЃС‚Р°С‚РєРё] as st
+			where st.Р”Р°С‚Р° = @date_stock
+				and not st.[РЎРєР»Р°Рґ]  like '%Р±СЂР°Рє%'
+				and st.[РљР°С‚РµРіРѕСЂРёСЏ] in ('РљРѕР»Р±Р°СЃС‹ СЃС‹СЂРѕРєРѕРїС‡РµРЅС‹Рµ')
+				and st.[Р¤РёР»РёР°Р»] in ('Р‘РёРєРѕРј', 'Р§РњРџР—', 'РўР” Р§РµСЂРєРёР·РѕРІРѕ - Р‘РРљРћРњ', 'РљР°С€РёСЂР°')
+			group by st.[РљРѕРґ SAP MDG]
+					,st.[РЎРєР»Р°Рґ 2] 
+					,st.[РЎРєР»Р°Рґ] 
+					,st.[Р¤РёР»РёР°Р»]
+					,st.[Р”Р°С‚Р° РІС‹СЂР°Р±РѕС‚РєРё]
+					,st.[Р”Р°С‚Р°]
+					,st.[РіРѕРґРµРЅ РґРѕ];
 
 					
 
 
-			-- подтягиваем данные ---------------------------------------------------------------
-			-- подтягиваем SAP ID к данным SAP
+			-- РїРѕРґС‚СЏРіРёРІР°РµРј РґР°РЅРЅС‹Рµ ---------------------------------------------------------------
+			-- РїРѕРґС‚СЏРіРёРІР°РµРј SAP ID Рє РґР°РЅРЅС‹Рј SAP
 			IF OBJECT_ID('tempdb..#sap_id','U') is not null drop table #sap_id;
 
 			select *, count(s.sap_id) over (partition by s.product_finished_id) as check_double_sap_id
@@ -82,16 +82,16 @@ BEGIN
 
 
 
-			-- пишем ошибки ---------------------------------------------------------------
+			-- РїРёС€РµРј РѕС€РёР±РєРё ---------------------------------------------------------------
 			update project_plan_production_finished_products.data_import.stock
 			Set reason_ignore_in_calculate = 
 				nullif(
-						  case when sap_id is null then 'Не найден sap id | ' else '' end
-						+ case when stock_current_KOS is null then 'КОС некорректный | ' else '' end
-						+ case when stock_current_KOS < 0.1 then 'КОС меньше 10% | ' else '' end
+						  case when sap_id is null then 'РќРµ РЅР°Р№РґРµРЅ sap id | ' else '' end
+						+ case when stock_current_KOS is null then 'РљРћРЎ РЅРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ | ' else '' end
+						+ case when stock_current_KOS < 0.1 then 'РљРћРЎ РјРµРЅСЊС€Рµ 10% | ' else '' end
 						, '');
 
-			-- выгружаем данные ---------------------------------------------------------------
+			-- РІС‹РіСЂСѓР¶Р°РµРј РґР°РЅРЅС‹Рµ ---------------------------------------------------------------
 			select 
 					 s.reason_ignore_in_calculate	
 					,s.product_status

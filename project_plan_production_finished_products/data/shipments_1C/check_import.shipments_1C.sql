@@ -1,4 +1,4 @@
-use project_plan_production_finished_products
+п»їuse project_plan_production_finished_products
 
 --exec project_plan_production_finished_products.check_import.shipments_1C
 
@@ -9,23 +9,23 @@ as
 BEGIN
 			SET NOCOUNT ON;
 
-			-- удаляем, адреса доставки, так как это внутр перемещения
+			-- СѓРґР°Р»СЏРµРј, Р°РґСЂРµСЃР° РґРѕСЃС‚Р°РІРєРё, С‚Р°Рє РєР°Рє СЌС‚Рѕ РІРЅСѓС‚СЂ РїРµСЂРµРјРµС‰РµРЅРёСЏ
 			delete 
 			from project_plan_production_finished_products.data_import.shipments_1C 
-			where shipment_customer_name	in ('ТД ЧЕРКИЗОВО ООО') 
-			  and shipment_delivery_address in ( '107143, Москва г, Пермская ул, вл. 5'
-												,', Москва г, Пермская ул., дом № 5'
-												,'115372, Москва г, Бирюлевская ул., дом № 38'
-												,'107143, Россия, Москва г, Пермская ул; вл. 5');
+			where shipment_customer_name	in ('РўР” Р§Р•Р РљРР—РћР’Рћ РћРћРћ') 
+			  and shipment_delivery_address in ( '107143, РњРѕСЃРєРІР° Рі, РџРµСЂРјСЃРєР°СЏ СѓР», РІР». 5'
+												,', РњРѕСЃРєРІР° Рі, РџРµСЂРјСЃРєР°СЏ СѓР»., РґРѕРј в„– 5'
+												,'115372, РњРѕСЃРєРІР° Рі, Р‘РёСЂСЋР»РµРІСЃРєР°СЏ СѓР»., РґРѕРј в„– 38'
+												,'107143, Р РѕСЃСЃРёСЏ, РњРѕСЃРєРІР° Рі, РџРµСЂРјСЃРєР°СЏ СѓР»; РІР». 5');
 
 			delete 
 			from project_plan_production_finished_products.data_import.shipments_1C 
-			where shipment_customer_name	in ('ЧМПЗ АО')		  
-			  and shipment_delivery_address in ('107143, Россия, Москва г, Пермская ул; вл. 5');
+			where shipment_customer_name	in ('Р§РњРџР— РђРћ')		  
+			  and shipment_delivery_address in ('107143, Р РѕСЃСЃРёСЏ, РњРѕСЃРєРІР° Рі, РџРµСЂРјСЃРєР°СЏ СѓР»; РІР». 5');
 
 
 
-			-- подтягиваем SAP ID к данным 1С, article_packaging должен быть 1
+			-- РїРѕРґС‚СЏРіРёРІР°РµРј SAP ID Рє РґР°РЅРЅС‹Рј 1РЎ, article_packaging РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ 1
 			IF OBJECT_ID('tempdb..#sap_id','U') is not null drop table #sap_id;
 
 			select *, count(s.sap_id) over (partition by s.article_packaging) as check_double_sap_id
@@ -54,21 +54,21 @@ BEGIN
 			where s.check_double_sap_id = 1;
 
 
-			-- проставляем данные в 1C
+			-- РїСЂРѕСЃС‚Р°РІР»СЏРµРј РґР°РЅРЅС‹Рµ РІ 1C
 			update c
-			set c.shipment_sales_channel_name = r.[Название канала сбыта]
-				,c.shipment_priority = r.[Приоритет отгрузки]
-				,c.shipment_min_KOS = r.[ручной КОС]
+			set c.shipment_sales_channel_name = r.[РќР°Р·РІР°РЅРёРµ РєР°РЅР°Р»Р° СЃР±С‹С‚Р°]
+				,c.shipment_priority = r.[РџСЂРёРѕСЂРёС‚РµС‚ РѕС‚РіСЂСѓР·РєРё]
+				,c.shipment_min_KOS = r.[СЂСѓС‡РЅРѕР№ РљРћРЎ]
 			from project_plan_production_finished_products.data_import.shipments_1C as c
 			join project_plan_production_finished_products.info_view.customers as r 
-				on c.shipment_customer_name = r.[Название контрагента]
-				and not r.[Ошибки] like '%Название контрагента дублируется%'
+				on c.shipment_customer_name = r.[РќР°Р·РІР°РЅРёРµ РєРѕРЅС‚СЂР°РіРµРЅС‚Р°]
+				and not r.[РћС€РёР±РєРё] like '%РќР°Р·РІР°РЅРёРµ РєРѕРЅС‚СЂР°РіРµРЅС‚Р° РґСѓР±Р»РёСЂСѓРµС‚СЃСЏ%'
 
 
 
 
 
-			-- разбиваем коробочки на набивки
+			-- СЂР°Р·Р±РёРІР°РµРј РєРѕСЂРѕР±РѕС‡РєРё РЅР° РЅР°Р±РёРІРєРё
 			begin
 
 					insert into project_plan_production_finished_products.data_import.shipments_1C
@@ -112,7 +112,7 @@ BEGIN
 					join project_plan_production_finished_products.info.stuffing as t on s.stuffing_id = t.stuffing_id_box;
 
 					
-					-- проставляем row_id у группа набивок
+					-- РїСЂРѕСЃС‚Р°РІР»СЏРµРј row_id Сѓ РіСЂСѓРїРїР° РЅР°Р±РёРІРѕРє
 					update s
 					set s.stuffing_id_box_row_id = b.stuffing_id_box_row_id
 					from project_plan_production_finished_products.data_import.shipments_1C as s
@@ -121,32 +121,32 @@ BEGIN
 						  where not stuffing_id_box is null) as b on s.row_id = b.stuffing_id_box_row_id;
 
 					
-					-- проставляем тип набивки
+					-- РїСЂРѕСЃС‚Р°РІР»СЏРµРј С‚РёРї РЅР°Р±РёРІРєРё
 					update project_plan_production_finished_products.data_import.shipments_1C
 					set stuffing_id_box_type = case 
-													when stuffing_id_box_row_id is null then 0 -- набивка не коробка
-													when stuffing_id_box is null		then 1 -- набивка коробка
-													when not stuffing_id_box is null	then 2 -- набивка разбитая на коробки
+													when stuffing_id_box_row_id is null then 0 -- РЅР°Р±РёРІРєР° РЅРµ РєРѕСЂРѕР±РєР°
+													when stuffing_id_box is null		then 1 -- РЅР°Р±РёРІРєР° РєРѕСЂРѕР±РєР°
+													when not stuffing_id_box is null	then 2 -- РЅР°Р±РёРІРєР° СЂР°Р·Р±РёС‚Р°СЏ РЅР° РєРѕСЂРѕР±РєРё
 											   end;
 
 			end;
 
 
-			---- пишем ошибки ---------------------------------------------------------------
+			---- РїРёС€РµРј РѕС€РёР±РєРё ---------------------------------------------------------------
 			update d
 			Set d.reason_ignore_in_calculate = 
 				nullif(
 							case 
 								when (select top 1 c.check_double_sap_id from #sap_id as c where d.article_packaging = c.article_packaging) > 1 
-																				then	'Артикул тары возрощает > 1 SAP ID | '
-								when d.sap_id is null							then	'Не найден sap id | '
-								when d.stuffing_id is null						then	'Код набивки отсутствует | '
-								when d.sap_id_expiration_date_in_days is null	then	'Отсутствует срок годности | '
+																				then	'РђСЂС‚РёРєСѓР» С‚Р°СЂС‹ РІРѕР·СЂРѕС‰Р°РµС‚ > 1 SAP ID | '
+								when d.sap_id is null							then	'РќРµ РЅР°Р№РґРµРЅ sap id | '
+								when d.stuffing_id is null						then	'РљРѕРґ РЅР°Р±РёРІРєРё РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚ | '
+								when d.sap_id_expiration_date_in_days is null	then	'РћС‚СЃСѓС‚СЃС‚РІСѓРµС‚ СЃСЂРѕРє РіРѕРґРЅРѕСЃС‚Рё | '
 								else ''
 							end
-						+ iif(d.shipment_sales_channel_name is null,					'Канал сбыта не присвоен | ', '')
-						+ iif(d.shipment_priority is null,								'Отсутствует приоритет отгрузки | ', '')
-						+ iif(d.shipment_min_KOS is null,								'Отсутствует КОС | ', '')
+						+ iif(d.shipment_sales_channel_name is null,					'РљР°РЅР°Р» СЃР±С‹С‚Р° РЅРµ РїСЂРёСЃРІРѕРµРЅ | ', '')
+						+ iif(d.shipment_priority is null,								'РћС‚СЃСѓС‚СЃС‚РІСѓРµС‚ РїСЂРёРѕСЂРёС‚РµС‚ РѕС‚РіСЂСѓР·РєРё | ', '')
+						+ iif(d.shipment_min_KOS is null,								'РћС‚СЃСѓС‚СЃС‚РІСѓРµС‚ РљРћРЎ | ', '')
 						, '')
 			from project_plan_production_finished_products.data_import.shipments_1C as d;
 
@@ -154,11 +154,11 @@ BEGIN
 
 			
 
-			-- удаляем ранее созданную таблицу
+			-- СѓРґР°Р»СЏРµРј СЂР°РЅРµРµ СЃРѕР·РґР°РЅРЅСѓСЋ С‚Р°Р±Р»РёС†Сѓ
 			IF OBJECT_ID('tempdb..#sap_id','U') is not null drop table #sap_id;
 
 
-			-- выгружаем данные в excel
+			-- РІС‹РіСЂСѓР¶Р°РµРј РґР°РЅРЅС‹Рµ РІ excel
 			select 
 					 h.reason_ignore_in_calculate
 					,h.product_status

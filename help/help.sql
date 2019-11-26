@@ -19,16 +19,16 @@ select ROUND(15.123456789, 0, 1)        -- округление
 
 
 --------------------
--- ÐÀÁÎÒÀ Ñ ÒÀÁËÈÖÅÉ
+-- РАБОТА С ТАБЛИЦЕЙ
 --------------------
 begin 
 
 			
-			-- ïðîâåðêà è óäàëåíèå òàáëèöû
+			-- проверка и удаление таблицы
 			IF OBJECT_ID('tempdb..#table','U')	is not null drop table #table;
 			IF OBJECT_ID('db.dbo.table','U')	is not null drop table db.dbo.[table];
 
-			-- ñîçäàíèå òàáëèöû
+			-- создание таблицы
 			create table #test	
 			(	
 				 id								int					not	null	IDENTITY(1,1)		
@@ -39,13 +39,13 @@ begin
 				,UNIQUE (id_text) 
 			);
 			
-			TRUNCATE TABLE #table											-- î÷èñòèòü òàáëèöó
+			TRUNCATE TABLE #table											-- очистить таблицу
 
-			ALTER TABLE #test ADD			column_name smallint not null;	-- äîáàâëåíèå ñòîáöà
-			ALTER TABLE #test DROP COLUMN	column_name;					-- óäàëåíèå ñòîáöà
+			ALTER TABLE #test ADD			column_name smallint not null;	-- добавление стобца
+			ALTER TABLE #test DROP COLUMN	column_name;					-- удаление стобца
 
-			ALTER INDEX ALL ON #table DISABLE;								-- îòêëþ÷èòü âñå èíäåêñû
-			ALTER INDEX ALL ON #table REBUILD;								-- âêëþ÷èòü  âñå èíäåêñû
+			ALTER INDEX ALL ON #table DISABLE;								-- отключить все индексы
+			ALTER INDEX ALL ON #table REBUILD;								-- включить  все индексы
 
 			DISABLE TRIGGER Products_INSERT_UPDATE ON Products				
 			ENABLE TRIGGER Products_INSERT_UPDATE ON Products				
@@ -58,26 +58,26 @@ end;
 
 
 -----------------------
--- ÐÀÁÎÒÀ Ñ ÏÅÐÅÌÅÍÍÍÎÉ
+-- РАБОТА С ПЕРЕМЕНННОЙ
 -----------------------
 begin 
 
-			declare @v varchar(10)					-- îáúÿâëåíèå ïåðåìåííûõ
-				set @v='Ëåøà'						-- ïðèñâîåíèå çíà÷åíèé
-			print @v								-- ðåçóëüòàò
-			select @v='Ëåøà1'						-- ïðèñâîåíèå çíà÷åíèé â çàïðîñå
-			select @v								-- ðåçóëüòàò
+			declare @v varchar(10)					-- объявление переменных
+				set @v='Ëåøà'						-- присвоение значений
+			print @v								-- результат
+			select @v='Ëåøà1'						-- присвоение значений в запросе
+			select @v								-- результат
 
 end;
 
 
 
 -------------------------
--- ÎÁÐÀÁÎÒÊÀ ÎØÈÁÎÊ Â SQL
+-- ОБРАБОТКА ОШИБОК В SQL
 -------------------------
 begin 
 
-			-- îáðàáîòêà îøèáîê â SQL
+			-- обработка ошибок в SQL
 			BEGIN TRY  
 						SELECT 1/1;  
 						SELECT 1/0;  

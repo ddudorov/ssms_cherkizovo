@@ -1,4 +1,4 @@
-use project_plan_production_finished_products
+п»їuse project_plan_production_finished_products
 
 go
 
@@ -18,7 +18,7 @@ create table project_plan_production_finished_products.data_import.stock
 		,stuffing_id					VARCHAR(40)				NULL
 		,product_finished_id			decimal(14, 0)			NULL
 		
-		--- остатки ---
+		--- РѕСЃС‚Р°С‚РєРё ---
 		,stock_warehouse_name			VARCHAR(100)			NULL	
 		,stock_storage_area_name		VARCHAR(100)			NULL	
 		,stock_branch_name				VARCHAR(100)			NULL
@@ -34,7 +34,7 @@ create table project_plan_production_finished_products.data_import.stock
 		,stock_KOS_in_day				as case when stock_production_date >= stock_expiration_date then null	
 												when stock_production_date >  stock_on_date			then null
 												else 1.0 / DATEDIFF(day, stock_production_date, stock_expiration_date) end	
-		-- расчетные поля
+		-- СЂР°СЃС‡РµС‚РЅС‹Рµ РїРѕР»СЏ
 		,stock_kg						dec(11,5)				NULL
 		,stock_shipment_kg				dec(11,5)				NULL
 		,stock_after_shipment_kg		as nullif(stock_kg - isnull(stock_shipment_kg, 0), 0)
@@ -46,7 +46,7 @@ create table project_plan_production_finished_products.data_import.stock
 
 
 
---- логи остатки
+--- Р»РѕРіРё РѕСЃС‚Р°С‚РєРё
 select * from project_plan_production_finished_products.data_import.stock_log_calculation
 drop table project_plan_production_finished_products.data_import.stock_log_calculation
 create table project_plan_production_finished_products.data_import.stock_log_calculation

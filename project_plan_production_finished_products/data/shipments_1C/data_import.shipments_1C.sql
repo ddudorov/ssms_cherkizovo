@@ -1,4 +1,4 @@
-use project_plan_production_finished_products
+п»їuse project_plan_production_finished_products
 
 go
 
@@ -23,7 +23,7 @@ create table project_plan_production_finished_products.data_import.shipments_1C
 	
 		,article_packaging				VARCHAR(25)				NULL	
 
-		-- заявки
+		-- Р·Р°СЏРІРєРё
 		,shipment_sales_channel_name	VARCHAR(25)				NULL
 		,shipment_customer_name			VARCHAR(100)			NULL
 		,shipment_delivery_address		VARCHAR(1000)			NULL
@@ -34,14 +34,14 @@ create table project_plan_production_finished_products.data_import.shipments_1C
 		,shipment_date					DATETIME				NULL
 		,shipment_kg					dec(11,5)				NULL
 
-		-- расчетные поля
+		-- СЂР°СЃС‡РµС‚РЅС‹Рµ РїРѕР»СЏ
 		,stock_shipment_kg				dec(11,5)				NULL
 		,stock_net_need_kg				as nullif( shipment_kg - isnull(stock_shipment_kg, 0)   , 0)
 		   
-		,stuffing_fact_shipment_kg		dec(11,5)				NULL	-- кол-во которое уже отгружено из набивки включая маркировку
+		,stuffing_fact_shipment_kg		dec(11,5)				NULL	-- РєРѕР»-РІРѕ РєРѕС‚РѕСЂРѕРµ СѓР¶Рµ РѕС‚РіСЂСѓР¶РµРЅРѕ РёР· РЅР°Р±РёРІРєРё РІРєР»СЋС‡Р°СЏ РјР°СЂРєРёСЂРѕРІРєСѓ
 		,stuffing_fact_net_need_kg		as nullif( shipment_kg - isnull(stock_shipment_kg, 0) - isnull(stuffing_fact_shipment_kg, 0)   , 0)
 		   
-		,stuffing_plan_shipment_kg		dec(11,5)				NULL	-- кол-во которое уже отгружено из набивки включая маркировку
+		,stuffing_plan_shipment_kg		dec(11,5)				NULL	-- РєРѕР»-РІРѕ РєРѕС‚РѕСЂРѕРµ СѓР¶Рµ РѕС‚РіСЂСѓР¶РµРЅРѕ РёР· РЅР°Р±РёРІРєРё РІРєР»СЋС‡Р°СЏ РјР°СЂРєРёСЂРѕРІРєСѓ
 		,stuffing_plan_net_need_kg		as nullif( shipment_kg - isnull(stock_shipment_kg, 0) - isnull(stuffing_fact_shipment_kg, 0) - isnull(stuffing_plan_shipment_kg, 0)   , 0)
 		
 		,marking_shipment_kg			dec(11,5)				NULL
