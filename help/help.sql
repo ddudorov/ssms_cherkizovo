@@ -4,17 +4,17 @@ select convert(dec(4,3),0.02)
 select ISNUMERIC('134')
 select ORIGINAL_LOGIN()					
 
-select FLOOR(1.256)						-- îêðóãëåíèå âíèç / îòáðàñûâàåò äðîáíóþ ÷àñòü
-select CEILING(1.256)					-- îêðóãëåíèå ââåðõ
-select UPPER('ÁîËüØàß ÁóÊâÀ')			-- âåðõíèé ðåãèñòð
-select LOWER('ÌàËåÍüÊàß ÁóÊâÀ')			-- íèæíèé ðåãèñòð
+select FLOOR(1.256)						-- округление вниз / отбрасывает дробную часть
+select CEILING(1.256)					-- округление вверх
+select UPPER('ÁîËüØàß ÁóÊâÀ')			-- верхний регистр
+select LOWER('ÌàËåÍüÊàß ÁóÊâÀ')			-- нижний регистр
 
 
 
-select @@version						-- âåðñèÿ ñåðâåðà Microsoft SQL Server 2017 (RTM-CU13-OD) (KB4483666) - 14.0.3049.1 (X64)  on Windows Server 2016 Standard 10.0 <X64> (Build 14393: ) (Hypervisor) 
-use cherkizovo;							-- ïîäêëþ÷åíèå ê ÁÄ
-kill 800								-- çàâåðøèòü ¹ ñåññèþ
-select ROUND(15.123456789, 0, 1)        -- îêðóãëåíèå
+select @@version						-- версия сервера Microsoft SQL Server 2017 (RTM-CU13-OD) (KB4483666) - 14.0.3049.1 (X64)  on Windows Server 2016 Standard 10.0 <X64> (Build 14393: ) (Hypervisor) 
+use cherkizovo;							-- подключение к БД
+kill 800								-- завершить № сессию
+select ROUND(15.123456789, 0, 1)        -- округление
 
 
 
