@@ -1,20 +1,18 @@
 
-select FORMAT(123456666789,'0-00-0') ываывавыа
 select convert(dec(4,3),0.02)
-select ISNUMERIC('134')
-select ORIGINAL_LOGIN()					
 
-select FLOOR(1.256)						-- округление вниз / отбрасывает дробную часть
-select CEILING(1.256)					-- округление вверх
-select UPPER('ÁîËüØàß ÁóÊâÀ')			-- верхний регистр
-select LOWER('ÌàËåÍüÊàß ÁóÊâÀ')			-- нижний регистр
-
+-- возрощает номер IDENTITY
+select 
+ @@identity as 'identity'	 -- уже вставленной строки						
+,scope_identity() as 'scope_identity' -- уже вставленной строки		
+,ident_current( 'user_activity' )  as 'ident_current' -- последний		
 
 
+
+select ORIGINAL_LOGIN()	
 select @@version						-- версия сервера Microsoft SQL Server 2017 (RTM-CU13-OD) (KB4483666) - 14.0.3049.1 (X64)  on Windows Server 2016 Standard 10.0 <X64> (Build 14393: ) (Hypervisor) 
 use cherkizovo;							-- подключение к БД
 kill 800								-- завершить № сессию
-select ROUND(15.123456789, 0, 1)        -- округление
 
 
 
@@ -63,13 +61,26 @@ end;
 begin 
 
 			declare @v varchar(10)					-- объявление переменных
-				set @v='Ëåøà'						-- присвоение значений
+				set @v='значение'					-- присвоение значений
 			print @v								-- результат
-			select @v='Ëåøà1'						-- присвоение значений в запросе
 			select @v								-- результат
 
-end;
+			select @v='значение'					-- присвоение значений в запросе
+			select @v								-- результат
 
+			set @v = (select top 1 'значение')		-- присвоение значений в запросе
+			select @v								-- результат
+
+
+			select FORMAT(10000000,'0-00-0')		-- задает формат числа/даты
+			select ISNUMERIC('134')					-- проверка тип данных (число)
+			select FLOOR(1.256)						-- округление вниз / отбрасывает дробную часть
+			select CEILING(1.256)					-- округление вверх
+			select ROUND(15.123456789, 0, 1)        -- округление
+			select UPPER('ВеРхнИй РегИсТр')			-- верхний регистр
+			select LOWER('НиЖниЙ рЕгиСтР')			-- нижний регистр
+
+end;
 
 
 -------------------------
