@@ -1,4 +1,11 @@
-﻿use monitoring;
+﻿----------------------
+-- data create: 201911
+-- name project/database: user_activity
+-- author: RoshchinMU
+-- description: Таблица и хранимка для записи действий пользователей
+---------------------
+
+use monitoring; go;
 
 go
 
@@ -45,8 +52,6 @@ BEGIN
 					select @@identity as 'identity',scope_identity() as 'scope_identity', ident_current( 'user_activity' )  as 'ident_current'
 
 			end;
-
-		
 
 end;
 
