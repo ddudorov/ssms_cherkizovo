@@ -17,6 +17,12 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "project_plan_production_finished_products", "project_plan_production_finished_products", "{820DD553-DFD8-4F36-8B53-BFF441C22E95}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "info", "info", "{375E7F4C-F7BA-4BAC-880B-A349846855AB}"
+	ProjectSection(SolutionItems) = preProject
+		project_plan_production_finished_products\info\info.branches.sql = project_plan_production_finished_products\info\info.branches.sql
+		project_plan_production_finished_products\info\info.customers.sql = project_plan_production_finished_products\info\info.customers.sql
+		project_plan_production_finished_products\info\info.finished_products_sap_id_manual.sql = project_plan_production_finished_products\info\info.finished_products_sap_id_manual.sql
+		project_plan_production_finished_products\info\info.stuffing.sql = project_plan_production_finished_products\info\info.stuffing.sql
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "data", "data", "{6BAF1633-51A7-4D43-AB85-981299F91516}"
 EndProject
@@ -106,7 +112,7 @@ Global
 		Default|Default = Default|Default
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{DDA9C0FD-C61F-4A88-84B4-1C606213A9C2}.Default|Default.ActiveCfg = Default
+		{525C4D16-9D32-412D-9B34-146580ED0AD0}.Default|Default.ActiveCfg = Default
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
