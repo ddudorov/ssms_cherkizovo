@@ -1,7 +1,7 @@
 ﻿use project_plan_production_finished_products
 
 -- таблица
-drop table project_plan_production_finished_products.info.finished_products_sap_id_manual
+--drop table project_plan_production_finished_products.info.finished_products_sap_id_manual
 create table project_plan_production_finished_products.info.finished_products_sap_id_manual
 (
 		 sap_id							BIGINT			NOT NULL
@@ -84,14 +84,19 @@ BEGIN
 			select cm.sap_id, cm.error
 			into #check_double_name_1c
 			from (
-					select cm.sap_id, iif(COUNT(1) over (partition by cm.product_1C_full_name) > 1, 'Дубликат | ' + cm.product_1C_full_name, null) as error
+					select cm.sap_id, iif(COUNT(1) over (partition by ps.product_1C_full_name) > 1, 'Дубликат | ' + ps.product_1C_full_name, null) as error
 					from (
+							select cm.SAP_id
+							from project_plan_production_finished_products.info.finished_products_sap_id_manual as cm
+							where cm.SAP_id_correct_manual is null
 
-							select distinct isnull(cm.SAP_id_correct_manual, ps.sap_id) as sap_id, ps.product_1C_full_name
-							from cherkizovo.info.products_sap as ps
-							left join project_plan_production_finished_products.info.finished_products_sap_id_manual as cm on ps.sap_id = cm.sap_id
-							where ps.category_3_level_name in ('Колбасы сырокопченые')
+							union
+
+							select cm.SAP_id_correct_manual
+							from project_plan_production_finished_products.info.finished_products_sap_id_manual as cm
+							where not cm.SAP_id_correct_manual is null
 						 ) as cm
+					join cherkizovo.info.products_sap as ps on cm.sap_id = ps.sap_id
 				 ) as cm
 			where not cm.error is null;
 
@@ -142,27 +147,27 @@ BEGIN
 
 
 			select 
-						 'SAP ID' = convert(varchar(24),FORMAT(s.SAP_id, '000000000000000000000000') )
-						,'SAP ID исключение' = convert(varchar(24),FORMAT(sm.SAP_id_correct_manual, '000000000000000000000000') )
-						,'SAP ID аналог 1' = convert(varchar(24),FORMAT(sm.sap_id_analog_1, '000000000000000000000000') )
-						,'SAP ID аналог 2' = convert(varchar(24),FORMAT(sm.sap_id_analog_2, '000000000000000000000000') )
+						 'SAP ID'				= convert(varchar(24),FORMAT(s.SAP_id, '000000000000000000000000') )
+						,'SAP ID исключение'	= convert(varchar(24),FORMAT(sm.SAP_id_correct_manual, '000000000000000000000000') )
+						,'SAP ID аналог 1'		= convert(varchar(24),FORMAT(sm.sap_id_analog_1, '000000000000000000000000') )
+						,'SAP ID аналог 2'		= convert(varchar(24),FORMAT(sm.sap_id_analog_2, '000000000000000000000000') )
 						,'Проверка справочника' = nullif(
-														 isnull((select top 1 cm.error from #check_stuffing as cm				where s.sap_id = cm.SAP_id) + ' | ','')
-														+isnull((select top 1 cm.error from #check_sap_id_correct_manual as cm	where s.sap_id = cm.SAP_id) + ' | ','')
-														+isnull((select top 1 cm.error from #check_sap_id_analog as cm			where s.sap_id = cm.SAP_id) + ' | ','')
-														+isnull((select top 1 cm.error from #check_double_name_1c as cm			where s.sap_id = cm.SAP_id) + ' | ','')
+														 isnull(	(select top 1 cm.error from #check_stuffing as cm				where s.sap_id = cm.SAP_id) + ' | '		,'')
+														+isnull(	(select top 1 cm.error from #check_sap_id_correct_manual as cm	where s.sap_id = cm.SAP_id) + ' | '		,'')
+														+isnull(	(select top 1 cm.error from #check_sap_id_analog as cm			where s.sap_id = cm.SAP_id) + ' | '		,'')
+														+isnull(	(select top 1 cm.error from #check_double_name_1c as cm			where s.sap_id = cm.SAP_id) + ' | '		,'')
 														,'')
-						,'Код 1 уровня' = s.category_1_level_id 
-						,'Название 1 уровня' = s.category_1_level_name
-						,'Код 2 уровня' = s.category_2_level_id 
-						,'Название 2 уровня' = s.category_2_level_name
-						,'Код 3 уровня' = s.category_3_level_id
-						,'Название 3 уровня' = s.category_3_level_name
-						,'Код 4 уровня' = s.category_4_level_id
-						,'Название 4 уровня' = s.category_4_level_name 
-						,'Код 5 уровня' = s.category_5_level_id  
-						,'Название 5 уровня' =  s.category_5_level_name
-						,'Категория' = s.category_full_name
+						,'Код 1 уровня'			= s.category_1_level_id 
+						,'Название 1 уровня'	= s.category_1_level_name
+						,'Код 2 уровня'			= s.category_2_level_id 
+						,'Название 2 уровня'	= s.category_2_level_name
+						,'Код 3 уровня'			= s.category_3_level_id
+						,'Название 3 уровня'	= s.category_3_level_name
+						,'Код 4 уровня'			= s.category_4_level_id
+						,'Название 4 уровня'	= s.category_4_level_name 
+						,'Код 5 уровня'			= s.category_5_level_id  
+						,'Название 5 уровня'	=  s.category_5_level_name
+						,'Категория'			= s.category_full_name
 						,'Статус блокировки SKU' = s.product_status
 						,'Статус блокировки SKU ручная' = sm.product_status_manual
 						,'Код завода' = s.production_id
