@@ -31,31 +31,66 @@ BEGIN
 			-- подтягиваем SAP ID к данным SAP
 			IF OBJECT_ID('tempdb..#sap_id','U') is not null drop table #sap_id;
 
-			select *, count(s.sap_id) over (partition by s.position_dependent_id, individual_marking_id) as check_double_sap_id
+			select 
+					 sm.sap_id 
+					,sm.active_before
+					,sm.position_dependent_id
+					,sm.individual_marking_id
+					,sp.expiration_date_in_days
+					,sp.product_status
+					,st.stuffing_id
+					,count(sm.sap_id) over (partition by sm.active_before, sm.position_dependent_id, sm.individual_marking_id) as check_double_sap_id
 			into #sap_id
-			from (
-					select distinct
-							 s1.position_dependent_id
-							,s1.individual_marking_id
-							,s2.sap_id 
-							,s2.expiration_date_in_days
-							,s2.product_status
-							,sm2.stuffing_id
-					from cherkizovo.info.products_sap													as s1
-					join project_plan_production_finished_products.info.finished_products_sap_id_manual as sm1 on s1.sap_id = sm1.sap_id
-					join cherkizovo.info.products_sap													as s2  on isnull(sm1.sap_id_shipment_manual, sm1.SAP_id) = s2.sap_id 
-					join project_plan_production_finished_products.info.finished_products_sap_id_manual as sm2 on s2.sap_id = sm2.sap_id
-				 ) as s;
+			from ( 
+			
+						-- берем таблицу с ручными артикулами где указана дата действия артикула, подтягиваем по исключение другие артикула которые имеют данное исключение
+						select distinct
+								 sm.sap_id
+								,sm.active_before
+								,sp.position_dependent_id
+								,sp.individual_marking_id
+						from project_plan_production_finished_products.info.finished_products_sap_id_manual as sm
+						join project_plan_production_finished_products.info.finished_products_sap_id_manual as a on sm.sap_id_shipment_manual = ISNULL(a.sap_id_shipment_manual, a.sap_id)
+						join cherkizovo.info.products_sap as sp on a.sap_id = sp.sap_id
+						where not sm.active_before is null
+
+						union 
+
+						-- берем таблицу с ручными артикулами, подтягиваем варианты артикулов из другой системы и если у нормального артикула указано исключение отображаем ислючение
+						select 
+								 isnull(sm.sap_id_shipment_manual, sm.sap_id) as sap_id
+								,null as active_before
+								,sp.position_dependent_id
+								,sp.individual_marking_id
+						from project_plan_production_finished_products.info.finished_products_sap_id_manual as sm
+						join cherkizovo.info.products_sap as sp on sm.sap_id = sp.sap_id
+
+				 ) as sm 
+			join cherkizovo.info.products_sap as sp on sm.sap_id = sp.sap_id
+			join project_plan_production_finished_products.info.finished_products_sap_id_manual as st on sm.sap_id = st.sap_id;
 
 
+			-- обновляем данные до даты
 			update c
 			set c.sap_id							= s.SAP_id
 				,c.stuffing_id						= s.stuffing_id
 				,c.sap_id_expiration_date_in_days	= s.expiration_date_in_days
 				,c.product_status					= s.product_status
 			from project_plan_production_finished_products.data_import.shipments_SAP as c
-			join #sap_id as s on c.position_dependent_id = s.position_dependent_id and c.individual_marking_id = s.individual_marking_id
+			join #sap_id as s on c.position_dependent_id = s.position_dependent_id and c.individual_marking_id = s.individual_marking_id and not s.active_before is null and c.shipment_date <= s.active_before 
 			where s.check_double_sap_id = 1;
+
+			-- обновляем остальные
+			update c
+			set c.sap_id							= s.SAP_id
+				,c.stuffing_id						= s.stuffing_id
+				,c.sap_id_expiration_date_in_days	= s.expiration_date_in_days
+				,c.product_status					= s.product_status
+			from project_plan_production_finished_products.data_import.shipments_SAP as c
+			join #sap_id as s on c.position_dependent_id = s.position_dependent_id and c.individual_marking_id = s.individual_marking_id and s.active_before is null
+			where s.check_double_sap_id = 1
+			  and c.sap_id is null;
+
 
 
 			-- добавляем клиента и канал сбыта если нет в cherkizovo.info.customers
@@ -202,8 +237,6 @@ BEGIN
 			Set d.reason_ignore_in_calculate = 
 				nullif(
 							case 
-								when (select top 1 s.check_double_sap_id from #sap_id as s where d.position_dependent_id = s.position_dependent_id and d.individual_marking_id = s.individual_marking_id) > 1 
-																				then	'Код зависимой позиции и Код индивидуальной маркировки возрощает > 1 SAP ID | '
 								when d.sap_id is null							then	'Не найден sap id | '
 								when d.stuffing_id is null						then	'Код набивки отсутствует | '
 								when d.sap_id_expiration_date_in_days is null	then	'Отсутствует срок годности | '
@@ -223,6 +256,7 @@ BEGIN
 					 h.reason_ignore_in_calculate
 					,h.product_status
 					,h.sap_id_text
+					,sp.product_1C_full_name
 					,h.stuffing_id
 					,h.position_dependent_id
 					,h.individual_marking_id
@@ -242,6 +276,7 @@ BEGIN
 					,ie.dt_tm_insert
 			from project_plan_production_finished_products.data_import.shipments_SAP as h
 			join project_plan_production_finished_products.data_import.info_excel as ie on h.name_table = ie.name_table
+			left join cherkizovo.info.products_sap as sp on h.sap_id = sp.sap_id
 			where h.stuffing_id_box_type in (0, 1);
 
 

@@ -45,7 +45,7 @@ BEGIN
 					IF OBJECT_ID('tempdb..#shipment_union_all','U') is not null drop table #shipment_union_all; 
 
 					select
-								o.row_id as shipment_row_id
+							 o.row_id as shipment_row_id
 							,o.name_table as shipment_name_table
 							,o.shipment_priority
 							,o.shipment_min_KOS
@@ -131,7 +131,7 @@ BEGIN
 
 					-- создаем таблицу
 					select top 0 
-									stuffing_row_id
+								 stuffing_row_id
 								,name_table as stuffing_name_table
 								,stuffing_id
 								,convert(date, stuffing_available_date) as stuffing_available_date
@@ -144,7 +144,7 @@ BEGIN
 					exec('	
 							insert into #stuffing_for_shipment
 							select 
-										stuffing_row_id
+									 stuffing_row_id
 									,name_table as stuffing_name_table
 									,stuffing_id
 									,stuffing_available_date
@@ -194,7 +194,7 @@ BEGIN
 
 								select 
 
-											st.stuffing_available_date								
+										 st.stuffing_available_date								
 										,st.stuffing_before_next_available_date
 
 										-- before_next
@@ -242,7 +242,7 @@ BEGIN
 			begin 
 					IF OBJECT_ID('tempdb..#stuffing','U') is not null drop table #stuffing;  -- select * from #stuffing_fact
 					select 
-								sh.sap_id	
+							 sh.sap_id	
 							,sh.stuffing_id
 							,st.stuffing_row_id
 							,st.stuffing_name_table
@@ -277,10 +277,11 @@ BEGIN
 
 					create table #stuffing_log_calculation
 					( 
-								sort_id				INT				NOT NULL IDENTITY(1,1)
+							 sort_id				INT				NOT NULL IDENTITY(1,1)
 							,shipment_row_id		INT				NOT NULL	
 							,shipment_name_table	varchar(40)			NULL	
 							,shipment_sap_id		bigint			NOT NULL
+							,shipment_date			datetime			NULL
 							,shipment_kg			dec(11,5)		NOT NULL
 							,stuffing_row_id		INT					NULL
 							,stuffing_kg			dec(11,5)			NULL	

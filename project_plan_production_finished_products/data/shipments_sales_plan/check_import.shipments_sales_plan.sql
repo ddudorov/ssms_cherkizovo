@@ -197,30 +197,90 @@ BEGIN
 			-- подтягиваем SAP ID к данным план продаж, article_packaging должен быть 1
 			IF OBJECT_ID('tempdb..#sap_id','U') is not null drop table #sap_id;
 
-			select *, count(s.sap_id) over (partition by s.article_packaging) as check_double_sap_id
+			select 
+					 sm.sap_id 
+					,sm.active_before
+					,sm.article_packaging
+					,sp.expiration_date_in_days
+					,sp.product_status
+					,st.stuffing_id
+					,count(sm.sap_id) over (partition by sm.active_before, sm.article_packaging) as check_double_sap_id
 			into #sap_id
-			from (
-					select distinct
-							 s1.article_packaging
-							,s2.sap_id 
-							,s2.expiration_date_in_days
-							,s2.product_status
-							,sm2.stuffing_id
-					from cherkizovo.info.products_sap													as s1
-					join project_plan_production_finished_products.info.finished_products_sap_id_manual as sm1 on s1.sap_id = sm1.sap_id
-					join cherkizovo.info.products_sap													as s2  on isnull(sm1.sap_id_shipment_manual, sm1.SAP_id) = s2.sap_id 
-					join project_plan_production_finished_products.info.finished_products_sap_id_manual as sm2 on s2.sap_id = sm2.sap_id
-				 ) as s;
+			from ( 
+			
+						-- берем таблицу с ручными артикулами где указана дата действия артикула, подтягиваем по исключение другие артикула которые имеют данное исключение
+						select distinct
+								 sm.sap_id
+								,sm.active_before
+								,sp.article_packaging
+						from project_plan_production_finished_products.info.finished_products_sap_id_manual as sm
+						join project_plan_production_finished_products.info.finished_products_sap_id_manual as a on sm.sap_id_shipment_manual = ISNULL(a.sap_id_shipment_manual, a.sap_id)
+						join cherkizovo.info.products_sap as sp on a.sap_id = sp.sap_id
+						where not sm.active_before is null
+
+						union 
+
+						-- берем таблицу с ручными артикулами, подтягиваем варианты артикулов из другой системы и если у нормального артикула указано исключение отображаем ислючение
+						select 
+								 isnull(sm.sap_id_shipment_manual, sm.sap_id) as sap_id
+								,null as active_before
+								,sp.article_packaging
+						from project_plan_production_finished_products.info.finished_products_sap_id_manual as sm
+						join cherkizovo.info.products_sap as sp on sm.sap_id = sp.sap_id
+
+				 ) as sm 
+			join cherkizovo.info.products_sap as sp on sm.sap_id = sp.sap_id
+			join project_plan_production_finished_products.info.finished_products_sap_id_manual as st on sm.sap_id = st.sap_id;
 
 
+			-- обновляем данные до даты
 			update c
 			set c.sap_id							= s.SAP_id
 				,c.stuffing_id						= s.stuffing_id
 				,c.sap_id_expiration_date_in_days	= s.expiration_date_in_days
 				,c.product_status					= s.product_status
 			from project_plan_production_finished_products.data_import.shipments_sales_plan as c
-			join #sap_id as s on c.article_packaging = s.article_packaging
+			join #sap_id as s on c.article_packaging = s.article_packaging and not s.active_before is null and c.shipment_date <= s.active_before 
 			where s.check_double_sap_id = 1;
+
+			-- обновляем остальные
+			update c
+			set c.sap_id							= s.SAP_id
+				,c.stuffing_id						= s.stuffing_id
+				,c.sap_id_expiration_date_in_days	= s.expiration_date_in_days
+				,c.product_status					= s.product_status
+			from project_plan_production_finished_products.data_import.shipments_sales_plan as c
+			join #sap_id as s on c.article_packaging = s.article_packaging and s.active_before is null
+			where s.check_double_sap_id = 1
+			  and c.sap_id is null;
+
+
+
+
+			--select *, count(s.sap_id) over (partition by s.article_packaging) as check_double_sap_id
+			--into #sap_id
+			--from (
+			--		select distinct
+			--				 s1.article_packaging
+			--				,s2.sap_id 
+			--				,s2.expiration_date_in_days
+			--				,s2.product_status
+			--				,sm2.stuffing_id
+			--		from cherkizovo.info.products_sap													as s1
+			--		join project_plan_production_finished_products.info.finished_products_sap_id_manual as sm1 on s1.sap_id = sm1.sap_id
+			--		join cherkizovo.info.products_sap													as s2  on isnull(sm1.sap_id_shipment_manual, sm1.SAP_id) = s2.sap_id 
+			--		join project_plan_production_finished_products.info.finished_products_sap_id_manual as sm2 on s2.sap_id = sm2.sap_id
+			--	 ) as s;
+
+
+			--update c
+			--set c.sap_id							= s.SAP_id
+			--	,c.stuffing_id						= s.stuffing_id
+			--	,c.sap_id_expiration_date_in_days	= s.expiration_date_in_days
+			--	,c.product_status					= s.product_status
+			--from project_plan_production_finished_products.data_import.shipments_sales_plan as c
+			--join #sap_id as s on c.article_packaging = s.article_packaging
+			--where s.check_double_sap_id = 1;
 
 
 			-- разбиваем коробочки на набивки
@@ -342,6 +402,7 @@ BEGIN
 					 'Ошибки'							= h.reason_ignore_in_calculate
 					,'Статус блокировки SKU'			= h.product_status
 					,'SAP ID'							= h.sap_id_text
+					,sp.product_1C_full_name
 					,'Код набивки'						= h.stuffing_id
 
 					,'Код зависимой позиции'			= h.position_dependent_id
@@ -367,6 +428,7 @@ BEGIN
 
 			from project_plan_production_finished_products.data_import.shipments_sales_plan as h
 			join project_plan_production_finished_products.data_import.info_excel as ie on h.name_table = ie.name_table
+			left join cherkizovo.info.products_sap as sp on h.sap_id = sp.sap_id
 			where h.stuffing_id_box_type in (0, 1);
 		
 

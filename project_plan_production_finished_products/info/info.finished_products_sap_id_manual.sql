@@ -5,10 +5,10 @@
 
 create table project_plan_production_finished_products.info.finished_products_sap_id_manual
 (
-		 sap_id							BIGINT			NOT NULL
-		--,sap_id_correct_manual			BIGINT				NULL	
+		 sap_id							BIGINT			NOT NULL	
+		,active_before					datetime			NULL
 		,sap_id_shipment_manual			BIGINT				NULL	
-		,sap_id_stock_manual			BIGINT				NULL	
+		,sap_id_stock_manual			BIGINT				NULL
 		,stuffing_id					VARCHAR(40)		NOT NULL	DEFAULT		'укажите код набивки'
 		,product_status_manual			VARCHAR(100)		NULL	
 		,number_days_normative_stock	smallint			null
@@ -17,27 +17,12 @@ create table project_plan_production_finished_products.info.finished_products_sa
 											sap_id <> sap_id_shipment_manual
 										and sap_id <> sap_id_stock_manual
 									 )
-		--						    
-
-		--,CONSTRAINT CHK_SAP_id CHECK (
-		--									sap_id <> sap_id_correct_manual
-		--								and sap_id <> sap_id_analog_1
-		--								and sap_id <> sap_id_analog_2
-		--								and sap_id_correct_manual <> sap_id_analog_1
-		--								and sap_id_correct_manual <> sap_id_analog_2
-		--								and sap_id_analog_1 <> sap_id_analog_2
-		--								and (   (	 sap_id_analog_1 is null and	 sap_id_analog_2 is null) or
-		--										(not sap_id_analog_1 is null and	 sap_id_analog_2 is null) or 
-		--										(not sap_id_analog_1 is null and not sap_id_analog_2 is null)   )
-		--						     )
 )
 
 
 
 
-
-
-
+go
 
 
 
@@ -112,6 +97,7 @@ BEGIN
 			
 			select 
 						 'SAP ID'				= convert(varchar(24),FORMAT(s.SAP_id, '000000000000000000000000') )
+						,'Постребность до'		= sm.active_before
 						,'SAP ID потребность'	= convert(varchar(24),FORMAT(sm.sap_id_shipment_manual, '000000000000000000000000') )
 						,'SAP ID остатки'		= convert(varchar(24),FORMAT(sm.sap_id_stock_manual, '000000000000000000000000') )
 						,'Проверка справочника' = nullif(
@@ -120,20 +106,20 @@ BEGIN
 														+ isnull(	(select top 1 cm.error from #check_sap_id_stock_manual as cm	where s.sap_id = cm.SAP_id) + ' | '		,'')
 														+ isnull(	(select top 1 cm.error from #check_double_name_1c as cm			where s.sap_id = cm.SAP_id) + ' | '		,'')
 														,'')
-						,'Код 1 уровня'			= s.category_1_level_id 
-						,'Название 1 уровня'	= s.category_1_level_name
-						,'Код 2 уровня'			= s.category_2_level_id 
-						,'Название 2 уровня'	= s.category_2_level_name
-						,'Код 3 уровня'			= s.category_3_level_id
+						--,'Код 1 уровня'			= s.category_1_level_id 
+						--,'Название 1 уровня'	= s.category_1_level_name
+						--,'Код 2 уровня'			= s.category_2_level_id 
+						--,'Название 2 уровня'	= s.category_2_level_name
+						--,'Код 3 уровня'			= s.category_3_level_id
 						,'Название 3 уровня'	= s.category_3_level_name
-						,'Код 4 уровня'			= s.category_4_level_id
+						--,'Код 4 уровня'			= s.category_4_level_id
 						,'Название 4 уровня'	= s.category_4_level_name 
-						,'Код 5 уровня'			= s.category_5_level_id  
+						--,'Код 5 уровня'			= s.category_5_level_id  
 						,'Название 5 уровня'	=  s.category_5_level_name
-						,'Категория'			= s.category_full_name
+						--,'Категория'			= s.category_full_name
 						,'Статус блокировки SKU' = s.product_status
 						,'Статус блокировки SKU ручная' = sm.product_status_manual
-						,'Код завода' = s.production_id
+						--,'Код завода' = s.production_id
 						,'Признак завода' = s.production_attribute
 						,'Название завода' = s.production_name
 						,'Код базовой позиции' = s.position_basic_id
@@ -144,13 +130,13 @@ BEGIN
 						--,'Код PIM Z013' = FORMAT(s.product_not_packaged_id, '#####################')
 						,'Код PIM Z011' = convert(varchar(50), s.product_finished_id)
 						,'Код PIM Z013' = convert(varchar(50), s.product_not_packaged_id)
-						,'Код ТНВЭД' = s.FEACN_id
-						,'Название ТНВЭД' = s.FEACN_name
+						--,'Код ТНВЭД' = s.FEACN_id
+						--,'Название ТНВЭД' = s.FEACN_name
 						,'VAD/VOL' = s.vad_vol
-						,'Сокращенное название бренда (Торговая марка)' = s.brand_trademark_short_name
-						,'Название бренда (Торговая марка)' = s.brand_trademark_full_name
-						,'Сокращенное название бренда (Назначение)' = s.brand_destination_short_name
-						,'Название бренда (Назначение)' = s.brand_destination_full_name
+						--,'Сокращенное название бренда (Торговая марка)' = s.brand_trademark_short_name
+						--,'Название бренда (Торговая марка)' = s.brand_trademark_full_name
+						--,'Сокращенное название бренда (Назначение)' = s.brand_destination_short_name
+						--,'Название бренда (Назначение)' = s.brand_destination_full_name
 						,'1С УПП' = s.UPP_1C_id
 						,'Код 1С УПП ТМ' = s.UPP_TM_1C_id
 						,'Код csb' = s.CSB_id
@@ -160,28 +146,28 @@ BEGIN
 						,'Название SKU SAP MDG' = s.product_SAP_full_name
 						,'Название SKU без завода и индивидуальной маркировки' = s.product_clean_full_name
 						,'Название SKU 1С' = s.product_1C_full_name
-						,'GTIN (ШК) штуки (CU)' = s.GTIN_CU_id
-						,'GTIN (ШК) штуки (SKU)' = s.GTIN_SKU_id
-						,'ГОСТ/ТУ продукции' = s.product_GOST_name
-						,'Цех производства 1С' = s.production_shop_1C_name
+						--,'GTIN (ШК) штуки (CU)' = s.GTIN_CU_id
+						--,'GTIN (ШК) штуки (SKU)' = s.GTIN_SKU_id
+						--,'ГОСТ/ТУ продукции' = s.product_GOST_name
+						--,'Цех производства 1С' = s.production_shop_1C_name
 						,'Наименование и вес тары без продукции' = s.box_name
-						,'Размер единицы продукции ДхШхВ (мм)' = s.unit_size_name
-						,'Количество коробов на поддоне (шт)' = s.quantity_box_on_pallet
-						,'Количество вложений в короб (шт)' = s.quantity_in_box
-						,'Единица хранения остатков' = s.product_storage_type
-						,'Вес продукции в коробе нетто (кг)' = s.product_net_weight_in_box_kg
-						,'Вес единицы продукции нетто (кг)' = s.unit_net_weight_kg
-						,'Вес упаковки с единицы продукции (кг)' = s.packaging_unit_net_weight_kg
-						,'Вес дополнительной упаковки в коробе (кг)' = s.packaging_net_weight_in_box_kg
-						,'Вес нетто продукции на поддоне (кг)' = s.product_net_weight_on_pallet_kg
-						,'Описание срока хранения и температурного режима' = s.product_storage_description
-						,'Термосостояние' = s.freezing_type_name
-						,'Общий срок годности' = s.expiration_date_in_days
-						,'Тип срока годности' = s.expiration_date_type
+						--,'Размер единицы продукции ДхШхВ (мм)' = s.unit_size_name
+						--,'Количество коробов на поддоне (шт)' = s.quantity_box_on_pallet
+						--,'Количество вложений в короб (шт)' = s.quantity_in_box
+						--,'Единица хранения остатков' = s.product_storage_type
+						--,'Вес продукции в коробе нетто (кг)' = s.product_net_weight_in_box_kg
+						--,'Вес единицы продукции нетто (кг)' = s.unit_net_weight_kg
+						--,'Вес упаковки с единицы продукции (кг)' = s.packaging_unit_net_weight_kg
+						--,'Вес дополнительной упаковки в коробе (кг)' = s.packaging_net_weight_in_box_kg
+						--,'Вес нетто продукции на поддоне (кг)' = s.product_net_weight_on_pallet_kg
+						--,'Описание срока хранения и температурного режима' = s.product_storage_description
+						--,'Термосостояние' = s.freezing_type_name
+						,'Общий срок годности, дни' = s.expiration_date_in_days
+						--,'Тип срока годности' = s.expiration_date_type
 						--,'срок годности в днях от' = s.expiration_date_in_days_from
 						--,'срок годности в днях до' = s.expiration_date_in_days_to
 						--,'Категория ОСГ' = s.category_residual_expiration_date
-						,'НДС' = s.vat
+						--,'НДС' = s.vat
 						,'Дата обновления' = s.update_dt_tm
 						--,'Пользователь обновил' = s.update_user	
 						,'Кол-во дней для норматива остатков' = sm.number_days_normative_stock		 

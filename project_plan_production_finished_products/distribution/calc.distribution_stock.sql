@@ -55,8 +55,7 @@ BEGIN
 					-- ОСТАТКИ
 					IF OBJECT_ID('tempdb..#stock','U') is not null drop table #stock; 
 				
-
-					select ROW_NUMBER() over (order by s.sap_id, s.stock_on_date, s.stock_current_KOS, s.stock_kg) as stock_id
+					select convert(int, ROW_NUMBER() over (order by s.sap_id, s.stock_on_date, s.stock_current_KOS, s.stock_kg)) as stock_id
 							,s.stock_row_id
 							,s.stock_name_table
 							,s.sap_id
@@ -95,18 +94,16 @@ BEGIN
 					join #sap_id_group as sg on s.sap_id = sg.sap_id;
 
 					-- индекс
-					CREATE NONCLUSTERED INDEX NoCl_stock_id ON #stock (stock_id asc)
-					include(stock_on_date, stock_current_KOS, stock_KOS_in_day, stock_kg); 
+					CREATE NONCLUSTERED INDEX NoCl_stock ON #stock (sap_id_group, stock_id asc, stock_on_date desc)
+					include(stock_current_KOS, stock_KOS_in_day, production_attribute); 
+					
+					CREATE CLUSTERED INDEX Cl_stock_id ON #stock (stock_id);  
 							
-							
-
-
-								
 
 					-- ОТГРУЗКА
 					IF OBJECT_ID('tempdb..#shipment','U') is not null drop table #shipment; 
 
-					select ROW_NUMBER() over (order by o.sap_id, o.shipment_date, o.shipment_priority, o.shipment_min_KOS, o.shipment_kg desc) as shipment_id
+					select convert(int,   ROW_NUMBER() over (order by o.sap_id, o.shipment_date, o.shipment_priority, o.shipment_min_KOS, o.shipment_kg desc)   ) as shipment_id
 						  ,o.name_table as shipment_name_table
 						  ,o.row_id as shipment_row_id
 						  ,o.sap_id
@@ -165,7 +162,8 @@ BEGIN
 
 					
 					-- индекс
-					CREATE NONCLUSTERED INDEX NoCl_shipment_id ON #shipment (shipment_id); 
+					--CREATE NONCLUSTERED INDEX NoCl_shipment_id ON #shipment (shipment_id); 
+					CREATE CLUSTERED INDEX Cl_shipment_id ON #shipment (shipment_id); 
 
 					
 			
@@ -178,7 +176,7 @@ BEGIN
 			------------------
 
 			-- переменные для отгрузки
-			declare @shipment_id						int; set @shipment_id = 1;
+			declare @shipment_id						int;			set @shipment_id = 1;
 			declare @shipment_sap_id					bigint; 
 			declare @shipment_sap_id_group				smallint; 
 			declare @shipment_production_attribute		varchar(4);
@@ -190,10 +188,10 @@ BEGIN
 			
 			-- переменные для остатков
 			declare @stock_id							int;
-			declare @stock_kg							dec(11,5);
-			declare @stock_shipment_kg					dec(11,5);
 			declare @stock_row_id						int;			-- log
 			declare @stock_name_table					varchar(40);	-- log
+			declare @stock_kg							dec(11,5);
+			declare @stock_shipment_kg					dec(11,5);
 			
 
 
@@ -246,13 +244,37 @@ BEGIN
 											  and s.stock_on_date <= @shipment_date
 											  and @shipment_min_KOS < s.stock_current_KOS - (s.stock_KOS_in_day * DATEDIFF(day, s.stock_on_date, @shipment_date))  --ПРОВЕРКА: КОС остатков больше мин КОС на отгрузку
 											order by s.stock_id
+												 ,case @shipment_production_attribute
+														when 'П1' then 
+																		case s.production_attribute 
+																				when 'П4' then 1
+																				when 'П7' then 2
+																				when 'П1' then 3
+																		 end
+														when 'П4' then 
+																		case s.production_attribute 
+																				when 'П4' then 4
+																				when 'П7' then 5
+																				when 'П1' then 6
+																		 end
+																		 
+														when 'П7' then 
+																		case s.production_attribute 
+																				when 'П4' then 7
+																				when 'П1' then 8
+																				when 'П7' then 9
+																		 end
+												  end
+															--П1	ОАО ЧМПЗ Москва
+															--П4	ОАО ЧМПЗ Калининград 
+															--П7	ЗАО Черкизово-Кашира
+
 										 ) as s;
 
 
 									-- ПРОВЕРКА: если остатков нет
 									if @stock_id is null CONTINUE;
 
-	
 									set @stock_shipment_kg = iif(@shipment_kg > @stock_kg, @stock_kg, @shipment_kg);
 															
 									-- ПИШЕМ ЛОГИ РАСПРДЕЛЕНИЯ ОСТАТКОВ | ЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГ

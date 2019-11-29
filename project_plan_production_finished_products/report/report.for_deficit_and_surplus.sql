@@ -155,16 +155,15 @@ BEGIN
 										select 
 												 lg.stock_row_id
 												,lg.stock_name_table
-												,sh.shipment_date
+												,lg.shipment_date + 1
 												,sum(lg.stock_shipment_kg) as shipment_kg
 										from project_plan_production_finished_products.data_import.stock_log_calculation as lg
-										join #shipments_union as sh on lg.shipment_row_id = sh.row_id and lg.shipment_name_table  = sh.name_table
 										where not lg.stock_shipment_kg is null
 										group by 
 												 lg.stock_row_id
 												,lg.stock_name_table
-												,sh.shipment_date
-									  ) as lst on st.row_id = lst.stock_row_id and st.name_table = lst.stock_name_table and cl.dt_tm = lst.shipment_date + 1
+												,lg.shipment_date
+									  ) as lst on st.row_id = lst.stock_row_id and st.name_table = lst.stock_name_table and cl.dt_tm = lst.shipment_date
 							--order by st.row_id
 						) as st
 					where st.stock_kg > 0

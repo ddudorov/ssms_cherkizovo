@@ -1,6 +1,7 @@
 ﻿use project_plan_production_finished_products 
 
 --exec project_plan_production_finished_products.report.log_distribution @log_type = 'stuffing_plan'
+--exec project_plan_production_finished_products.report.log_distribution @log_type = 'stock'
 
 go
 
@@ -10,33 +11,50 @@ BEGIN
 
 			if @log_type = 'stock' -- остатки
 			begin
+						
+						with shipments_stock as  
+						(
 
+									select sp.row_id, sp.name_table, sp.sap_id, sp.stuffing_id, sp.shipment_date, sp.shipment_priority, sp.shipment_min_KOS
+									from project_plan_production_finished_products.data_import.shipments_SAP as sp										
+									union all
+									select sp.row_id, sp.name_table, sp.sap_id, sp.stuffing_id, sp.shipment_date, sp.shipment_priority, sp.shipment_min_KOS
+									from project_plan_production_finished_products.data_import.shipments_1C as sp	
+									union all
+									select sp.row_id, sp.name_table, sp.sap_id, sp.stuffing_id, sp.shipment_date, sp.shipment_priority, sp.shipment_min_KOS
+									from project_plan_production_finished_products.data_import.shipments_sales_plan as sp	
+						)
+						
 						SELECT 
-								 'Порядок'				= l.sort_id
-								,'Источник потребности' = l.shipment_name_table
-								,'SAP ID потребности'	= convert(varchar(24),FORMAT(COALESCE(sp.sap_id, c1.sap_id, sl.sap_id), '000000000000000000000000'))
-								,'Дата отгрузки'		= COALESCE(sp.shipment_date, c1.shipment_date, sl.shipment_date)
-								,'Пр отг'				= COALESCE(sp.shipment_priority, c1.shipment_priority, sl.shipment_priority)
-								,'Мин КОС отгрузки'		= COALESCE(sp.shipment_min_KOS, c1.shipment_min_KOS, sl.shipment_min_KOS)
-								,'Потреность в отг'		= l.shipment_kg
+								 'Порядок'								= l.sort_id
+								,'Источник потребности'					= l.shipment_name_table
+								,'SAP ID потребности'					= convert(varchar(24),FORMAT(sp.sap_id, '000000000000000000000000'))
+								,'Наименование артикула потребность'	= i1.product_1C_full_name
+								,'Код набивки'							= sp.stuffing_id
+								,'Дата отгрузки'						= sp.shipment_date
+								,'Пр отг'								= sp.shipment_priority
+								,'Мин КОС отгрузки'						= sp.shipment_min_KOS
+								,'Потреность в отг'						= l.shipment_kg
 
-								,'Источник остатка'		= l.stock_name_table
-								,'Остатки ID'			= l.stock_row_id
-								,'SAP ID остатков'		= convert(varchar(24),FORMAT(COALESCE(st.sap_id, tr.sap_id), '000000000000000000000000'))
+								,'Источник остатка'						= l.stock_name_table
+								,'Остатки ID'							= l.stock_row_id
+								,'SAP ID остатков'						= convert(varchar(24),FORMAT(COALESCE(st.sap_id, tr.sap_id), '000000000000000000000000'))
+								,'Наименование артикула остатков'		= i2.product_1C_full_name
 
-								,'Ост на дату'			= COALESCE(st.stock_on_date, tr.stock_on_date)
-								,'КОС на дату'			= COALESCE(st.stock_current_KOS, tr.stock_current_KOS)
-								,'Ост на дату отгрузки' = l.stock_kg
+								,'Ост на дату'							= COALESCE(st.stock_on_date, tr.stock_on_date)
+								,'КОС на дату'							= COALESCE(st.stock_current_KOS, tr.stock_current_KOS)
+								,'Ост на дату отгрузки'					= l.stock_kg
 							
-								,'Отг из остатков'		=l.stock_shipment_kg
+								,'Отг из остатков'						=l.stock_shipment_kg
 
 						FROM project_plan_production_finished_products.data_import.stock_log_calculation		as l
 						left join project_plan_production_finished_products.data_import.stock					as st on l.stock_row_id = st.row_id		and l.stock_name_table = st.name_table
 						left join project_plan_production_finished_products.data_import.transits				as tr on l.stock_row_id = tr.row_id		and l.stock_name_table = tr.name_table
-						left join project_plan_production_finished_products.data_import.shipments_SAP			as sp on l.shipment_row_id = sp.row_id	and l.shipment_name_table = sp.name_table
-						left join project_plan_production_finished_products.data_import.shipments_1C			as c1 on l.shipment_row_id = c1.row_id	and l.shipment_name_table = c1.name_table
-						left join project_plan_production_finished_products.data_import.shipments_sales_plan	as sl on l.shipment_row_id = sl.row_id	and l.shipment_name_table = sl.name_table
-						order by l.sort_id
+						left join shipments_stock																as sp on l.shipment_row_id = sp.row_id	and l.shipment_name_table = sp.name_table
+						left join cherkizovo.info.products_sap													as i1 on sp.sap_id = i1.sap_id
+						left join cherkizovo.info.products_sap													as i2 on COALESCE(st.sap_id, tr.sap_id) = i2.sap_id
+						order by l.sort_id;
+
 
 			end;
 
