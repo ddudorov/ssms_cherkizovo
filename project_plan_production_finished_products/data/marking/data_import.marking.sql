@@ -43,13 +43,15 @@ create table project_plan_production_finished_products.data_import.marking
 
 --- логи остатки
 select * from project_plan_production_finished_products.data_import.marking_log_calculation
+--drop table project_plan_production_finished_products.data_import.marking_log_calculation
 create table project_plan_production_finished_products.data_import.marking_log_calculation
 ( 
 		 sort_id				INT				NOT NULL
-		,marking_row_id			INT					NULL
 		,shipment_row_id		INT				NOT NULL	
-		,shipment_name_table	varchar(40)			NULL	
+		,shipment_name_table	varchar(40)			NULL
+		,shipment_date			datetime			NULL		
 		,shipment_kg			dec(11,5)		NOT NULL
+		,marking_row_id			INT					NULL
 		,marking_kg				dec(11,5)			NULL	
 		,marking_shipment_kg	dec(11,5)			NULL				
 );

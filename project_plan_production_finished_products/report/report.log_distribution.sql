@@ -13,19 +13,21 @@ BEGIN
 
 						SELECT 
 								 'Порядок'				= l.sort_id
-								,'Источник остатка'		= l.stock_name_table
-								,'Остатки ID'			= l.stock_row_id
-								,'SAP ID'				= convert(varchar(24),FORMAT(COALESCE(sp.sap_id, c1.sap_id, sl.sap_id, st.sap_id, tr.sap_id), '000000000000000000000000'))
-								,'Ост на дату'			= COALESCE(st.stock_on_date, tr.stock_on_date)
-								,'КОС на дату'			= COALESCE(st.stock_current_KOS, tr.stock_current_KOS)
-								,'Ост на дату отгрузки' = l.stock_kg
-							
 								,'Источник потребности' = l.shipment_name_table
-								,COALESCE(sp.reason_ignore_in_calculate, c1.reason_ignore_in_calculate, sl.reason_ignore_in_calculate) as reason_ignore_in_calculate
+								,'SAP ID потребности'	= convert(varchar(24),FORMAT(COALESCE(sp.sap_id, c1.sap_id, sl.sap_id), '000000000000000000000000'))
 								,'Дата отгрузки'		= COALESCE(sp.shipment_date, c1.shipment_date, sl.shipment_date)
 								,'Пр отг'				= COALESCE(sp.shipment_priority, c1.shipment_priority, sl.shipment_priority)
 								,'Мин КОС отгрузки'		= COALESCE(sp.shipment_min_KOS, c1.shipment_min_KOS, sl.shipment_min_KOS)
 								,'Потреность в отг'		= l.shipment_kg
+
+								,'Источник остатка'		= l.stock_name_table
+								,'Остатки ID'			= l.stock_row_id
+								,'SAP ID остатков'		= convert(varchar(24),FORMAT(COALESCE(st.sap_id, tr.sap_id), '000000000000000000000000'))
+
+								,'Ост на дату'			= COALESCE(st.stock_on_date, tr.stock_on_date)
+								,'КОС на дату'			= COALESCE(st.stock_current_KOS, tr.stock_current_KOS)
+								,'Ост на дату отгрузки' = l.stock_kg
+							
 								,'Отг из остатков'		=l.stock_shipment_kg
 
 						FROM project_plan_production_finished_products.data_import.stock_log_calculation		as l

@@ -21,6 +21,18 @@ BEGIN
 					update project_plan_production_finished_products.data_import.shipments_sales_plan	set stock_shipment_kg = null, stuffing_fact_shipment_kg = null, stuffing_plan_shipment_kg = null;	
 
 
+					-- СОЗДАЕМ ГРУППУ АРТИКУЛОВ, ЧТО БЫ НЕ ЗАВИСИТЬ ОТ ПЛОЩАДКИ
+					IF OBJECT_ID('tempdb..#sap_id_group','U') is not null drop table #sap_id_group;
+					select 
+						 sap_id
+						,DENSE_RANK() over (order by product_clean_full_name, individual_marking_id) as sap_id_group
+						,production_attribute
+						,product_clean_full_name
+						,individual_marking_id
+					into #sap_id_group
+					from cherkizovo.info.products_sap;
+
+
 					-- ЛОГ ОСТАТКОВ
 					TRUNCATE TABLE project_plan_production_finished_products.data_import.stock_log_calculation;
 
@@ -28,15 +40,15 @@ BEGIN
 
 					create table #stock_log_calculation
 					( 
-							 sort_id				INT				NOT NULL IDENTITY(1,1)
-							,stock_row_id			INT					NULL
-							,stock_name_table		varchar(40)			NULL
-							,shipment_row_id		INT				NOT NULL	
-							,shipment_name_table	varchar(40)			NULL	
-							,shipment_kg			dec(11,5)		NOT NULL
-							,stock_kg				dec(11,5)			NULL	
-							,stock_shipment_kg		dec(11,5)			NULL	
-							
+							 sort_id				INT				NOT NULL IDENTITY(1,1)  
+							,shipment_row_id		INT				NOT NULL				
+							,shipment_name_table	varchar(40)		NOT NULL
+							,shipment_date			datetime		NOT NULL			
+							,shipment_kg			dec(11,5)		NOT NULL				
+							,stock_row_id			INT					NULL				
+							,stock_name_table		varchar(40)			NULL				
+							,stock_kg				dec(11,5)			NULL				
+							,stock_shipment_kg		dec(11,5)			NULL				
 					);
 
 					
@@ -48,6 +60,8 @@ BEGIN
 							,s.stock_row_id
 							,s.stock_name_table
 							,s.sap_id
+							,sg.sap_id_group
+							,sg.production_attribute
 							,s.stock_on_date
 							,s.stock_current_KOS
 							,s.stock_KOS_in_day
@@ -78,6 +92,7 @@ BEGIN
 							from project_plan_production_finished_products.data_import.transits as s
 							where s.reason_ignore_in_calculate is null
 						 ) as s
+					join #sap_id_group as sg on s.sap_id = sg.sap_id;
 
 					-- индекс
 					CREATE NONCLUSTERED INDEX NoCl_stock_id ON #stock (stock_id asc)
@@ -95,6 +110,8 @@ BEGIN
 						  ,o.name_table as shipment_name_table
 						  ,o.row_id as shipment_row_id
 						  ,o.sap_id
+						  ,sg.sap_id_group
+						  ,sg.production_attribute
 						  ,o.shipment_min_KOS
 						  ,o.shipment_date
 						  ,o.shipment_kg
@@ -142,11 +159,9 @@ BEGIN
 							  and o.shipment_delete = 0
 							  and o.reason_ignore_in_calculate is null
 
-
-
-
 						 ) as o
-					where o.sap_id in (select s.sap_id from #stock as s);
+					join #sap_id_group as sg on o.sap_id = sg.sap_id;
+					--where o.sap_id in (select s.sap_id from #stock as s)
 
 					
 					-- индекс
@@ -162,22 +177,23 @@ BEGIN
 			-- расчет остатков
 			------------------
 
-
 			-- переменные для отгрузки
-			declare @shipment_id			int; set @shipment_id = 1;
-			declare @shipment_sap_id		bigint; 
-			declare @shipment_date			datetime; 
-			declare @shipment_min_KOS		DEC(7,6);
-			declare @shipment_kg			dec(11,5);
-			declare @shipment_row_id		int;			-- log
-			declare @shipment_name_table	varchar(40);	-- log
+			declare @shipment_id						int; set @shipment_id = 1;
+			declare @shipment_sap_id					bigint; 
+			declare @shipment_sap_id_group				smallint; 
+			declare @shipment_production_attribute		varchar(4);
+			declare @shipment_date						datetime;		-- log
+			declare @shipment_min_KOS					DEC(7,6);
+			declare @shipment_kg						dec(11,5);
+			declare @shipment_row_id					int;			-- log
+			declare @shipment_name_table				varchar(40);	-- log
 			
 			-- переменные для остатков
-			declare @stock_id				int;
-			declare @stock_kg				dec(11,5);
-			declare @stock_shipment_kg		dec(11,5);
-			declare @stock_row_id			int;			-- log
-			declare @stock_name_table		varchar(40);	-- log
+			declare @stock_id							int;
+			declare @stock_kg							dec(11,5);
+			declare @stock_shipment_kg					dec(11,5);
+			declare @stock_row_id						int;			-- log
+			declare @stock_name_table					varchar(40);	-- log
 			
 
 
@@ -187,13 +203,15 @@ BEGIN
 			begin
 						-- заполняем переменные по отгрузке
 						select
-								 @shipment_id			= max(o.shipment_id)
-								,@shipment_sap_id		= max(o.sap_id)
-								,@shipment_date			= max(o.shipment_date)
-								,@shipment_min_KOS		= max(o.shipment_min_KOS)
-								,@shipment_kg			= max(o.shipment_kg)
-								,@shipment_row_id		= max(o.shipment_row_id)
-								,@shipment_name_table	= max(o.shipment_name_table)
+								 @shipment_id						= max(o.shipment_id)
+								,@shipment_sap_id					= max(o.sap_id)
+								,@shipment_sap_id_group				= max(o.sap_id_group)
+								,@shipment_production_attribute		= max(o.production_attribute)
+								,@shipment_date						= max(o.shipment_date)
+								,@shipment_min_KOS					= max(o.shipment_min_KOS)
+								,@shipment_kg						= max(o.shipment_kg)
+								,@shipment_row_id					= max(o.shipment_row_id)
+								,@shipment_name_table				= max(o.shipment_name_table)
 						from #shipment as o
 						where o.shipment_id = @shipment_id;
 
@@ -208,8 +226,8 @@ BEGIN
 									 
 									-- ПИШЕМ ЛОГИ РАСПРДЕЛЕНИЯ ОСТАТКОВ | ЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГ
 									insert into #stock_log_calculation
-									(		shipment_row_id,  shipment_name_table,  shipment_kg)	
-									values(@shipment_row_id, @shipment_name_table, @shipment_kg);
+									(		shipment_row_id,  shipment_name_table,  shipment_date,  shipment_kg)	
+									values(@shipment_row_id, @shipment_name_table, @shipment_date, @shipment_kg);
 
 
 									-- БЕРЕМ ОСТАТКИ
@@ -221,8 +239,9 @@ BEGIN
 									from (
 											select top 1 s.stock_id, s.stock_kg, s.stock_row_id, s.stock_name_table
 											from #stock as s
-											where s.sap_id = @shipment_sap_id
-											  and s.stock_kg > 0.0
+											where s.stock_kg > 0.0
+											  and s.sap_id_group = @shipment_sap_id_group											
+											  --and s.sap_id = @shipment_sap_id
 											  and s.stock_id > @stock_id
 											  and s.stock_on_date <= @shipment_date
 											  and @shipment_min_KOS < s.stock_current_KOS - (s.stock_KOS_in_day * DATEDIFF(day, s.stock_on_date, @shipment_date))  --ПРОВЕРКА: КОС остатков больше мин КОС на отгрузку
@@ -238,8 +257,8 @@ BEGIN
 															
 									-- ПИШЕМ ЛОГИ РАСПРДЕЛЕНИЯ ОСТАТКОВ | ЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГ
 									insert into #stock_log_calculation
-									(		stock_row_id,  stock_name_table,  shipment_row_id,  shipment_name_table,  shipment_kg,  stock_kg,  stock_shipment_kg)	
-									values(@stock_row_id, @stock_name_table, @shipment_row_id, @shipment_name_table, @shipment_kg, @stock_kg, @stock_shipment_kg);
+										  ( shipment_row_id,  shipment_name_table,  shipment_date,  shipment_kg,     stock_row_id,  stock_name_table,  stock_kg,  stock_shipment_kg)	
+									values(@shipment_row_id, @shipment_name_table, @shipment_date, @shipment_kg,    @stock_row_id, @stock_name_table, @stock_kg, @stock_shipment_kg);
 									
 									-- РАСПРЕДЕЛЯЕМ: если заказали больше чем на остатках, но берем кол-во на остатках или кол-во заказанного	
 									update #shipment	set shipment_kg		= shipment_kg	- @stock_shipment_kg	where shipment_id = @shipment_id;

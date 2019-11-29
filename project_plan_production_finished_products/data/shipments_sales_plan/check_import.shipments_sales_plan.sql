@@ -208,7 +208,7 @@ BEGIN
 							,sm2.stuffing_id
 					from cherkizovo.info.products_sap													as s1
 					join project_plan_production_finished_products.info.finished_products_sap_id_manual as sm1 on s1.sap_id = sm1.sap_id
-					join cherkizovo.info.products_sap													as s2  on isnull(sm1.SAP_id_correct_manual, sm1.SAP_id) = s2.sap_id 
+					join cherkizovo.info.products_sap													as s2  on isnull(sm1.sap_id_shipment_manual, sm1.SAP_id) = s2.sap_id 
 					join project_plan_production_finished_products.info.finished_products_sap_id_manual as sm2 on s2.sap_id = sm2.sap_id
 				 ) as s;
 

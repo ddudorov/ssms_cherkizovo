@@ -2,7 +2,7 @@
 "C:\Users\m_roshchin\AppData\Roaming\Microsoft\SQL Server Management Studio\14.0\Templates\Sql\SQLFile.sql"
 
 
-select convert(dec(4,3),0.02)
+select convert(dec(4,3),0.02) 
 
 -- возрощает номер IDENTITY
 select 
@@ -40,7 +40,7 @@ begin
 				,UNIQUE (id_text) 
 			);
 			
-			TRUNCATE TABLE #table											-- очистить таблицу
+			TRUNCATE TABLE #table											-- очистить таблицу всю без условий -- работает быстрее чем delete from [table]
 
 			ALTER TABLE #test ADD			column_name smallint not null;	-- добавление стобца
 			ALTER TABLE #test DROP COLUMN	column_name;					-- удаление стобца
@@ -68,10 +68,10 @@ begin
 			print @v								-- результат
 			select @v								-- результат
 
-			select @v='значение'					-- присвоение значений в запросе
+			select @v='значение 2'					-- присвоение значений в запросе
 			select @v								-- результат
 
-			set @v = (select top 1 'значение')		-- присвоение значений в запросе
+			set @v = (select top 1 'значение 3')	-- присвоение значений в запросе
 			select @v								-- результат
 
 

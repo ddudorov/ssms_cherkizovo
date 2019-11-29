@@ -61,6 +61,7 @@ create table project_plan_production_finished_products.data_import.stuffing_plan
 		,shipment_row_id		INT				NOT NULL	
 		,shipment_name_table	varchar(40)			NULL	
 		,shipment_sap_id		bigint			NOT NULL
+		,shipment_date			datetime			NULL	
 		,shipment_kg			dec(11,5)		NOT NULL
 		,stuffing_row_id		INT					NULL
 		,stuffing_kg			dec(11,5)			NULL	

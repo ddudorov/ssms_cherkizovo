@@ -51,12 +51,13 @@ select * from project_plan_production_finished_products.data_import.stock_log_ca
 drop table project_plan_production_finished_products.data_import.stock_log_calculation
 create table project_plan_production_finished_products.data_import.stock_log_calculation
 ( 
-		 sort_id				INT				NOT NULL
-		,stock_row_id			INT					NULL
-		,stock_name_table		varchar(40)			NULL	
+		 sort_id				INT				NOT NULL	
 		,shipment_row_id		INT				NOT NULL	
 		,shipment_name_table	varchar(40)			NULL	
+		,shipment_date			datetime			NULL	
 		,shipment_kg			dec(11,5)		NOT NULL
+		,stock_row_id			INT					NULL
+		,stock_name_table		varchar(40)			NULL
 		,stock_kg				dec(11,5)			NULL	
 		,stock_shipment_kg		dec(11,5)			NULL				
 );

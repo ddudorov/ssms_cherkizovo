@@ -2,32 +2,35 @@
 
 -- таблица
 --drop table project_plan_production_finished_products.info.finished_products_sap_id_manual
+
 create table project_plan_production_finished_products.info.finished_products_sap_id_manual
 (
 		 sap_id							BIGINT			NOT NULL
-		,sap_id_correct_manual			BIGINT				NULL	
-		,sap_id_analog_1				BIGINT				NULL
-		,sap_id_analog_2				BIGINT				NULL
+		--,sap_id_correct_manual			BIGINT				NULL	
+		,sap_id_shipment_manual			BIGINT				NULL	
+		,sap_id_stock_manual			BIGINT				NULL	
 		,stuffing_id					VARCHAR(40)		NOT NULL	DEFAULT		'укажите код набивки'
 		,product_status_manual			VARCHAR(100)		NULL	
 		,number_days_normative_stock	smallint			null
 		,CONSTRAINT [PK finished_products_sap_id_manual | sap_id] PRIMARY KEY CLUSTERED (SAP_id) 
 		,CONSTRAINT CHK_SAP_id CHECK (
-											sap_id <> sap_id_correct_manual
-										and sap_id <> sap_id_analog_1
-										and sap_id <> sap_id_analog_2
-										and sap_id_correct_manual <> sap_id_analog_1
-										and sap_id_correct_manual <> sap_id_analog_2
-										and sap_id_analog_1 <> sap_id_analog_2
-										and (   (	 sap_id_analog_1 is null and	 sap_id_analog_2 is null) or
-												(not sap_id_analog_1 is null and	 sap_id_analog_2 is null) or 
-												(not sap_id_analog_1 is null and not sap_id_analog_2 is null)   )
-								     )
+											sap_id <> sap_id_shipment_manual
+										and sap_id <> sap_id_stock_manual
+									 )
+		--						    
+
+		--,CONSTRAINT CHK_SAP_id CHECK (
+		--									sap_id <> sap_id_correct_manual
+		--								and sap_id <> sap_id_analog_1
+		--								and sap_id <> sap_id_analog_2
+		--								and sap_id_correct_manual <> sap_id_analog_1
+		--								and sap_id_correct_manual <> sap_id_analog_2
+		--								and sap_id_analog_1 <> sap_id_analog_2
+		--								and (   (	 sap_id_analog_1 is null and	 sap_id_analog_2 is null) or
+		--										(not sap_id_analog_1 is null and	 sap_id_analog_2 is null) or 
+		--										(not sap_id_analog_1 is null and not sap_id_analog_2 is null)   )
+		--						     )
 )
-
-
-go
-
 
 
 
@@ -50,8 +53,6 @@ BEGIN
 			SET NOCOUNT ON;
 
 
-
-
 			-- ПРОВЕРКА НАБИВОК
 			IF OBJECT_ID('tempdb..#check_stuffing','U') is not null drop table #check_stuffing;
 
@@ -64,17 +65,25 @@ BEGIN
 			
 
 
+			-- ПРОВЕРКА КОГДА У ИСКЛЮЧЕНИЯ УКАЗАНО ИСКЛЮЧЕНИЕ ДЛЯ ПОТРЕБНОСТИ
+			IF OBJECT_ID('tempdb..#check_sap_id_shipment_manual','U') is not null drop table #check_sap_id_shipment_manual;
 
-			-- ПРОВЕРКА КОГДА У ИСКЛЮЧЕНИЯ УКАЗАНО ИСКЛЮЧЕНИЕ
-			IF OBJECT_ID('tempdb..#check_sap_id_correct_manual','U') is not null drop table #check_sap_id_correct_manual;
-
-			select cm2.SAP_id, 'Исключение имеет исключение' as error
-			into #check_sap_id_correct_manual
+			select cm2.SAP_id, 'SAP ID потребность имеет исключение' as error
+			into #check_sap_id_shipment_manual
 			from project_plan_production_finished_products.info.finished_products_sap_id_manual as cm
-			join project_plan_production_finished_products.info.finished_products_sap_id_manual as cm2 on cm.SAP_id_correct_manual = cm2.SAP_id
-			where not cm2.SAP_id_correct_manual is null;
+			join project_plan_production_finished_products.info.finished_products_sap_id_manual as cm2 on cm.sap_id_shipment_manual = cm2.SAP_id
+			where not cm2.SAP_id_shipment_manual is null;
+			
 			
 
+			-- ПРОВЕРКА КОГДА У ИСКЛЮЧЕНИЯ УКАЗАНО ИСКЛЮЧЕНИЕ ДЛЯ ОСТАТКОВ
+			IF OBJECT_ID('tempdb..#check_sap_id_stock_manual','U') is not null drop table #check_sap_id_stock_manual;
+
+			select cm2.SAP_id, 'SAP ID остатки имеет исключение' as error
+			into #check_sap_id_stock_manual
+			from project_plan_production_finished_products.info.finished_products_sap_id_manual as cm
+			join project_plan_production_finished_products.info.finished_products_sap_id_manual as cm2 on cm.sap_id_stock_manual = cm2.SAP_id
+			where not cm2.SAP_id_stock_manual is null;
 
 
 
@@ -88,74 +97,28 @@ BEGIN
 					from (
 							select cm.SAP_id
 							from project_plan_production_finished_products.info.finished_products_sap_id_manual as cm
-							where cm.SAP_id_correct_manual is null
+							where cm.sap_id_shipment_manual is null
 
 							union
 
-							select cm.SAP_id_correct_manual
+							select cm.sap_id_shipment_manual
 							from project_plan_production_finished_products.info.finished_products_sap_id_manual as cm
-							where not cm.SAP_id_correct_manual is null
+							where not cm.sap_id_shipment_manual is null
 						 ) as cm
 					join cherkizovo.info.products_sap as ps on cm.sap_id = ps.sap_id
 				 ) as cm
 			where not cm.error is null;
 
 			
-			-- АНАЛОГ ИМЕЕТ ИСКЛЮЧЕНИЕ И УКАЗАН НЕСКОЛЬКО РАЗ
-			IF OBJECT_ID('tempdb..#check_sap_id_analog','U') is not null drop table #check_sap_id_analog;
-
-			select cm.sap_id, cm.error
-			into #check_sap_id_analog
-			from (
-				
-					select 
-							 cm1.sap_id
-							,cm1.sap_id_analog_1
-							,cm1.sap_id_analog_2
-							,case 
-									when isnull(a2.count_analog, 1) > 1			then 'Аналог указан больше 1 раза: '	+  convert(varchar(24),FORMAT(cm1.sap_id_analog_2, '000000000000000000000000') ) 
-									when isnull(a1.count_analog, 1) > 1			then 'Аналог указан больше 1 раза: '	+  convert(varchar(24),FORMAT(cm1.sap_id_analog_1, '000000000000000000000000') ) 
-									when not cm2.sap_id_correct_manual is null	then 'Аналог имеет исключение: '		+  convert(varchar(24),FORMAT(cm1.sap_id_analog_1, '000000000000000000000000') ) 
-									when not cm3.sap_id_correct_manual is null	then 'Аналог имеет исключение: '		+  convert(varchar(24),FORMAT(cm1.sap_id_analog_2, '000000000000000000000000') ) 	
-							 end as error
-							,a1.count_analog as count_analog_1
-							,a2.count_analog as count_analog_2	
-					from project_plan_production_finished_products.info.finished_products_sap_id_manual as cm1 
-					left 
-					join project_plan_production_finished_products.info.finished_products_sap_id_manual as cm2 on cm1.sap_id_analog_1 = cm2.sap_id
-					left 
-					join project_plan_production_finished_products.info.finished_products_sap_id_manual as cm3 on cm1.sap_id_analog_2 = cm3.sap_id
-					left
-					join (	select sap_id_analog, COUNT(1) as count_analog
-							from (  select sap_id_analog_1 as sap_id_analog from project_plan_production_finished_products.info.finished_products_sap_id_manual where not sap_id_analog_1 is null
-									union all
-									select sap_id_analog_2 as sap_id_analog from project_plan_production_finished_products.info.finished_products_sap_id_manual where not sap_id_analog_2 is null  ) as cm
-							group by sap_id_analog  ) as a1 on cm1.sap_id_analog_1 = a1.sap_id_analog
-					left
-					join (	select sap_id_analog, COUNT(1) as count_analog
-							from (  select sap_id_analog_1 as sap_id_analog from project_plan_production_finished_products.info.finished_products_sap_id_manual where not sap_id_analog_1 is null
-									union all
-									select sap_id_analog_2 as sap_id_analog from project_plan_production_finished_products.info.finished_products_sap_id_manual where not sap_id_analog_2 is null  ) as cm
-							group by sap_id_analog  ) as a2 on cm1.sap_id_analog_2 = a2.sap_id_analog
-						 
-					where not cm1.sap_id_analog_1 is null or not cm1.sap_id_analog_2 is null
-				 ) as cm
-			where not cm.error is null;
-
-
-
-
-
 			select 
 						 'SAP ID'				= convert(varchar(24),FORMAT(s.SAP_id, '000000000000000000000000') )
-						,'SAP ID исключение'	= convert(varchar(24),FORMAT(sm.SAP_id_correct_manual, '000000000000000000000000') )
-						,'SAP ID аналог 1'		= convert(varchar(24),FORMAT(sm.sap_id_analog_1, '000000000000000000000000') )
-						,'SAP ID аналог 2'		= convert(varchar(24),FORMAT(sm.sap_id_analog_2, '000000000000000000000000') )
+						,'SAP ID потребность'	= convert(varchar(24),FORMAT(sm.sap_id_shipment_manual, '000000000000000000000000') )
+						,'SAP ID остатки'		= convert(varchar(24),FORMAT(sm.sap_id_stock_manual, '000000000000000000000000') )
 						,'Проверка справочника' = nullif(
-														 isnull(	(select top 1 cm.error from #check_stuffing as cm				where s.sap_id = cm.SAP_id) + ' | '		,'')
-														+isnull(	(select top 1 cm.error from #check_sap_id_correct_manual as cm	where s.sap_id = cm.SAP_id) + ' | '		,'')
-														+isnull(	(select top 1 cm.error from #check_sap_id_analog as cm			where s.sap_id = cm.SAP_id) + ' | '		,'')
-														+isnull(	(select top 1 cm.error from #check_double_name_1c as cm			where s.sap_id = cm.SAP_id) + ' | '		,'')
+														  isnull(	(select top 1 cm.error from #check_stuffing as cm				where s.sap_id = cm.SAP_id) + ' | '		,'')
+														+ isnull(	(select top 1 cm.error from #check_sap_id_shipment_manual as cm	where s.sap_id = cm.SAP_id) + ' | '		,'')
+														+ isnull(	(select top 1 cm.error from #check_sap_id_stock_manual as cm	where s.sap_id = cm.SAP_id) + ' | '		,'')
+														+ isnull(	(select top 1 cm.error from #check_double_name_1c as cm			where s.sap_id = cm.SAP_id) + ' | '		,'')
 														,'')
 						,'Код 1 уровня'			= s.category_1_level_id 
 						,'Название 1 уровня'	= s.category_1_level_name
@@ -237,13 +200,14 @@ BEGIN
 			IF OBJECT_ID('tempdb..#check_stuffing','U') is not null drop table #check_stuffing;
 
 			-- ПРОВЕРКА КОГДА У ИСКЛЮЧЕНИЯ УКАЗАНО ИСКЛЮЧЕНИЕ
-			IF OBJECT_ID('tempdb..#check_sap_id_correct_manual','U') is not null drop table #check_sap_id_correct_manual;
+			IF OBJECT_ID('tempdb..#check_sap_id_shipment_manual','U') is not null drop table #check_sap_id_shipment_manual;
+
+			
+			-- ПРОВЕРКА КОГДА У ИСКЛЮЧЕНИЯ УКАЗАНО ИСКЛЮЧЕНИЕ
+			IF OBJECT_ID('tempdb..#check_sap_id_stock_manual','U') is not null drop table #check_sap_id_stock_manual;
 
 			-- НАИМЕНОВАНИЕ ВОЗРОЩАЕТ РАЗНЫЕ SAP ID
 			IF OBJECT_ID('tempdb..#check_double_name_1c','U') is not null drop table #check_double_name_1c;
-			
-			-- АНАЛОГ ИМЕЕТ ИСКЛЮЧЕНИЕ И УКАЗАН НЕСКОЛЬКО РАЗ
-			IF OBJECT_ID('tempdb..#check_sap_id_analog','U') is not null drop table #check_sap_id_analog;
 			
 end;
 
