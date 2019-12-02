@@ -5,7 +5,7 @@
 -- description: Шаблон для создание SQL скриптов
 ---------------------
 
-use cherkizovo; go;
+use cherkizovo; go; 123
 
 
 
