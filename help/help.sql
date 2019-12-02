@@ -1,3 +1,5 @@
+test
+
 -- изменить на  UTF-8 файл и тогда все скрипты будут сразу  -- пока не понятно
 "C:\Users\m_roshchin\AppData\Roaming\Microsoft\SQL Server Management Studio\14.0\Templates\Sql\SQLFile.sql"
 
