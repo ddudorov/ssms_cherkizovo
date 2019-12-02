@@ -32,9 +32,9 @@ create table project_plan_production_finished_products.data_import.shipments_sal
 		,shipment_delete				tinyint					NOT NULL default 0
 		,shipment_exclude_for_stuffing_plan	tinyint				NOT NULL default 0
 		
-		,shipment_promo_status			VARCHAR(50)				NULL
-		,shipment_promo					VARCHAR(7)				NULL
-		,shipment_promo_kos_listing		VARCHAR(20)				NULL
+		,shipment_promo_status			VARCHAR(100)			NULL
+		,shipment_promo					VARCHAR(100)			NULL
+		,shipment_promo_kos_listing		VARCHAR(100)			NULL
 
 		,shipment_branch_id				VARCHAR(20)				NULL	
 		,shipment_branch_name			VARCHAR(100)			NULL	
