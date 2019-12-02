@@ -86,9 +86,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "transits", "transits", "{2D
 		project_plan_production_finished_products\data\transits\data_import.transits.sql = project_plan_production_finished_products\data\transits\data_import.transits.sql
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "info_excel", "info_excel", "{B79A3BE2-DD2F-4D2A-BBDC-8DD02295AE30}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "data_type", "data_type", "{B79A3BE2-DD2F-4D2A-BBDC-8DD02295AE30}"
 	ProjectSection(SolutionItems) = preProject
-		project_plan_production_finished_products\data\info_excel\data_import.info_excel.sql = project_plan_production_finished_products\data\info_excel\data_import.info_excel.sql
+		project_plan_production_finished_products\data\data_type\data_import.data_type.sql = project_plan_production_finished_products\data\data_type\data_import.data_type.sql
+		project_plan_production_finished_products\data\data_type\data_import.info_excel_del.sql = project_plan_production_finished_products\data\data_type\data_import.info_excel_del.sql
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "distribution", "distribution", "{AA1A981B-4C1A-4788-A516-6EE058B7EADE}"
@@ -107,12 +108,26 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "distribution_stuffing", "di
 		project_plan_production_finished_products\distribution\distribution_stuffing\calc.distribution_stuffing_shipment del.sql = project_plan_production_finished_products\distribution\distribution_stuffing\calc.distribution_stuffing_shipment del.sql
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cherkizovo", "cherkizovo", "{5E2D2B2B-F23C-49D5-9000-A5C9DFCAB56A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "info", "info", "{5E0A723A-9E7C-436C-8961-1E139EB890C0}"
+	ProjectSection(SolutionItems) = preProject
+		cherkizovo\info\info.calendar.sql = cherkizovo\info\info.calendar.sql
+		cherkizovo\info\info.products_sap.sql = cherkizovo\info\info.products_sap.sql
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shipments", "shipments", "{E16CA595-B133-4D92-9A58-D68FE41CD75B}"
+	ProjectSection(SolutionItems) = preProject
+		project_plan_production_finished_products\data\shipments\check_import.shipments.sql = project_plan_production_finished_products\data\shipments\check_import.shipments.sql
+		project_plan_production_finished_products\data\shipments\data_import.shipments.sql = project_plan_production_finished_products\data\shipments\data_import.shipments.sql
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Default|Default = Default|Default
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{525C4D16-9D32-412D-9B34-146580ED0AD0}.Default|Default.ActiveCfg = Default
+		{5CF03FEF-6860-4435-9CAA-C3C9DA85AC0C}.Default|Default.ActiveCfg = Default
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -132,5 +147,7 @@ Global
 		{B79A3BE2-DD2F-4D2A-BBDC-8DD02295AE30} = {6BAF1633-51A7-4D43-AB85-981299F91516}
 		{AA1A981B-4C1A-4788-A516-6EE058B7EADE} = {820DD553-DFD8-4F36-8B53-BFF441C22E95}
 		{BBCD301B-09BD-4E87-8A79-5A20CAAC4BDB} = {AA1A981B-4C1A-4788-A516-6EE058B7EADE}
+		{5E0A723A-9E7C-436C-8961-1E139EB890C0} = {5E2D2B2B-F23C-49D5-9000-A5C9DFCAB56A}
+		{E16CA595-B133-4D92-9A58-D68FE41CD75B} = {6BAF1633-51A7-4D43-AB85-981299F91516}
 	EndGlobalSection
 EndGlobal
