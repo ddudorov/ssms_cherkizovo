@@ -1,7 +1,7 @@
 ﻿use project_plan_production_finished_products
 
 -- таблица
---drop table project_plan_production_finished_products.info.finished_products_sap_id_manual
+-- drop table project_plan_production_finished_products.info.finished_products_sap_id_manual
 
 create table project_plan_production_finished_products.info.finished_products_sap_id_manual
 (
@@ -9,25 +9,53 @@ create table project_plan_production_finished_products.info.finished_products_sa
 		,active_before					datetime			NULL
 		,sap_id_shipment_manual			BIGINT				NULL	
 		,sap_id_stock_manual			BIGINT				NULL
+
+		,sap_id_priority_1				BIGINT				null
+		,sap_id_priority_2				BIGINT				null
+		,sap_id_priority_3				BIGINT				null
+
+		,sap_id_group_name				VARCHAR(200)		NULL
 		,stuffing_id					VARCHAR(40)		NOT NULL	DEFAULT		'укажите код набивки'
 		,product_status_manual			VARCHAR(100)		NULL	
 		,number_days_normative_stock	smallint			null
+
 		,CONSTRAINT [PK finished_products_sap_id_manual | sap_id] PRIMARY KEY CLUSTERED (SAP_id) 
-		,CONSTRAINT CHK_SAP_id CHECK (
-											sap_id <> sap_id_shipment_manual
-										and sap_id <> sap_id_stock_manual
-									 )
+		,CONSTRAINT CHK_SAP_id 
+					CHECK (
+								sap_id <> sap_id_shipment_manual and sap_id <> sap_id_stock_manual
+							
+						  )
+		,CONSTRAINT CHK_stuffing_production 
+					CHECK (		
+							   (not sap_id_shipment_manual is null and sap_id_priority_1 is null and sap_id_priority_2 is null and sap_id_priority_3 is null)
+							or (sap_id_shipment_manual is null and sap_id_priority_1 <> sap_id_priority_2 
+															   and sap_id_priority_1 <> sap_id_priority_3
+															   and sap_id_priority_2 <> sap_id_priority_3)
+															   
+						  )
+		
 )
 
-
-
-
-go
-
-
-
-
-
+insert into project_plan_production_finished_products.info.finished_products_sap_id_manual
+(		 sap_id
+		,active_before
+		,sap_id_shipment_manual
+		,sap_id_stock_manual
+		,stuffing_id
+		,product_status_manual
+		,number_days_normative_stock)
+select *
+from cherkizovo.temp.t
+select 
+		 sap_id
+		,active_before
+		,sap_id_shipment_manual
+		,sap_id_stock_manual
+		,stuffing_id
+		,product_status_manual
+		,number_days_normative_stock
+into #ttt
+from project_plan_production_finished_products.info.finished_products_sap_id_manual
 
 
 
@@ -100,6 +128,11 @@ BEGIN
 						,'Постребность до'		= sm.active_before
 						,'SAP ID потребность'	= convert(varchar(24),FORMAT(sm.sap_id_shipment_manual, '000000000000000000000000') )
 						,'SAP ID остатки'		= convert(varchar(24),FORMAT(sm.sap_id_stock_manual, '000000000000000000000000') )
+			
+						,'SAP ID приоритет 1 для набивки' = convert(varchar(24),FORMAT(sm.sap_id_priority_1, '000000000000000000000000') )	
+						,'SAP ID приоритет 2 для набивки' = convert(varchar(24),FORMAT(sm.sap_id_priority_2, '000000000000000000000000') )
+						,'SAP ID приоритет 3 для набивки' = convert(varchar(24),FORMAT(sm.sap_id_priority_3, '000000000000000000000000') )	
+								
 						,'Проверка справочника' = nullif(
 														  isnull(	(select top 1 cm.error from #check_stuffing as cm				where s.sap_id = cm.SAP_id) + ' | '		,'')
 														+ isnull(	(select top 1 cm.error from #check_sap_id_shipment_manual as cm	where s.sap_id = cm.SAP_id) + ' | '		,'')

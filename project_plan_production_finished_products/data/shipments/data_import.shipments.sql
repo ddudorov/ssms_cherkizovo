@@ -19,10 +19,10 @@ create table project_plan_production_finished_products.data_import.shipments
 		,shipment_stuffing_id						VARCHAR(40)				NULL
 		,shipment_stuffing_id_box					VARCHAR(40)				NULL
 		,shipment_stuffing_id_box_row_id			INT						NULL
-		,shipment_stuffing_id_box_type				TINYINT					NULL
+		,shipment_stuffing_id_box_type				TINYINT				NOT NULL default 0			-- 0 обычная набивка / 1 коробка / 2 разбитая коробка на набивки
 					
-		,shipment_promo								VARCHAR(100)			NULL	-- план продаж	
 		,shipment_promo_status						VARCHAR(100)			NULL	-- план продаж	
+		,shipment_promo								VARCHAR(100)			NULL	-- план продаж	
 		,shipment_promo_kos_listing					VARCHAR(100)			NULL	-- план продаж	
 
 		,sap_id										BIGINT					NULL	-- ПЛАН ПРОДАЖ		
@@ -48,7 +48,6 @@ create table project_plan_production_finished_products.data_import.shipments
 		,shipment_date								DATETIME				NULL
 		,shipment_kg								dec(11,5)			NOT NULL
 
-
 		-- расчетные поля
 		,shipment_from_stock_kg						dec(11,5)				NULL
 		,shipment_after_stock_kg					as nullif( shipment_kg - isnull(shipment_from_stock_kg, 0)   , 0)
@@ -59,7 +58,6 @@ create table project_plan_production_finished_products.data_import.shipments
 		,shipment_from_stuffing_plan_kg				dec(11,5)				NULL
 		,shipment_after_stuffing_plan_kg			as nullif( shipment_kg - isnull(shipment_from_stock_kg, 0) - isnull(shipment_from_stuffing_fact_kg, 0) - isnull(shipment_from_stuffing_plan_kg, 0) , 0)
 
-		
 		,shipment_from_marking_kg					dec(11,5)				NULL
 		,shipment_after_marking_kg					as nullif( shipment_kg - isnull(shipment_from_stock_kg, 0) - isnull(shipment_from_marking_kg, 0)   , 0)
 

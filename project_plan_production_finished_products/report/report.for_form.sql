@@ -26,6 +26,7 @@ BEGIN
 
 
 			-- остатки
+			if 1=0
 			begin
 					
 					insert into #for_form (label_name, label_caption)
@@ -46,6 +47,7 @@ BEGIN
 			
 
 			-- маркировка
+			if 1=0
 			begin		
 						
 					insert into #for_form (label_name, label_caption)
@@ -67,6 +69,7 @@ BEGIN
 
 
 			-- набифка факт
+			if 1=0
 			begin		
 						
 					insert into #for_form (label_name, label_caption)
@@ -88,6 +91,7 @@ BEGIN
 
 
 			-- набифка план
+			if 1=0
 			begin		
 						
 					insert into #for_form (label_name, label_caption)
@@ -107,142 +111,113 @@ BEGIN
 					
 			end;
 
-			-- SAP
+
+
+
+
+			-- shipments_SAP / shipments_1C / shipments_sales_plan продаж / TOTAL
 			begin
 									
 					insert into #for_form (label_name, label_caption)
 					select label_name, label_caption
 					from (
 							select 
-									 isnull(format(max(ie.date_file					),'dd.MM.yyyy'			),'') as 'lbl_SAP_date_file'
-									,isnull(format(sum(s.shipment_kg				),'### ### ### ### ###'	),'') as 'lbl_SAP_shipment_kg'
-									,isnull(format(sum(s.stock_shipment_kg			),'### ### ### ### ###'	),'') as 'lbl_SAP_stock_shipment_kg'
-									,isnull(format(sum(s.stock_net_need_kg			),'### ### ### ### ###'	),'') as 'lbl_SAP_stock_net_need_kg'
-									,isnull(format(sum(s.stuffing_fact_shipment_kg	),'### ### ### ### ###'	),'') as 'lbl_SAP_stuffing_fact_shipment_kg'
-									,isnull(format(sum(s.stuffing_plan_shipment_kg	),'### ### ### ### ###'	),'') as 'lbl_SAP_stuffing_plan_shipment_kg'
-									,isnull(format(sum(s.marking_shipment_kg		),'### ### ### ### ###'	),'') as 'lbl_SAP_marking_shipment_kg'
-									,isnull(format(sum(s.marking_net_need_kg		),'### ### ### ### ###'	),'') as 'lbl_SAP_marking_net_need_kg'
-							from project_plan_production_finished_products.data_import.shipments_SAP as s
-							join project_plan_production_finished_products.data_import.info_excel as ie on s.name_table = ie.name_table
-							where s.stuffing_id_box_type in (0, 1) and s.shipment_delete = 0
-						 ) pv
-					UNPIVOT( label_caption for label_name in (	 lbl_SAP_date_file
-																,lbl_SAP_shipment_kg
-																,lbl_SAP_stock_shipment_kg
-																,lbl_SAP_stock_net_need_kg
-																,lbl_SAP_stuffing_fact_shipment_kg
-																,lbl_SAP_stuffing_plan_shipment_kg
-																,lbl_SAP_marking_shipment_kg
-																,lbl_SAP_marking_net_need_kg)   ) as pv
-					
-			end;
+									-- shipments_SAP
+									 isnull(format(max(	iif(s.shipment_data_type = 'shipments_SAP',			d.data_on_date						, null)	),'dd.MM.yyyy'			),'') as 'lbl_SAP_data_on_date'
 
-			
+									,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_SAP',			s.shipment_kg						, null)	),'### ### ### ### ###'	),'') as 'lbl_SAP_kg'
+									,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_SAP',			s.shipment_from_stock_kg			, null)	),'### ### ### ### ###'	),'') as 'lbl_SAP_from_stock_kg'
+									,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_SAP',			s.shipment_after_stock_kg			, null)	),'### ### ### ### ###'	),'') as 'lbl_SAP_after_stock_kg'
 
-
-			-- 1C
-			begin
+									,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_SAP',			s.shipment_from_stuffing_fact_kg	, null)	),'### ### ### ### ###'	),'') as 'lbl_SAP_from_stuffing_fact_kg'
+									--,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_SAP',			s.shipment_after_stuffing_fact_kg	, null)	),'### ### ### ### ###'	),'') as 'lbl_SAP_after_stuffing_fact_kg'
 									
-					insert into #for_form (label_name, label_caption)
-					select label_name, label_caption
-					from (
-							select 
-									 isnull(format(max(ie.date_file					),'dd.MM.yyyy'			),'') as 'lbl_1C_date_file'
-									,isnull(format(sum(s.shipment_kg				),'### ### ### ### ###'	),'') as 'lbl_1C_shipment_kg'
-									,isnull(format(sum(s.stock_shipment_kg			),'### ### ### ### ###'	),'') as 'lbl_1C_stock_shipment_kg'
-									,isnull(format(sum(s.stock_net_need_kg			),'### ### ### ### ###'	),'') as 'lbl_1C_stock_net_need_kg'
-									,isnull(format(sum(s.stuffing_fact_shipment_kg	),'### ### ### ### ###'	),'') as 'lbl_1C_stuffing_fact_shipment_kg'
-									,isnull(format(sum(s.stuffing_plan_shipment_kg	),'### ### ### ### ###'	),'') as 'lbl_1C_stuffing_plan_shipment_kg'
-									,isnull(format(sum(s.marking_shipment_kg		),'### ### ### ### ###'	),'') as 'lbl_1C_marking_shipment_kg'
-									,isnull(format(sum(s.marking_net_need_kg		),'### ### ### ### ###'	),'') as 'lbl_1C_marking_net_need_kg'
-							from project_plan_production_finished_products.data_import.shipments_1C as s
-							join project_plan_production_finished_products.data_import.info_excel as ie on s.name_table = ie.name_table
-							where s.stuffing_id_box_type in (0, 1)
+									,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_SAP',			s.shipment_from_stuffing_plan_kg	, null)	),'### ### ### ### ###'	),'') as 'lbl_SAP_from_stuffing_plan_kg'
+									--,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_SAP',			s.shipment_after_stuffing_plan_kg	, null)	),'### ### ### ### ###'	),'') as 'lbl_SAP_after_stuffing_plan_kg'
+
+									,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_SAP',			s.shipment_from_marking_kg			, null)	),'### ### ### ### ###'	),'') as 'lbl_SAP_from_marking_kg'
+									,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_SAP',			s.shipment_after_marking_kg			, null)	),'### ### ### ### ###'	),'') as 'lbl_SAP_after_marking_kg'
+									
+									-- shipments_1C
+									,isnull(format(max(	iif(s.shipment_data_type = 'shipments_1C',			d.data_on_date						, null)	),'dd.MM.yyyy'			),'') as 'lbl_1C_data_on_date'
+
+									,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_1C',			s.shipment_kg						, null)	),'### ### ### ### ###'	),'') as 'lbl_1C_kg'
+									,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_1C',			s.shipment_from_stock_kg			, null)	),'### ### ### ### ###'	),'') as 'lbl_1C_from_stock_kg'
+									,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_1C',			s.shipment_after_stock_kg			, null)	),'### ### ### ### ###'	),'') as 'lbl_1C_after_stock_kg'
+
+									,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_1C',			s.shipment_from_stuffing_fact_kg	, null)	),'### ### ### ### ###'	),'') as 'lbl_1C_from_stuffing_fact_kg'
+									--,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_1C',			s.shipment_after_stuffing_fact_kg	, null)	),'### ### ### ### ###'	),'') as 'lbl_1C_after_stuffing_fact_kg'
+									
+									,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_1C',			s.shipment_from_stuffing_plan_kg	, null)	),'### ### ### ### ###'	),'') as 'lbl_1C_from_stuffing_plan_kg'
+									--,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_1C',			s.shipment_after_stuffing_plan_kg	, null)	),'### ### ### ### ###'	),'') as 'lbl_1C_after_stuffing_plan_kg'
+
+									,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_1C',			s.shipment_from_marking_kg			, null)	),'### ### ### ### ###'	),'') as 'lbl_1C_from_marking_kg'
+									,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_1C',			s.shipment_after_marking_kg			, null)	),'### ### ### ### ###'	),'') as 'lbl_1C_after_marking_kg'
+
+									
+									-- shipments_sales_plan
+									,isnull(format(max(	iif(s.shipment_data_type = 'shipments_sales_plan',	d.data_on_date						, null)	),'dd.MM.yyyy'			),'') as 'lbl_sales_plan_data_on_date'
+
+									,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_sales_plan',	s.shipment_kg						, null)	),'### ### ### ### ###'	),'') as 'lbl_sales_plan_kg'
+									,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_sales_plan',	s.shipment_from_stock_kg			, null)	),'### ### ### ### ###'	),'') as 'lbl_sales_plan_from_stock_kg'
+									,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_sales_plan',	s.shipment_after_stock_kg			, null)	),'### ### ### ### ###'	),'') as 'lbl_sales_plan_after_stock_kg'
+
+									,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_sales_plan',	s.shipment_from_stuffing_fact_kg	, null)	),'### ### ### ### ###'	),'') as 'lbl_sales_plan_from_stuffing_fact_kg'
+									--,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_sales_plan',	s.shipment_after_stuffing_fact_kg	, null)	),'### ### ### ### ###'	),'') as 'lbl_sales_plan_after_stuffing_fact_kg'
+									
+									,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_sales_plan',	s.shipment_from_stuffing_plan_kg	, null)	),'### ### ### ### ###'	),'') as 'lbl_sales_plan_from_stuffing_plan_kg'
+									--,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_sales_plan',	s.shipment_after_stuffing_plan_kg	, null)	),'### ### ### ### ###'	),'') as 'lbl_sales_plan_after_stuffing_plan_kg'
+
+									,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_sales_plan',	s.shipment_from_marking_kg			, null)	),'### ### ### ### ###'	),'') as 'lbl_sales_plan_from_marking_kg'
+									,isnull(format(sum(	iif(s.shipment_data_type = 'shipments_sales_plan',	s.shipment_after_marking_kg			, null)	),'### ### ### ### ###'	),'') as 'lbl_sales_plan_after_marking_kg'
+									
+									-- total
+									,isnull(format(sum(														s.shipment_kg								),'### ### ### ### ###'	),'') as 'lbl_total_kg'
+									,isnull(format(sum(														s.shipment_from_stock_kg					),'### ### ### ### ###'	),'') as 'lbl_total_from_stock_kg'
+									,isnull(format(sum(														s.shipment_after_stock_kg					),'### ### ### ### ###'	),'') as 'lbl_total_after_stock_kg'
+
+									,isnull(format(sum(														s.shipment_from_stuffing_fact_kg			),'### ### ### ### ###'	),'') as 'lbl_total_from_stuffing_fact_kg'
+									--,isnull(format(sum(														s.shipment_after_stuffing_fact_kg			),'### ### ### ### ###'	),'') as 'lbl_total_after_stuffing_fact_kg'
+									
+									,isnull(format(sum(														s.shipment_from_stuffing_plan_kg			),'### ### ### ### ###'	),'') as 'lbl_total_from_stuffing_plan_kg'
+									--,isnull(format(sum(														s.shipment_after_stuffing_plan_kg			),'### ### ### ### ###'	),'') as 'lbl_total_after_stuffing_plan_kg'
+
+									,isnull(format(sum(														s.shipment_from_marking_kg					),'### ### ### ### ###'	),'') as 'lbl_total_from_marking_kg'
+									,isnull(format(sum(														s.shipment_after_marking_kg					),'### ### ### ### ###'	),'') as 'lbl_total_after_marking_kg'
+
+							from project_plan_production_finished_products.data_import.shipments as s
+							join project_plan_production_finished_products.data_import.data_type as d on s.shipment_data_type = d.data_type
+							where s.shipment_stuffing_id_box_type in (0, 1) and s.shipment_delete = 0
 						 ) pv
-					UNPIVOT( label_caption for label_name in (	 lbl_1C_date_file
-																,lbl_1C_shipment_kg
-																,lbl_1C_stock_shipment_kg
-																,lbl_1C_stock_net_need_kg
-																,lbl_1C_stuffing_fact_shipment_kg
-																,lbl_1C_stuffing_plan_shipment_kg
-																,lbl_1C_marking_shipment_kg
-																,lbl_1C_marking_net_need_kg)   ) as pv
-					
+					UNPIVOT( label_caption for label_name in (	
+																 lbl_SAP_data_on_date, lbl_SAP_kg
+																,lbl_SAP_from_stock_kg, lbl_SAP_after_stock_kg
+																,lbl_SAP_from_stuffing_fact_kg--, lbl_SAP_after_stuffing_fact_kg
+																,lbl_SAP_from_stuffing_plan_kg--, lbl_SAP_after_stuffing_plan_kg
+																,lbl_SAP_from_marking_kg, lbl_SAP_after_marking_kg
+
+																,lbl_1C_data_on_date, lbl_1C_kg
+																,lbl_1C_from_stock_kg, lbl_1C_after_stock_kg
+																,lbl_1C_from_stuffing_fact_kg--, lbl_1C_after_stuffing_fact_kg
+																,lbl_1C_from_stuffing_plan_kg--, lbl_1C_after_stuffing_plan_kg
+																,lbl_1C_from_marking_kg, lbl_1C_after_marking_kg
+
+																,lbl_sales_plan_data_on_date, lbl_sales_plan_kg
+																,lbl_sales_plan_from_stock_kg, lbl_sales_plan_after_stock_kg
+																,lbl_sales_plan_from_stuffing_fact_kg--, lbl_sales_plan_after_stuffing_fact_kg
+																,lbl_sales_plan_from_stuffing_plan_kg--, lbl_sales_plan_after_stuffing_plan_kg
+																,lbl_sales_plan_from_marking_kg, lbl_sales_plan_after_marking_kg
+
+																,lbl_total_kg
+																,lbl_total_from_stock_kg, lbl_total_after_stock_kg
+																,lbl_total_from_stuffing_fact_kg--, lbl_total_after_stuffing_fact_kg
+																,lbl_total_from_stuffing_plan_kg--, lbl_total_after_stuffing_plan_kg
+																,lbl_total_from_marking_kg, lbl_total_after_marking_kg
+																
+															)   ) as pv
 					
 			end;
 
-			-- план продаж
-			begin
-
-					insert into #for_form (label_name, label_caption)
-					select label_name, label_caption
-					from (
-							select 
-									 isnull(format(max(ie.date_file					),'dd.MM.yyyy'			),'') as 'lbl_sales_plan_date_file'
-									,isnull(format(sum(s.shipment_kg				),'### ### ### ### ###'	),'') as 'lbl_sales_plan_shipment_kg'
-									,isnull(format(sum(s.stock_shipment_kg			),'### ### ### ### ###'	),'') as 'lbl_sales_plan_stock_shipment_kg'
-									,isnull(format(sum(s.stock_net_need_kg			),'### ### ### ### ###'	),'') as 'lbl_sales_plan_stock_net_need_kg'
-									,isnull(format(sum(s.stuffing_fact_shipment_kg	),'### ### ### ### ###'	),'') as 'lbl_sales_plan_stuffing_fact_shipment_kg'
-									,isnull(format(sum(s.stuffing_plan_shipment_kg	),'### ### ### ### ###'	),'') as 'lbl_sales_plan_stuffing_plan_shipment_kg'
-									,isnull(format(sum(s.marking_shipment_kg		),'### ### ### ### ###'	),'') as 'lbl_sales_plan_marking_shipment_kg'
-									,isnull(format(sum(s.marking_net_need_kg		),'### ### ### ### ###'	),'') as 'lbl_sales_plan_marking_net_need_kg'
-							from project_plan_production_finished_products.data_import.shipments_sales_plan as s
-							join project_plan_production_finished_products.data_import.info_excel as ie on s.name_table = ie.name_table
-							where s.stuffing_id_box_type in (0, 1) and s.shipment_delete = 0
-						 ) pv
-					UNPIVOT( label_caption for label_name in (	 lbl_sales_plan_date_file
-																,lbl_sales_plan_shipment_kg
-																,lbl_sales_plan_stock_shipment_kg
-																,lbl_sales_plan_stock_net_need_kg
-																,lbl_sales_plan_stuffing_fact_shipment_kg
-																,lbl_sales_plan_stuffing_plan_shipment_kg
-																,lbl_sales_plan_marking_shipment_kg
-																,lbl_sales_plan_marking_net_need_kg)   ) as pv
-					
-			end;
-		
-		
-			-- ИТОГ SAP + 1C + план продаж
-			begin
-
-					insert into #for_form (label_name, label_caption)
-					select label_name, label_caption
-					from (
-							select 
-									 isnull(format(sum(o.shipment_kg				),'### ### ### ### ###'	),'') as 'lbl_total_shipment_kg'
-									,isnull(format(sum(o.stock_shipment_kg			),'### ### ### ### ###'	),'') as 'lbl_total_stock_shipment_kg'
-									,isnull(format(sum(o.stock_net_need_kg			),'### ### ### ### ###'	),'') as 'lbl_total_stock_net_need_kg'
-									,isnull(format(sum(o.stuffing_fact_shipment_kg	),'### ### ### ### ###'	),'') as 'lbl_total_stuffing_fact_shipment_kg'
-									,isnull(format(sum(o.stuffing_plan_shipment_kg	),'### ### ### ### ###'	),'') as 'lbl_total_stuffing_plan_shipment_kg'
-									,isnull(format(sum(o.marking_shipment_kg		),'### ### ### ### ###'	),'') as 'lbl_total_marking_shipment_kg'
-									,isnull(format(sum(o.marking_net_need_kg		),'### ### ### ### ###'	),'') as 'lbl_total_marking_net_need_kg'
-							from (
-									select shipment_kg, stock_shipment_kg, stock_net_need_kg, stuffing_fact_shipment_kg, stuffing_plan_shipment_kg, marking_shipment_kg, marking_net_need_kg	
-									from project_plan_production_finished_products.data_import.shipments_SAP
-									where stuffing_id_box_type in (0, 1) and shipment_delete = 0
-
-									union all
-
-									select shipment_kg, stock_shipment_kg, stock_net_need_kg, stuffing_fact_shipment_kg, stuffing_plan_shipment_kg, marking_shipment_kg, marking_net_need_kg	
-									from project_plan_production_finished_products.data_import.shipments_1C
-									where stuffing_id_box_type in (0, 1)
-
-									union all
-
-									select shipment_kg, stock_shipment_kg, stock_net_need_kg, stuffing_fact_shipment_kg, stuffing_plan_shipment_kg, marking_shipment_kg, marking_net_need_kg	
-									from project_plan_production_finished_products.data_import.shipments_sales_plan
-									where stuffing_id_box_type in (0, 1) and shipment_delete = 0
-								 ) as o
-						 ) pv
-					UNPIVOT( label_caption for label_name in (	 lbl_total_shipment_kg
-																,lbl_total_stock_shipment_kg
-																,lbl_total_stock_net_need_kg
-																,lbl_total_stuffing_fact_shipment_kg
-																,lbl_total_stuffing_plan_shipment_kg
-																,lbl_total_marking_shipment_kg
-																,lbl_total_marking_net_need_kg)   ) as pv
-					
-			end;
 
 			select 
 					 label_name		

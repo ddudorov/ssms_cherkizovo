@@ -3,11 +3,36 @@
 
 go
 
-alter procedure check_import.shipments_sales_plan @dates_for_unpivot varchar(max) 										
+alter procedure check_import.shipments_sales_plan @path_file			varchar(300) = null
+												 ,@data_on_date			datetime = null		
+												 ,@dates_for_unpivot	varchar(max) = null		 										
 as
 BEGIN
 			SET NOCOUNT ON;
+
+			-- ИНФОРМАЦИЯ О ФАЙЛЕ: УДАЛЯЕМ И ВСТАВЛЯЕМ ДАННЫЕ О ФАЙЛЕ И ВЫГРУЖАЕМ ТАБЛИЦУ ДЛЯ ЗАГРУЗКИ
+			if not @path_file is null	 
+			begin
+						-- удаляем данные
+						delete project_plan_production_finished_products.data_import.data_type where data_type = 'shipments_sales_plan';
+						
+						-- добавляем данные
+						insert into project_plan_production_finished_products.data_import.data_type
+							   (			 data_type,  source_data,  path_file,  data_on_date)
+						values ('shipments_sales_plan',		 'Excel', @path_file, @data_on_date);
+			
+						-- удаляем и выгружаем
+						delete from project_plan_production_finished_products.data_import.shipments where shipment_data_type = 'shipments_sales_plan';
+						--select top 0 * from project_plan_production_finished_products.data_import.shipments;
+
+						return(0);
+			end;
+
+
 	
+
+
+
 			declare @sql varchar(max);
 			declare @dt_for_delete datetime;
 			
