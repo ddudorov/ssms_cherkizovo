@@ -101,7 +101,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shipments", "shipments", "{
 		project_plan_production_finished_products\data\shipments\check_import.shipments_SAP.sql = project_plan_production_finished_products\data\shipments\check_import.shipments_SAP.sql
 		project_plan_production_finished_products\data\shipments\data_import.shipments.sql = project_plan_production_finished_products\data\shipments\data_import.shipments.sql
 		project_plan_production_finished_products\data\shipments\data_import.shipments_1C_del.sql = project_plan_production_finished_products\data\shipments\data_import.shipments_1C_del.sql
-		project_plan_production_finished_products\data\shipments\data_import.shipments_sales_plan.sql = project_plan_production_finished_products\data\shipments\data_import.shipments_sales_plan.sql
+		project_plan_production_finished_products\data\shipments\data_import.shipments_sales_plan del.sql = project_plan_production_finished_products\data\shipments\data_import.shipments_sales_plan del.sql
 		project_plan_production_finished_products\data\shipments\data_import.shipments_SAP_del.sql = project_plan_production_finished_products\data\shipments\data_import.shipments_SAP_del.sql
 	EndProjectSection
 EndProject

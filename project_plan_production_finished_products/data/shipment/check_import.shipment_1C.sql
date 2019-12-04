@@ -1,11 +1,11 @@
 ﻿use project_plan_production_finished_products
 
---exec project_plan_production_finished_products.check_import.shipments_1C
+--exec project_plan_production_finished_products.check_import.shipment_1C
 
 go
 
-alter procedure check_import.shipments_1C @path_file		varchar(300) = null
-										 ,@data_on_date	datetime = null										
+alter procedure check_import.shipment_1C @path_file		varchar(300) = null
+										,@data_on_date	datetime = null										
 as
 BEGIN
 			SET NOCOUNT ON;
@@ -14,16 +14,16 @@ BEGIN
 			if not @path_file is null	 
 			begin
 						-- удаляем данные
-						delete project_plan_production_finished_products.data_import.data_type where data_type = 'shipments_1C';
+						delete project_plan_production_finished_products.data_import.data_type where data_type = 'shipment_1C';
 						
 						-- добавляем данные
 						insert into project_plan_production_finished_products.data_import.data_type
 							   (	  data_type,  source_data,  path_file,  data_on_date)
-						values ('shipments_1C',	  'Excel', @path_file, @data_on_date);
+						values ('shipment_1C',	  'Excel', @path_file, @data_on_date);
 			
 						-- удаляем и выгружаем
-						delete from project_plan_production_finished_products.data_import.shipments where shipment_data_type = 'shipments_1C';
-						select top 0 * from project_plan_production_finished_products.data_import.shipments;
+						delete from project_plan_production_finished_products.data_import.shipment where shipment_data_type = 'shipment_1C';
+						select top 0 * from project_plan_production_finished_products.data_import.shipment;
 
 						return(0);
 			end;
@@ -37,7 +37,7 @@ BEGIN
 			begin 
 
 						delete 
-						from project_plan_production_finished_products.data_import.shipments
+						from project_plan_production_finished_products.data_import.shipment
 						where (shipment_customer_name in ('ТД ЧЕРКИЗОВО ООО') and shipment_delivery_address in ('107143, Москва г, Пермская ул, вл. 5'))
 						   or (shipment_customer_name in ('ТД ЧЕРКИЗОВО ООО') and shipment_delivery_address in (', Москва г, Пермская ул., дом № 5'))
 						   or (shipment_customer_name in ('ТД ЧЕРКИЗОВО ООО') and shipment_delivery_address in ('115372, Москва г, Бирюлевская ул., дом № 38'))
@@ -55,74 +55,82 @@ BEGIN
 					set c.shipment_sales_channel_name = r.[Название канала сбыта]
 						,c.shipment_priority = r.[Приоритет отгрузки]
 						,c.shipment_min_KOS = r.[ручной КОС]
-					from project_plan_production_finished_products.data_import.shipments as c
+					from project_plan_production_finished_products.data_import.shipment as c
 					join project_plan_production_finished_products.info_view.customers as r 
 						on c.shipment_customer_name = r.[Название контрагента]
 						and not r.[Ошибки] like '%Название контрагента дублируется%'
-					where c.shipment_data_type ='shipments_1C';
+					where c.shipment_data_type ='shipment_1C';
 
 			end;
 
 
 				
 
+			-- ПОДТЯГИВАЕМ SAP ID К ДАННЫМ 1С
+			begin 
+						IF OBJECT_ID('tempdb..#sap_id','U') is not null drop table #sap_id;
 
-			--select 
-			--		 sm.sap_id 
-			--		,sm.active_before
-			--		,sm.article_packaging
-			--		,sp.expiration_date_in_days
-			--		,sp.product_status
-			--		,st.stuffing_id
-			--		,count(sm.sap_id) over (partition by sm.active_before, sm.article_packaging) as check_double_sap_id
-			--into #sap_id
-			--from ( 
+						-- ПОДТЯГИВАЕМ SAP ID К ДАННЫМ SAP
+						select 
+								 sm.sap_id 
+								,sm.active_before
+								,sm.article_packaging
+								,sp.expiration_date_in_days
+								,sp.product_status
+								,st.stuffing_id
+								,count(sm.sap_id) over (partition by sm.active_before, sm.article_packaging) as check_double_sap_id
+						into #sap_id
+						from ( 
 			
-			--			-- берем таблицу с ручными артикулами где указана дата действия артикула, подтягиваем по исключение другие артикула которые имеют данное исключение
-			--			select distinct
-			--					 sm.sap_id
-			--					,sm.active_before
-			--					,sp.article_packaging
-			--			from project_plan_production_finished_products.info.finished_products_sap_id_manual as sm
-			--			join project_plan_production_finished_products.info.finished_products_sap_id_manual as a on sm.sap_id_shipment_manual = ISNULL(a.sap_id_shipment_manual, a.sap_id)
-			--			join cherkizovo.info.products_sap as sp on a.sap_id = sp.sap_id
-			--			where not sm.active_before is null
+									-- берем таблицу с ручными артикулами где указана дата действия артикула, подтягиваем по исключение другие артикула которые имеют данное исключение
+									select distinct
+											 sm.sap_id
+											,sm.active_before
+											,sp.article_packaging
+									from project_plan_production_finished_products.info.finished_products_sap_id_manual as sm
+									join project_plan_production_finished_products.info.finished_products_sap_id_manual as a on sm.sap_id_shipment_manual = ISNULL(a.sap_id_shipment_manual, a.sap_id)
+									join cherkizovo.info.products_sap as sp on a.sap_id = sp.sap_id
+									where not sm.active_before is null
 
-			--			union 
+									union 
 
-			--			-- берем таблицу с ручными артикулами, подтягиваем варианты артикулов из другой системы и если у нормального артикула указано исключение отображаем ислючение
-			--			select 
-			--					 isnull(sm.sap_id_shipment_manual, sm.sap_id) as sap_id
-			--					,null as active_before
-			--					,sp.article_packaging
-			--			from project_plan_production_finished_products.info.finished_products_sap_id_manual as sm
-			--			join cherkizovo.info.products_sap as sp on sm.sap_id = sp.sap_id
+									-- берем таблицу с ручными артикулами, подтягиваем варианты артикулов из другой системы и если у нормального артикула указано исключение отображаем ислючение
+									select 
+											 isnull(sm.sap_id_shipment_manual, sm.sap_id) as sap_id
+											,null as active_before
+											,sp.article_packaging
+									from project_plan_production_finished_products.info.finished_products_sap_id_manual as sm
+									join cherkizovo.info.products_sap as sp on sm.sap_id = sp.sap_id
 
-			--	 ) as sm 
-			--join cherkizovo.info.products_sap as sp on sm.sap_id = sp.sap_id
-			--join project_plan_production_finished_products.info.finished_products_sap_id_manual as st on sm.sap_id = st.sap_id;
+							 ) as sm 
+						join cherkizovo.info.products_sap as sp on sm.sap_id = sp.sap_id
+						join project_plan_production_finished_products.info.finished_products_sap_id_manual as st on sm.sap_id = st.sap_id
+						where not sm.article_packaging is null;
 
 
-			---- обновляем данные до даты
-			--update c
-			--set c.sap_id							= s.SAP_id
-			--	,c.stuffing_id						= s.stuffing_id
-			--	,c.sap_id_expiration_date_in_days	= s.expiration_date_in_days
-			--	,c.product_status					= s.product_status
-			--from project_plan_production_finished_products.data_import.shipments_1C as c
-			--join #sap_id as s on c.article_packaging = s.article_packaging and not s.active_before is null and c.shipment_date <= s.active_before 
-			--where s.check_double_sap_id = 1;
+						-- обновляем данные до даты
+						update c
+						set c.shipment_sap_id							= s.SAP_id
+						   ,c.shipment_stuffing_id						= s.stuffing_id
+						   ,c.shipment_sap_id_expiration_date_in_days	= s.expiration_date_in_days
+						   ,c.shipment_product_status					= s.product_status
+						from project_plan_production_finished_products.data_import.shipment as c
+						join #sap_id as s on c.article_packaging = s.article_packaging and not s.active_before is null and c.shipment_date <= s.active_before 
+						where s.check_double_sap_id = 1 and c.shipment_data_type ='shipment_1C';
 
-			---- обновляем остальные
-			--update c
-			--set c.sap_id							= s.SAP_id
-			--	,c.stuffing_id						= s.stuffing_id
-			--	,c.sap_id_expiration_date_in_days	= s.expiration_date_in_days
-			--	,c.product_status					= s.product_status
-			--from project_plan_production_finished_products.data_import.shipments_1C as c
-			--join #sap_id as s on c.article_packaging = s.article_packaging and s.active_before is null
-			--where s.check_double_sap_id = 1
-			--  and c.sap_id is null;
+
+						-- обновляем остальные
+						update c
+						set c.shipment_sap_id							= s.SAP_id
+						   ,c.shipment_stuffing_id						= s.stuffing_id
+						   ,c.shipment_sap_id_expiration_date_in_days	= s.expiration_date_in_days
+						   ,c.shipment_product_status					= s.product_status
+						from project_plan_production_finished_products.data_import.shipment as c
+						join #sap_id as s on c.article_packaging = s.article_packaging and  s.active_before is null
+						where s.check_double_sap_id = 1 and c.shipment_data_type ='shipment_1C' and c.shipment_sap_id is null;
+
+
+			end;
 
 
 
@@ -191,8 +199,6 @@ BEGIN
 			--end;
 
 
-			---- пишем ошибки ---------------------------------------------------------------
-
 			-- ПИШЕМ ОШИБКИ
 			begin
 			
@@ -200,6 +206,9 @@ BEGIN
 					Set d.shipment_reason_ignore_in_calculate = 
 						nullif(
 									case 
+										when (select top 1 s.check_double_sap_id 
+											  from #sap_id as s
+											  where d.article_packaging = s.article_packaging) > 1 then	'Артикул тары неуникален | '
 										when d.shipment_sap_id is null							then	'Отсутствует sap id | '
 										when d.shipment_stuffing_id is null						then	'Код набивки отсутствует | '
 										when d.shipment_sap_id_expiration_date_in_days is null	then	'Отсутствует срок годности | '
@@ -210,33 +219,14 @@ BEGIN
 								+ iif(d.shipment_min_KOS is null,						'Отсутствует КОС | ', '')
 
 								, '')
-					from project_plan_production_finished_products.data_import.shipments as d
-					where d.shipment_data_type ='shipments_1C';
+					from project_plan_production_finished_products.data_import.shipment as d
+					where d.shipment_data_type ='shipment_1C';
 
 
 			end;
 
-
-			--update d
-			--Set d.reason_ignore_in_calculate = 
-			--	nullif(
-			--				case 
-			--					when (select top 1 c.check_double_sap_id from #sap_id as c where d.article_packaging = c.article_packaging) > 1 
-			--																	then	'Артикул тары возрощает > 1 SAP ID | '
-			--					when d.sap_id is null							then	'Не найден sap id | '
-			--					when d.stuffing_id is null						then	'Код набивки отсутствует | '
-			--					when d.sap_id_expiration_date_in_days is null	then	'Отсутствует срок годности | '
-			--					else ''
-			--				end
-			--			+ iif(d.shipment_sales_channel_name is null,					'Канал сбыта не присвоен | ', '')
-			--			+ iif(d.shipment_priority is null,								'Отсутствует приоритет отгрузки | ', '')
-			--			+ iif(d.shipment_min_KOS is null,								'Отсутствует КОС | ', '')
-			--			, '')
-			--from project_plan_production_finished_products.data_import.shipments_1C as d;
-
-
-			---- удаляем ранее созданную таблицу
-			--IF OBJECT_ID('tempdb..#sap_id','U') is not null drop table #sap_id;
+			-- УДАЛЯЕМ РАНЕЕ СОЗДАННУЮ ТАБЛИЦУ
+			IF OBJECT_ID('tempdb..#sap_id','U') is not null drop table #sap_id;
 
 
 			-- ВЫГРУЖАЕМ РЕЗУЛЬТАТ
@@ -245,7 +235,7 @@ BEGIN
 						select 
 								 h.shipment_reason_ignore_in_calculate
 								,h.shipment_product_status
-								,convert(varchar(24), FORMAT(h.sap_id, '000000000000000000000000'))
+								,convert(varchar(24), FORMAT(h.shipment_sap_id, '000000000000000000000000')) as sap_id 
 								,sp.product_1C_full_name
 								,h.shipment_stuffing_id
 								,h.article_packaging
@@ -258,8 +248,8 @@ BEGIN
 								,h.shipment_kg
 								,ie.path_file
 								,ie.data_on_date
-						from project_plan_production_finished_products.data_import.shipments as h
-						join project_plan_production_finished_products.data_import.data_type as ie on h.shipment_data_type = ie.data_type and h.shipment_data_type = 'shipments_1C'
+						from project_plan_production_finished_products.data_import.shipment as h
+						join project_plan_production_finished_products.data_import.data_type as ie on h.shipment_data_type = ie.data_type and h.shipment_data_type = 'shipment_1C'
 						left join cherkizovo.info.products_sap as sp on h.sap_id = sp.sap_id
 						where h.shipment_stuffing_id_box_type in (0, 1);
 
