@@ -19,49 +19,40 @@ BEGIN
 			if @type_run = 'update'
 			begin
 
-						update project_plan_production_finished_products.data_import.shipments_sales_plan 
+						update project_plan_production_finished_products.data_import.shipment
 						set shipment_exclude_for_stuffing_plan = 0
-						where shipment_exclude_for_stuffing_plan = 1;
+						where shipment_exclude_for_stuffing_plan = 1
+						  and shipment_data_type = 'shipment_sales_plan';
 
 						if @where <> ''
 						begin
 								set @sql = '';
-								set @sql = @sql + char(10) + 'update project_plan_production_finished_products.data_import.shipments_sales_plan'
+								set @sql = @sql + char(10) + 'update project_plan_production_finished_products.data_import.shipment'
 								set @sql = @sql + char(10) + 'set shipment_exclude_for_stuffing_plan = 1'
-								set @sql = @sql + char(10) + 'where ' + @where
+								set @sql = @sql + char(10) + 'where shipment_data_type = ''shipment_sales_plan'' and ' + @where
 
 								exec(@sql);
 						end;
+
 						-- выгружаем данные в excel
 						select 
-
-								 'Ошибки'							= h.reason_ignore_in_calculate
-								,'SAP ID'							= h.sap_id_text
-								,'Код набивки'						= h.stuffing_id
+								 shipment_promo_status			
+								,shipment_promo					
+								,shipment_promo_kos_listing		
+								,shipment_sales_channel_name	
+								,shipment_customer_name		
+								,sum(shipment_kg) as shipment_kg
 								
-								,'Статус промо'						= h.shipment_promo_status 
-								,'Промо/не промо'					= h.shipment_promo 
-								,'Промо/не промо/ОСГ/Листинг'		= h.shipment_promo_kos_listing 
-
-								,'Код зависимой позиции'			= h.position_dependent_id
-								,'Код индивидуальной маркировки'	= h.individual_marking_id
-								,'Артикул тары'						= h.article_packaging
-								,'Артикул номенклатуры'				= h.article_nomenclature
-
-								,'Код филиала'						= h.shipment_branch_id	
-								,'Название филиала'					= h.shipment_branch_name
-								,'Название канала сбыта'			= h.shipment_sales_channel_name
-								,'Код контрагента'					= h.shipment_customer_id
-								,'Название контрагента'				= h.shipment_customer_name
-								,'Приоритет отгрузки'				= h.shipment_priority
-								,'КОС отгрузки'						= h.shipment_min_KOS
-								,'Дата отгрузки с филиала'			= h.shipment_with_branch_date
-								,'Дата отгрузки'					= h.shipment_date
-								,'План продаж, кг'					= h.shipment_kg
-								
-						from project_plan_production_finished_products.data_import.shipments_sales_plan as h
-						where h.stuffing_id_box_type in (0, 1)
-						  and h.shipment_exclude_for_stuffing_plan = 1;
+						from project_plan_production_finished_products.data_import.shipment 
+						where shipment_stuffing_id_box_type in (0, 1) -- для отчета берем набивки и коробки не разбитые
+						  and shipment_exclude_for_stuffing_plan = 1
+						  and shipment_data_type = 'shipment_sales_plan'
+						  and shipment_delete = 0
+						group by shipment_promo_status			
+								,shipment_promo					
+								,shipment_promo_kos_listing		
+								,shipment_sales_channel_name	
+								,shipment_customer_name;
 
 
 			end;
@@ -81,9 +72,10 @@ BEGIN
 								,isnull(convert(varchar(250),shipment_customer_name			),'---') as shipment_customer_name
 								,shipment_exclude_for_stuffing_plan
 						into #sales_plan
-						from project_plan_production_finished_products.data_import.shipments_sales_plan
+						from project_plan_production_finished_products.data_import.shipment
 						where shipment_delete = 0
-						  and reason_ignore_in_calculate is null;
+						  and shipment_reason_ignore_in_calculate is null
+						  and shipment_data_type = 'shipment_sales_plan';
 
 							
 
@@ -161,10 +153,11 @@ BEGIN
 			if @type_run = 'select_sum_shipment_kg'
 			begin
 					select FORMAT(isnull(SUM(shipment_kg),0),'#,###') as shipment_kg
-					from project_plan_production_finished_products.data_import.shipments_sales_plan
-					where shipment_delete = 0
-					  and shipment_exclude_for_stuffing_plan = 1
-					  and reason_ignore_in_calculate is null;
+					from project_plan_production_finished_products.data_import.shipment
+					where shipment_stuffing_id_box_type in (0, 1) -- для отчета берем набивки и коробки не разбитые
+						  and shipment_exclude_for_stuffing_plan = 1
+						  and shipment_data_type = 'shipment_sales_plan'
+						  and shipment_delete = 0;
 			end;
 
 end;

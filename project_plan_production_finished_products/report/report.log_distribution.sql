@@ -12,47 +12,34 @@ BEGIN
 			if @log_type = 'stock' -- остатки
 			begin
 						
-						with shipments_stock as  
-						(
-
-									select sp.row_id, sp.name_table, sp.sap_id, sp.stuffing_id, sp.shipment_date, sp.shipment_priority, sp.shipment_min_KOS
-									from project_plan_production_finished_products.data_import.shipments_SAP as sp										
-									union all
-									select sp.row_id, sp.name_table, sp.sap_id, sp.stuffing_id, sp.shipment_date, sp.shipment_priority, sp.shipment_min_KOS
-									from project_plan_production_finished_products.data_import.shipments_1C as sp	
-									union all
-									select sp.row_id, sp.name_table, sp.sap_id, sp.stuffing_id, sp.shipment_date, sp.shipment_priority, sp.shipment_min_KOS
-									from project_plan_production_finished_products.data_import.shipments_sales_plan as sp	
-						)
-						
 						SELECT 
-								 'Порядок'								= l.sort_id
-								,'Источник потребности'					= l.shipment_name_table
-								,'SAP ID потребности'					= convert(varchar(24),FORMAT(sp.sap_id, '000000000000000000000000'))
-								,'Наименование артикула потребность'	= i1.product_1C_full_name
-								,'Код набивки'							= sp.stuffing_id
-								,'Дата отгрузки'						= sp.shipment_date
-								,'Пр отг'								= sp.shipment_priority
-								,'Мин КОС отгрузки'						= sp.shipment_min_KOS
-								,'Потреность в отг'						= l.shipment_kg
+								 l.sort_id
+								,sh.shipment_data_type
+								,convert(varchar(24),FORMAT(sh.shipment_sap_id, '000000000000000000000000')) as shipment_sap_id
+								,shs.product_1C_full_name as shipment_product_1C_full_name
+								,sh.shipment_stuffing_id
+								,sh.shipment_date
+								,sh.shipment_priority
+								,sh.shipment_min_KOS
+								,l.shipment_kg
 
-								,'Источник остатка'						= l.stock_name_table
-								,'Остатки ID'							= l.stock_row_id
-								,'SAP ID остатков'						= convert(varchar(24),FORMAT(COALESCE(st.sap_id, tr.sap_id), '000000000000000000000000'))
-								,'Наименование артикула остатков'		= i2.product_1C_full_name
+								,st.stock_data_type
+								,l.stock_row_id
+								,convert(varchar(24),FORMAT(st.stock_sap_id, '000000000000000000000000')) as stock_sap_id
+								,sts.product_1C_full_name as stock_product_1C_full_name
 
-								,'Ост на дату'							= COALESCE(st.stock_on_date, tr.stock_on_date)
-								,'КОС на дату'							= COALESCE(st.stock_current_KOS, tr.stock_current_KOS)
-								,'Ост на дату отгрузки'					= l.stock_kg
+								,st.stock_on_date
+								,st.stock_current_KOS
+								,l.stock_kg
 							
-								,'Отг из остатков'						=l.stock_shipment_kg
+								,l.stock_shipment_kg
 
-						FROM project_plan_production_finished_products.data_import.stock_log_calculation		as l
-						left join project_plan_production_finished_products.data_import.stock					as st on l.stock_row_id = st.row_id		and l.stock_name_table = st.name_table
-						left join project_plan_production_finished_products.data_import.transits				as tr on l.stock_row_id = tr.row_id		and l.stock_name_table = tr.name_table
-						left join shipments_stock																as sp on l.shipment_row_id = sp.row_id	and l.shipment_name_table = sp.name_table
-						left join cherkizovo.info.products_sap													as i1 on sp.sap_id = i1.sap_id
-						left join cherkizovo.info.products_sap													as i2 on COALESCE(st.sap_id, tr.sap_id) = i2.sap_id
+						FROM project_plan_production_finished_products.data_import.stock_log_calculation	as l
+						left join project_plan_production_finished_products.data_import.stock				as st  on l.stock_row_id = st.stock_row_id
+						left join cherkizovo.info.products_sap												as sts on st.stock_sap_id = sts.sap_id
+
+						left join project_plan_production_finished_products.data_import.shipment			as sh  on l.shipment_row_id = sh.shipment_row_id
+						left join cherkizovo.info.products_sap												as shs on sh.shipment_sap_id = shs.sap_id
 						order by l.sort_id;
 
 
@@ -65,31 +52,37 @@ BEGIN
 			begin
 
 						SELECT 
-								 'sort_id'								= l.sort_id																						--'Порядок расчетов'				
-								,'shipment_name_table'					= l.shipment_name_table																			--'Источник потребности'			
-								,'stuffing_row_id'						= l.stuffing_row_id																				--'id набивки'					
-								,'sap_id'								= convert(varchar(24),FORMAT(l.shipment_sap_id, '000000000000000000000000')) 					--'sap id'						
-								,'product_1C_full_name'					= sa.product_1C_full_name																		--'Название SKU 1С'				
-								,'stuffing_id'							= COALESCE(st.stuffing_id, sp.stuffing_id, c1.stuffing_id, sl.stuffing_id)						--'Код набивки'					
-								,'stuffing_id_box'						= COALESCE(sp.stuffing_id_box , c1.stuffing_id_box, sl.stuffing_id_box)							--'Коробка'						
-								,'stuffing_production_date_to'			= st.stuffing_production_date_to																--'Дата выхода набивки'			
-								,'stuffing_before_next_available_date'	= nullif(st.stuffing_before_next_available_date,'29990101')										--'Дата выхода след набивки'		
-								,'stuffing_kg'							= l.stuffing_kg																					--'Остаток набивки'				
-								,'stuffing_marking_kg'					= l.stuffing_marking_kg																			--'Остаток маркировки'			
-								,'stuffing_shipment_kg'					= l.stuffing_shipment_kg																		--'Отгружено из маркировки'		
-																																		
-								,'shipment_customer_name'				= COALESCE(sp.shipment_customer_name, c1.shipment_customer_name, sl.shipment_customer_name)		--'Название контрагента'			
-								,'shipment_date'						= COALESCE(sp.shipment_date, c1.shipment_date, sl.shipment_date)								--'Дата отгрузки потребности'	 
-								,'shipment_priority'					= COALESCE(sp.shipment_priority, c1.shipment_priority, sl.shipment_priority)					--'Приоритет отгрузки'			
-								,'shipment_min_KOS'						= COALESCE(sp.shipment_min_KOS, c1.shipment_min_KOS, sl.shipment_min_KOS)						--'КОС отгрузки'					
-								,'shipment_kg'							= l.shipment_kg																					--'Потребность'		
+								 l.sort_id																						--Порядок расчетов		
+								,sh.shipment_data_type																			--Источник потребности	
+								,convert(varchar(24),FORMAT(sh.shipment_sap_id, '000000000000000000000000')) as shipment_sap_id
+								,shs.product_1C_full_name as shipment_product_1C_full_name
+								,sh.shipment_stuffing_id
+								,sh.shipment_stuffing_id_box							
+								,sh.shipment_date
+								,sh.shipment_priority
+								,sh.shipment_min_KOS
+								,l.shipment_kg
+								
+									
+								,l.stuffing_row_id																				--id набивки					
+								,convert(varchar(24),FORMAT(l.stuffing_sap_id, '000000000000000000000000')) 					--sap id					
+								,sts.product_1C_full_name																		--Название SKU 1С	
+								,st.stuffing_id																											
+								,st.stuffing_production_date_to																	--Дата выхода набивки		
+								,st.stuffing_available_date																		--Дата выхода набивки
+								--,nullif(st.stuffing_before_next_available_date, '29990101')										--Дата выхода след набивки	
+								,l.stuffing_kg																					--Остаток набивки	
+								,l.stuffing_marking_kg																			--Остаток маркировки			
+								,l.stuffing_shipment_kg																			--Отгружено из маркировки		
+				
+					
 
 						FROM project_plan_production_finished_products.data_import.stuffing_fact_log_calculation	as l
-						left join project_plan_production_finished_products.data_import.stuffing_fact				as st on l.stuffing_row_id = st.stuffing_row_id and l.shipment_sap_id = st.sap_id
-						left join project_plan_production_finished_products.data_import.shipments_SAP				as sp on l.shipment_row_id = sp.row_id			and l.shipment_name_table = sp.name_table
-						left join project_plan_production_finished_products.data_import.shipments_1C				as c1 on l.shipment_row_id = c1.row_id			and l.shipment_name_table = c1.name_table
-						left join project_plan_production_finished_products.data_import.shipments_sales_plan		as sl on l.shipment_row_id = sl.row_id			and l.shipment_name_table = sl.name_table
-						left join cherkizovo.info.products_sap														as sa on l.shipment_sap_id = sa.sap_id
+						left join project_plan_production_finished_products.data_import.stuffing_fact				as st on l.stuffing_row_id = st.stuffing_row_id
+						left join cherkizovo.info.products_sap														as sts on l.stuffing_sap_id = sts.sap_id
+
+						left join project_plan_production_finished_products.data_import.shipment					as sh on l.shipment_row_id = sh.shipment_row_id	
+						left join cherkizovo.info.products_sap														as shs on sh.shipment_sap_id = shs.sap_id	
 						order by l.sort_id
 
 			end;
@@ -99,31 +92,37 @@ BEGIN
 			begin
 
 						SELECT 
-								 'sort_id'								= l.sort_id																						--'Порядок расчетов'				
-								,'shipment_name_table'					= l.shipment_name_table																			--'Источник потребности'			
-								,'stuffing_row_id'						= l.stuffing_row_id																				--'id набивки'					
-								,'sap_id'								= convert(varchar(24),FORMAT(l.shipment_sap_id, '000000000000000000000000')) 					--'sap id'						
-								,'product_1C_full_name'					= sa.product_1C_full_name																		--'Название SKU 1С'				
-								,'stuffing_id'							= COALESCE(st.stuffing_id, sp.stuffing_id, c1.stuffing_id, sl.stuffing_id)						--'Код набивки'					
-								,'stuffing_id_box'						= COALESCE(sp.stuffing_id_box , c1.stuffing_id_box, sl.stuffing_id_box)							--'Коробка'						
-								,'stuffing_production_date_to'			= st.stuffing_production_date_to																--'Дата выхода набивки'			
-								,'stuffing_before_next_available_date'	= nullif(st.stuffing_before_next_available_date,'29990101')										--'Дата выхода след набивки'		
-								,'stuffing_kg'							= l.stuffing_kg																					--'Остаток набивки'				
-								,'stuffing_marking_kg'					= l.stuffing_marking_kg																			--'Остаток маркировки'			
-								,'stuffing_shipment_kg'					= l.stuffing_shipment_kg																		--'Отгружено из маркировки'		
-																																		
-								,'shipment_customer_name'				= COALESCE(sp.shipment_customer_name, c1.shipment_customer_name, sl.shipment_customer_name)		--'Название контрагента'			
-								,'shipment_date'						= COALESCE(sp.shipment_date, c1.shipment_date, sl.shipment_date)								--'Дата отгрузки потребности'	 
-								,'shipment_priority'					= COALESCE(sp.shipment_priority, c1.shipment_priority, sl.shipment_priority)					--'Приоритет отгрузки'			
-								,'shipment_min_KOS'						= COALESCE(sp.shipment_min_KOS, c1.shipment_min_KOS, sl.shipment_min_KOS)						--'КОС отгрузки'					
-								,'shipment_kg'							= l.shipment_kg																					--'Потребность'					
-																																		
+								 l.sort_id																						--Порядок расчетов		
+								,sh.shipment_data_type																			--Источник потребности	
+								,convert(varchar(24),FORMAT(sh.shipment_sap_id, '000000000000000000000000')) as shipment_sap_id
+								,shs.product_1C_full_name as shipment_product_1C_full_name
+								,sh.shipment_stuffing_id
+								,sh.shipment_stuffing_id_box							
+								,sh.shipment_date
+								,sh.shipment_priority
+								,sh.shipment_min_KOS
+								,l.shipment_kg
+								
+									
+								,l.stuffing_row_id																				--id набивки					
+								,convert(varchar(24),FORMAT(l.stuffing_sap_id, '000000000000000000000000')) 					--sap id					
+								,sts.product_1C_full_name																		--Название SKU 1С	
+								,st.stuffing_id																											
+								,st.stuffing_production_date_to																	--Дата выхода набивки		
+								,st.stuffing_available_date																		--Дата выхода набивки
+								--,nullif(st.stuffing_before_next_available_date, '29990101')										--Дата выхода след набивки	
+								,l.stuffing_kg																					--Остаток набивки	
+								,l.stuffing_marking_kg																			--Остаток маркировки			
+								,l.stuffing_shipment_kg																			--Отгружено из маркировки		
+				
+					
+
 						FROM project_plan_production_finished_products.data_import.stuffing_plan_log_calculation	as l
-						left join project_plan_production_finished_products.data_import.stuffing_fact				as st on l.stuffing_row_id = st.stuffing_row_id and l.shipment_sap_id = st.sap_id
-						left join project_plan_production_finished_products.data_import.shipments_SAP				as sp on l.shipment_row_id = sp.row_id			and l.shipment_name_table = sp.name_table
-						left join project_plan_production_finished_products.data_import.shipments_1C				as c1 on l.shipment_row_id = c1.row_id			and l.shipment_name_table = c1.name_table
-						left join project_plan_production_finished_products.data_import.shipments_sales_plan		as sl on l.shipment_row_id = sl.row_id			and l.shipment_name_table = sl.name_table
-						left join cherkizovo.info.products_sap														as sa on l.shipment_sap_id = sa.sap_id
+						left join project_plan_production_finished_products.data_import.stuffing_plan				as st on l.stuffing_row_id = st.stuffing_row_id
+						left join cherkizovo.info.products_sap														as sts on l.stuffing_sap_id = sts.sap_id
+
+						left join project_plan_production_finished_products.data_import.shipment					as sh on l.shipment_row_id = sh.shipment_row_id	
+						left join cherkizovo.info.products_sap														as shs on sh.shipment_sap_id = shs.sap_id	
 						order by l.sort_id
 
 			end;

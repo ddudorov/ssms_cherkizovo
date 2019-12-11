@@ -27,37 +27,17 @@ create table project_plan_production_finished_products.info.finished_products_sa
 						  )
 		,CONSTRAINT CHK_stuffing_production 
 					CHECK (		
-							   (not sap_id_shipment_manual is null and sap_id_priority_1 is null and sap_id_priority_2 is null and sap_id_priority_3 is null)
-							or (sap_id_shipment_manual is null and sap_id_priority_1 <> sap_id_priority_2 
-															   and sap_id_priority_1 <> sap_id_priority_3
-															   and sap_id_priority_2 <> sap_id_priority_3)
-															   
+								sap_id_priority_1 <> sap_id_priority_2 
+							and sap_id_priority_1 <> sap_id_priority_3
+							and sap_id_priority_2 <> sap_id_priority_3							   
 						  )
-		
 )
-
-insert into project_plan_production_finished_products.info.finished_products_sap_id_manual
-(		 sap_id
-		,active_before
-		,sap_id_shipment_manual
-		,sap_id_stock_manual
-		,stuffing_id
-		,product_status_manual
-		,number_days_normative_stock)
-select *
-from cherkizovo.temp.t
-select 
-		 sap_id
-		,active_before
-		,sap_id_shipment_manual
-		,sap_id_stock_manual
-		,stuffing_id
-		,product_status_manual
-		,number_days_normative_stock
-into #ttt
-from project_plan_production_finished_products.info.finished_products_sap_id_manual
+--insert into project_plan_production_finished_products.info.finished_products_sap_id_manual
+--select *
+--from project_plan_production_finished_products.info.finished_products_sap_id_manual1
 
 
+go
 
 -- exec project_plan_production_finished_products.report.finished_products_sap_id_manual		
 alter procedure report.finished_products_sap_id_manual							
@@ -65,40 +45,72 @@ as
 BEGIN
 			SET NOCOUNT ON;
 
-
-			-- ПРОВЕРКА НАБИВОК
-			IF OBJECT_ID('tempdb..#check_stuffing','U') is not null drop table #check_stuffing;
-
-			select ps.sap_id, 'Отсутствует набивка' as error
-			into #check_stuffing
-			from cherkizovo.info.products_sap as ps
-			left join project_plan_production_finished_products.info.finished_products_sap_id_manual as cm on ps.sap_id = cm.sap_id
-			where ps.category_3_level_name in ('Колбасы сырокопченые')
-			  and cm.stuffing_id is null;
 			
+			IF OBJECT_ID('tempdb..#sap_id','U') is not null drop table #sap_id;
 
+			select 
+					 sm.sap_id
+					,sm.sap_id_shipment_manual
+					,sm.sap_id_stock_manual
+					,sm.sap_id_priority_1
+					,sm.sap_id_priority_2
+					,sm.sap_id_priority_3
+					,sm.stuffing_id
+					,sp.product_status
+			into #sap_id
+			from project_plan_production_finished_products.info.finished_products_sap_id_manual as sm
+			join cherkizovo.info.products_sap as sp on sm.sap_id = sp.sap_id
 
-			-- ПРОВЕРКА КОГДА У ИСКЛЮЧЕНИЯ УКАЗАНО ИСКЛЮЧЕНИЕ ДЛЯ ПОТРЕБНОСТИ
-			IF OBJECT_ID('tempdb..#check_sap_id_shipment_manual','U') is not null drop table #check_sap_id_shipment_manual;
-
-			select cm2.SAP_id, 'SAP ID потребность имеет исключение' as error
-			into #check_sap_id_shipment_manual
-			from project_plan_production_finished_products.info.finished_products_sap_id_manual as cm
-			join project_plan_production_finished_products.info.finished_products_sap_id_manual as cm2 on cm.sap_id_shipment_manual = cm2.SAP_id
-			where not cm2.SAP_id_shipment_manual is null;
 			
+			IF OBJECT_ID('tempdb..#sap_id_check','U') is not null drop table #sap_id_check;
+
+			select
+					 s.sap_id
+					,s.stuffing_id
+
+					,s.sap_id_shipment_manual	
+					,iif(sh.sap_id_shipment_manual is null, '', 'SAP ID потребность имеет исключение')	as sap_id_shipment_manual_check
+
+					,s.sap_id_stock_manual		
+					,iif(st.sap_id_stock_manual is null,	'', 'SAP ID остатки имеет исключение')		as sap_id_stock_manual_check
+
+					,s.sap_id_priority_1	
+					,case 
+							when s.sap_id_priority_1 is null									then ''
+							when p1.stuffing_id like '%+%'										then 'SAP ID в приоритет 1 набивка коробка | '
+							when ISNUMERIC(left(isnull(p1.stuffing_id,''), 5)) <> 1				then 'SAP ID в приоритет 1 код набивки ошибка | '
+							when p1.product_status in ('БлокирДляЗаготов/Склада','Устаревший')	then 'SAP ID в приоритет 1 заблокирован | '
+							else ''
+					 end sap_id_priority_1_check
+
+
+					,s.sap_id_priority_2	
+					,case 
+							when s.sap_id_priority_2 is null									then ''
+							when p2.stuffing_id like '%+%'										then 'SAP ID в приоритет 2 набивка коробка | '
+							when ISNUMERIC(left(isnull(p2.stuffing_id,''), 5)) <> 1				then 'SAP ID в приоритет 2 код набивки ошибка | '
+							when p2.product_status in ('БлокирДляЗаготов/Склада','Устаревший')	then 'SAP ID в приоритет 2 заблокирован'
+							else ''
+					 end sap_id_priority_2_check
+
+					,s.sap_id_priority_3	
+					,case 
+							when s.sap_id_priority_3 is null									then ''
+							when p3.stuffing_id like '%+%'										then 'SAP ID в приоритет 3 набивка коробка | '
+							when ISNUMERIC(left(isnull(p3.stuffing_id,''), 5)) <> 1				then 'SAP ID в приоритет 3 код набивки ошибка | '
+							when p3.product_status in ('БлокирДляЗаготов/Склада','Устаревший')	then 'SAP ID в приоритет 3 заблокирован | '
+							else ''
+					 end sap_id_priority_3_check
+			into #sap_id_check
+			from #sap_id as s
+			left join #sap_id as sh on s.sap_id_shipment_manual	= sh.sap_id
+			left join #sap_id as st on s.sap_id_shipment_manual	= st.sap_id
+			left join #sap_id as p1 on s.sap_id_priority_1	= p1.sap_id
+			left join #sap_id as p2 on s.sap_id_priority_2	= p2.sap_id
+			left join #sap_id as p3 on s.sap_id_priority_3	= p3.sap_id;
+
 			
-
-			-- ПРОВЕРКА КОГДА У ИСКЛЮЧЕНИЯ УКАЗАНО ИСКЛЮЧЕНИЕ ДЛЯ ОСТАТКОВ
-			IF OBJECT_ID('tempdb..#check_sap_id_stock_manual','U') is not null drop table #check_sap_id_stock_manual;
-
-			select cm2.SAP_id, 'SAP ID остатки имеет исключение' as error
-			into #check_sap_id_stock_manual
-			from project_plan_production_finished_products.info.finished_products_sap_id_manual as cm
-			join project_plan_production_finished_products.info.finished_products_sap_id_manual as cm2 on cm.sap_id_stock_manual = cm2.SAP_id
-			where not cm2.SAP_id_stock_manual is null;
-
-
+		
 
 			-- НАИМЕНОВАНИЕ ВОЗРОЩАЕТ РАЗНЫЕ SAP ID
 			IF OBJECT_ID('tempdb..#check_double_name_1c','U') is not null drop table #check_double_name_1c;
@@ -134,9 +146,12 @@ BEGIN
 						,'SAP ID приоритет 3 для набивки' = convert(varchar(24),FORMAT(sm.sap_id_priority_3, '000000000000000000000000') )	
 								
 						,'Проверка справочника' = nullif(
-														  isnull(	(select top 1 cm.error from #check_stuffing as cm				where s.sap_id = cm.SAP_id) + ' | '		,'')
-														+ isnull(	(select top 1 cm.error from #check_sap_id_shipment_manual as cm	where s.sap_id = cm.SAP_id) + ' | '		,'')
-														+ isnull(	(select top 1 cm.error from #check_sap_id_stock_manual as cm	where s.sap_id = cm.SAP_id) + ' | '		,'')
+														  iif(sm.stuffing_id is null , 'Отсутствует набивка | '	,'')
+														+ isnull(	e.sap_id_shipment_manual_check	,'')
+														+ isnull(	e.sap_id_stock_manual_check		,'')
+														+ isnull(	e.sap_id_priority_1_check		,'')
+														+ isnull(	e.sap_id_priority_2_check		,'')
+														+ isnull(	e.sap_id_priority_3_check		,'')
 														+ isnull(	(select top 1 cm.error from #check_double_name_1c as cm			where s.sap_id = cm.SAP_id) + ' | '		,'')
 														,'')
 						--,'Код 1 уровня'			= s.category_1_level_id 
@@ -177,7 +192,8 @@ BEGIN
 						,'Артикул номенклатуры' = s.article_nomenclature
 						,'Артикул тары' = s.article_packaging
 						,'Название SKU SAP MDG' = s.product_SAP_full_name
-						,'Название SKU без завода и индивидуальной маркировки' = s.product_clean_full_name
+						,'Название SKU без завода и ИМ' = s.product_clean_full_name
+						,'Корректировка названия SKU без завода и ИМ' = sm.sap_id_group_name
 						,'Название SKU 1С' = s.product_1C_full_name
 						--,'GTIN (ШК) штуки (CU)' = s.GTIN_CU_id
 						--,'GTIN (ШК) штуки (SKU)' = s.GTIN_SKU_id
@@ -212,18 +228,14 @@ BEGIN
 			from cherkizovo.info.products_sap as s
 			left join project_plan_production_finished_products.info.finished_products_sap_id_manual as sm on s.SAP_id = sm.sap_id
 			left join project_plan_production_finished_products.info.stuffing as sf on sm.stuffing_id = sf.stuffing_id
+			left join #sap_id_check as e on s.sap_id = e.sap_id
 			where s.category_3_level_name in ('Колбасы сырокопченые');
-
-
-			-- ПРОВЕРКА НАБИВОК
-			IF OBJECT_ID('tempdb..#check_stuffing','U') is not null drop table #check_stuffing;
-
-			-- ПРОВЕРКА КОГДА У ИСКЛЮЧЕНИЯ УКАЗАНО ИСКЛЮЧЕНИЕ
-			IF OBJECT_ID('tempdb..#check_sap_id_shipment_manual','U') is not null drop table #check_sap_id_shipment_manual;
-
 			
-			-- ПРОВЕРКА КОГДА У ИСКЛЮЧЕНИЯ УКАЗАНО ИСКЛЮЧЕНИЕ
-			IF OBJECT_ID('tempdb..#check_sap_id_stock_manual','U') is not null drop table #check_sap_id_stock_manual;
+
+
+
+			IF OBJECT_ID('tempdb..#sap_id','U') is not null drop table #sap_id;
+			IF OBJECT_ID('tempdb..#sap_id_check','U') is not null drop table #sap_id_check;
 
 			-- НАИМЕНОВАНИЕ ВОЗРОЩАЕТ РАЗНЫЕ SAP ID
 			IF OBJECT_ID('tempdb..#check_double_name_1c','U') is not null drop table #check_double_name_1c;

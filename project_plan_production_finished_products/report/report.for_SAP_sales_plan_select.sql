@@ -9,7 +9,7 @@ go
 -- exec project_plan_production_finished_products.report.for_SAP_sales_plan_select @type_report = 'list_production_name'
 
 
-alter PROCEDURE report.for_SAP_sales_plan_select @type_report varchar(50), @production_name varchar(50) = ''
+alter PROCEDURE report.for_SAP_sales_plan_select @type_report varchar(50), @production_name varchar(50) = '%'
 											
 as
 BEGIN
@@ -21,17 +21,12 @@ BEGIN
 
 					select sp.production_name
 					from (
-							select isnull(f.production_name, 'Завод не указан') as production_name
-							from project_plan_production_finished_products.data_import.shipments_SAP as sp
-							join project_plan_production_finished_products.info.stuffing as f on sp.stuffing_id = f.stuffing_id	
-							where sp.reason_ignore_in_calculate is null
+							select distinct isnull(f.production_name, 'Завод не указан') as production_name
+							from project_plan_production_finished_products.data_import.shipment as sp
+							join project_plan_production_finished_products.info.stuffing as f on sp.shipment_stuffing_id = f.stuffing_id and ISNUMERIC(left(sp.shipment_stuffing_id,5)) = 1
+							where sp.shipment_reason_ignore_in_calculate is null
+							 and (sp.shipment_data_type in ('shipment_SAP')   or   (sp.shipment_data_type in ('shipment_sales_plan') and sp.shipment_branch_name = 'ЧМПЗ Москва'))
 
-							union
-
-							select isnull(f.production_name, 'Завод не указан') as production_name
-							from project_plan_production_finished_products.data_import.shipments_sales_plan as sp
-							join project_plan_production_finished_products.info.stuffing as f on sp.stuffing_id = f.stuffing_id	
-							where sp.reason_ignore_in_calculate is null
 						 ) as sp
 					order by case 
 									when sp.production_name = 'Завод не указан'	then 1
@@ -47,7 +42,7 @@ BEGIN
 			if @type_report = 'main'
 			begin
 
-					declare @dt_from datetime;  set @dt_from = (select date_file from project_plan_production_finished_products.data_import.info_excel where name_table = 'shipments_SAP');
+					declare @dt_from datetime;  set @dt_from = (select data_on_date  from project_plan_production_finished_products.data_import.data_type where data_type = 'shipment_SAP');
 					declare @dt_to datetime;	set @dt_to   = @dt_from  + 13;
 					declare @sql varchar(max);
 					declare @yyyyMMdd varchar(8);
@@ -57,55 +52,27 @@ BEGIN
 							IF OBJECT_ID('tempdb..#union_shipment','U') is not null drop table #union_shipment;
 					
 							select 
-									 sp.row_id
-									,sp.name_table
-									,sp.production_name
-									,sp.shipment_delete
-									,s.product_1C_full_name
-									,convert(varchar(24), FORMAT(sp.sap_id, '000000000000000000000000')) as sap_id
-									,sp.shipment_customer_name
-									,isnull(sp.shipment_customer_id, 'Код клиента не указан') as shipment_customer_id  
-									,sp.shipment_date
-									,sp.shipment_kg
+									 s.shipment_row_id
+									,s.shipment_data_type
+									,isnull(f.production_name, 'Завод не указан') as production_name
+									,s.shipment_delete
+									,convert(varchar(24), FORMAT(s.shipment_sap_id, '000000000000000000000000')) as sap_id
+									,p.product_1C_full_name
+									,isnull(s.shipment_customer_id, 'Код клиента не указан') as shipment_customer_id  
+									,s.shipment_customer_name
+									,s.shipment_date
+									,iif(s.shipment_stuffing_id_box_type in (0, 1), s.shipment_kg, null) as shipment_kg
 							into #union_shipment
-							from (
-									select 
-											 sp.row_id
-											,sp.name_table
-											,isnull(f.production_name, 'Завод не указан') as production_name
-											,sp.shipment_delete
-											,sp.sap_id
-											,sp.shipment_customer_id
-											,sp.shipment_customer_name
-											,sp.shipment_date
-											,iif(sp.stuffing_id_box_type in (0, 1), sp.shipment_kg, null) as shipment_kg
-									from project_plan_production_finished_products.data_import.shipments_SAP as sp
-									join project_plan_production_finished_products.info.stuffing as f on sp.stuffing_id = f.stuffing_id
-									where sp.reason_ignore_in_calculate is null
-									  and sp.shipment_date between @dt_from and @dt_to
-										
+							from project_plan_production_finished_products.data_import.shipment as s
+							join project_plan_production_finished_products.info.stuffing as f on s.shipment_stuffing_id = f.stuffing_id and ISNUMERIC(left(s.shipment_stuffing_id, 5)) = 1
+							join cherkizovo.info.products_sap as p on s.shipment_sap_id = p.SAP_id
+							where s.shipment_reason_ignore_in_calculate is null
+								and s.shipment_date between @dt_from and @dt_to
+								and (s.shipment_data_type in ('shipment_SAP')   or   (s.shipment_data_type in ('shipment_sales_plan') and s.shipment_branch_name = 'ЧМПЗ Москва'))
+							    and f.production_name like @production_name;
 
-									union all
 
-									select 
-											 sp.row_id
-											,sp.name_table
-											,isnull(f.production_name, 'Завод не указан') as production_name
-											,sp.shipment_delete
-											,sp.sap_id
-											,sp.shipment_customer_id
-											,sp.shipment_customer_name
-											,sp.shipment_date
-											,iif(sp.stuffing_id_box_type in (0, 1), sp.shipment_kg, null) as shipment_kg
-									from project_plan_production_finished_products.data_import.shipments_sales_plan as sp
-									join project_plan_production_finished_products.info.stuffing as f on sp.stuffing_id = f.stuffing_id
-									where sp.shipment_date between @dt_from and @dt_to
-									  and sp.shipment_branch_name = 'ЧМПЗ Москва'
-									  and sp.reason_ignore_in_calculate is null
 
-								 ) as sp
-							join cherkizovo.info.products_sap as s on sp.sap_id = s.SAP_id
-							where sp.production_name like iif(@production_name = '','%',@production_name) ;
 					end;
 
 					begin -- создаем окончательную таблицу из заявок SAP и плана продаж
@@ -120,31 +87,31 @@ BEGIN
 									,u.shipment_customer_id	
 									,u.shipment_date	
 
-									,sum(iif(u.name_table = 'shipments_SAP',		u.shipment_kg, null)) as SAP_kg
-									,sum(iif(u.name_table = 'shipments_sales_plan', u.shipment_kg, null)) as SP_kg
+									,sum(iif(u.shipment_data_type = 'shipment_SAP',			u.shipment_kg, null)) as SAP_kg
+									,sum(iif(u.shipment_data_type = 'shipment_sales_plan',	u.shipment_kg, null)) as SP_kg
 
-									,max(iif(u.name_table = 'shipments_SAP',		u.shipment_delete, null)) as SAP_del
-									,max(iif(u.name_table = 'shipments_sales_plan', u.shipment_delete, null)) as SP_del
+									,max(iif(u.shipment_data_type = 'shipment_SAP',			u.shipment_delete, null)) as SAP_del
+									,max(iif(u.shipment_data_type = 'shipment_sales_plan',	u.shipment_delete, null)) as SP_del
 							
 									,convert(varchar(5000),	(
-																select convert(varchar(20), x.row_id) + ','
+																select convert(varchar(20), x.shipment_row_id) + ','
 																from #union_shipment as x 
 																where u.sap_id = x.sap_id 
-																	and u.shipment_customer_id = x.shipment_customer_id
-																	and u.shipment_customer_name = x.shipment_customer_name
-																	and u.shipment_date = x.shipment_date
-																	and x.name_table = 'shipments_SAP'
+																	and u.shipment_customer_id		= x.shipment_customer_id
+																	and u.shipment_customer_name	= x.shipment_customer_name
+																	and u.shipment_date				= x.shipment_date
+																	and x.shipment_data_type		= 'shipment_SAP'
 																FOR XML PATH('')
 															 )) as SAP_row_id
 							
 									,convert(varchar(5000),	(
-																select convert(varchar(20), x.row_id) + ','
+																select convert(varchar(20), x.shipment_row_id) + ','
 																from #union_shipment as x 
 																where u.sap_id = x.sap_id 
-																	and u.shipment_customer_id = x.shipment_customer_id
-																	and u.shipment_customer_name = x.shipment_customer_name
-																	and u.shipment_date = x.shipment_date
-																	and x.name_table = 'shipments_sales_plan'
+																	and u.shipment_customer_id		= x.shipment_customer_id
+																	and u.shipment_customer_name	= x.shipment_customer_name
+																	and u.shipment_date				= x.shipment_date
+																	and x.shipment_data_type		= 'shipment_sales_plan'
 																FOR XML PATH('')
 															 )) as SP_row_id
 							into #shipment

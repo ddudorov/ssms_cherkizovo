@@ -35,12 +35,18 @@ BEGIN
 
 							select 
 									-- stock
-									 isnull(format(max(	iif(s.stock_data_type = 'stock',	d.data_on_date				, null)	),'dd.MM.yyyy'			),'') as 'lbl_stock_data_on_date'
+									-- isnull(format(max(	iif(s.stock_data_type = 'stock',	d.data_on_date				, null)	),'dd.MM.yyyy'			),'') as 'lbl_stock_data_on_date'
 
-									,isnull(format(sum(	iif(s.stock_data_type = 'stock',	s.stock_kg					, null)	),'### ### ### ### ###'	),'') as 'lbl_stock_kg'
-									,isnull(format(sum(	iif(s.stock_data_type = 'stock',	s.stock_shipment_kg			, null)	),'### ### ### ### ###'	),'') as 'lbl_stock_shipment_kg'
-									,isnull(format(sum(	iif(s.stock_data_type = 'stock',	s.stock_after_shipment_kg	, null)	),'### ### ### ### ###'	),'') as 'lbl_stock_after_shipment_kg'
+									--,isnull(format(sum(	iif(s.stock_data_type = 'stock',	s.stock_kg					, null)	),'### ### ### ### ###'	),'') as 'lbl_stock_kg'
+									--,isnull(format(sum(	iif(s.stock_data_type = 'stock',	s.stock_shipment_kg			, null)	),'### ### ### ### ###'	),'') as 'lbl_stock_shipment_kg'
+									--,isnull(format(sum(	iif(s.stock_data_type = 'stock',	s.stock_after_shipment_kg	, null)	),'### ### ### ### ###'	),'') as 'lbl_stock_after_shipment_kg'
 
+									
+									 isnull(format(min(		d.data_on_date				),'dd.MM.yyyy'			),'') as 'lbl_stock_data_on_date'
+
+									,isnull(format(sum(		s.stock_kg					),'### ### ### ### ###'	),'') as 'lbl_stock_kg'
+									,isnull(format(sum(		s.stock_shipment_kg			),'### ### ### ### ###'	),'') as 'lbl_stock_shipment_kg'
+									,isnull(format(sum(		s.stock_after_shipment_kg	),'### ### ### ### ###'	),'') as 'lbl_stock_after_shipment_kg'
 
 							from project_plan_production_finished_products.data_import.stock as s
 							join project_plan_production_finished_products.data_import.data_type as d on s.stock_data_type = d.data_type
@@ -52,7 +58,6 @@ BEGIN
 			
 
 			-- маркировка
-			if 1=0
 			begin		
 						
 					insert into #for_form (label_name, label_caption)
@@ -60,12 +65,13 @@ BEGIN
 					from (
 
 							select 
-									 isnull(format(max(ie.date_file					),'dd.MM.yyyy'			),'') as 'lbl_marking_date_file'
+									 isnull(format(max(d.data_on_date				),'dd.MM.yyyy'			),'') as 'lbl_marking_date_file'
 									,isnull(format(sum(s.marking_kg					),'### ### ### ### ###'	),'') as 'lbl_marking_kg'
 									,isnull(format(sum(s.marking_shipment_kg		),'### ### ### ### ###'	),'') as 'lbl_marking_shipment_kg'
 									,isnull(format(sum(s.marking_after_shipment_kg	),'### ### ### ### ###'	),'') as 'lbl_marking_after_shipment_kg'
+
 							from project_plan_production_finished_products.data_import.marking as s
-							join project_plan_production_finished_products.data_import.info_excel as ie on s.name_table = ie.name_table
+							join project_plan_production_finished_products.data_import.data_type as d on s.marking_data_type = d.data_type
 						 ) pv
 					UNPIVOT(   label_caption for label_name in (lbl_marking_date_file, lbl_marking_kg, lbl_marking_shipment_kg, lbl_marking_after_shipment_kg)   ) as pv
 
@@ -74,21 +80,20 @@ BEGIN
 
 
 			-- набифка факт
-			if 1=0
 			begin		
 						
 					insert into #for_form (label_name, label_caption)
 					select label_name, label_caption
 					from (
 							select 
-									 isnull(format(max(ie.date_file				),'dd.MM.yyyy'			),'') as 'lbl_stuffing_fact_date_file'
+									 isnull(format(max(ie.data_on_date			),'dd.MM.yyyy'			),'') as 'lbl_stuffing_fact_date_file'
 									,isnull(format(sum(s.stuffing_kg			),'### ### ### ### ###'	),'') as 'lbl_stuffing_fact_kg'
 									,isnull(format(sum(s.stuffing_surplus_kg	),'### ### ### ### ###'	),'') as 'lbl_stuffing_fact_surplus_kg'
 									,isnull(format(sum(s.stuffing_marking_kg	),'### ### ### ### ###'	),'') as 'lbl_stuffing_fact_marking_kg'
 									,isnull(format(sum(s.stuffing_shipment_kg	),'### ### ### ### ###'	),'') as 'lbl_stuffing_fact_shipment_kg'
 							from project_plan_production_finished_products.data_import.stuffing_fact as s
-							join project_plan_production_finished_products.data_import.info_excel as ie on s.name_table = ie.name_table
-							where sap_id is null
+							join project_plan_production_finished_products.data_import.data_type as ie on s.stuffing_data_type = ie.data_type
+							where s.stuffing_sap_id is null
 						 ) pv
 					UNPIVOT( label_caption for label_name in (lbl_stuffing_fact_date_file, lbl_stuffing_fact_kg, lbl_stuffing_fact_surplus_kg, lbl_stuffing_fact_marking_kg, lbl_stuffing_fact_shipment_kg)   ) as pv
 					
@@ -96,24 +101,23 @@ BEGIN
 
 
 			-- набифка план
-			if 1=0
 			begin		
-						
+
 					insert into #for_form (label_name, label_caption)
 					select label_name, label_caption
 					from (
 							select 
-									 isnull(format(max(ie.date_file				),'dd.MM.yyyy'			),'') as 'lbl_stuffing_plan_date_file'
+									 isnull(format(max(ie.data_on_date			),'dd.MM.yyyy'			),'') as 'lbl_stuffing_plan_date_file'
 									,isnull(format(sum(s.stuffing_kg			),'### ### ### ### ###'	),'') as 'lbl_stuffing_plan_kg'
 									,isnull(format(sum(s.stuffing_surplus_kg	),'### ### ### ### ###'	),'') as 'lbl_stuffing_plan_surplus_kg'
 									,isnull(format(sum(s.stuffing_marking_kg	),'### ### ### ### ###'	),'') as 'lbl_stuffing_plan_marking_kg'
 									,isnull(format(sum(s.stuffing_shipment_kg	),'### ### ### ### ###'	),'') as 'lbl_stuffing_plan_shipment_kg'
 							from project_plan_production_finished_products.data_import.stuffing_plan as s
-							join project_plan_production_finished_products.data_import.info_excel as ie on s.name_table = ie.name_table
-							where sap_id is null
+							join project_plan_production_finished_products.data_import.data_type as ie on s.stuffing_data_type = ie.data_type
+							where s.stuffing_sap_id is null
 						 ) pv
 					UNPIVOT( label_caption for label_name in (lbl_stuffing_plan_date_file, lbl_stuffing_plan_kg, lbl_stuffing_plan_surplus_kg, lbl_stuffing_plan_marking_kg, lbl_stuffing_plan_shipment_kg)   ) as pv
-					
+
 			end;
 
 

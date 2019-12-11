@@ -15,24 +15,14 @@ BEGIN
 
 					-- ОЧИЩАЕМ ЕСЛИ РАНЬШЕ УЖЕ БЫЛ РАСЧЕТ
 					update project_plan_production_finished_products.data_import.stock		set stock_shipment_kg = null;		
-					update project_plan_production_finished_products.data_import.shipments	set shipment_from_stock_kg = null, shipment_from_stuffing_fact_kg = null, shipment_from_stuffing_plan_kg = null, shipment_from_marking_kg = null;		
+					update project_plan_production_finished_products.data_import.shipment	set shipment_from_stock_kg = null, shipment_from_stuffing_fact_kg = null, shipment_from_stuffing_plan_kg = null, shipment_from_marking_kg = null;		
 
-
-					-- СОЗДАЕМ ГРУППУ АРТИКУЛОВ, ЧТО БЫ НЕ ЗАВИСИТЬ ОТ ПЛОЩАДКИ
-					IF OBJECT_ID('tempdb..#sap_id_group','U') is not null drop table #sap_id_group;
-					select 
-						 sap_id
-						,DENSE_RANK() over (order by product_clean_full_name, individual_marking_id) as sap_id_group
-						,production_attribute
-						,product_clean_full_name
-						,individual_marking_id
-					into #sap_id_group
-					from cherkizovo.info.products_sap;
-
-
-					-- ЛОГ ОСТАТКОВ
+					-- ЛОГ
 					TRUNCATE TABLE project_plan_production_finished_products.data_import.stock_log_calculation;
-
+					TRUNCATE TABLE project_plan_production_finished_products.data_import.stuffing_fact_log_calculation;
+					TRUNCATE TABLE project_plan_production_finished_products.data_import.stuffing_plan_log_calculation;
+					TRUNCATE TABLE project_plan_production_finished_products.data_import.marking_log_calculation;
+					
 					IF OBJECT_ID('tempdb..#stock_log_calculation','U') is not null drop table #stock_log_calculation;
 
 					create table #stock_log_calculation
@@ -46,13 +36,28 @@ BEGIN
 							,stock_shipment_kg		dec(11,5)			NULL			
 					);
 
+
+
+					-- СОЗДАЕМ ГРУППУ АРТИКУЛОВ, ЧТО БЫ НЕ ЗАВИСИТЬ ОТ ПЛОЩАДКИ
+					IF OBJECT_ID('tempdb..#sap_id_group','U') is not null drop table #sap_id_group;
+					select 
+						 sp.sap_id
+						,DENSE_RANK() over (order by isnull(p.sap_id_group_name, sp.product_clean_full_name), sp.individual_marking_id) as sap_id_group
+						,sp.production_attribute
+						,isnull(p.sap_id_group_name, sp.product_clean_full_name) as product_clean_full_name
+						,sp.individual_marking_id
+					into #sap_id_group
+					from cherkizovo.info.products_sap as sp
+					left join project_plan_production_finished_products.info.finished_products_sap_id_manual as p on sp.sap_id = p.sap_id;
+
+
 					
 					-- ОСТАТКИ
 					IF OBJECT_ID('tempdb..#stock','U') is not null drop table #stock; 
 				
-					select convert(int, ROW_NUMBER() over (order by s.sap_id, s.stock_on_date, s.stock_current_KOS, s.stock_kg)) as stock_id
+					select convert(int, ROW_NUMBER() over (order by s.stock_sap_id, s.stock_on_date, s.stock_current_KOS, s.stock_kg)) as stock_id
 							,s.stock_row_id
-							,s.sap_id
+							,s.stock_sap_id
 							,sg.sap_id_group
 							,sg.production_attribute
 							,s.stock_on_date
@@ -61,8 +66,8 @@ BEGIN
 							,s.stock_kg
 					into #stock
 					from project_plan_production_finished_products.data_import.stock as s
-					join #sap_id_group as sg on s.sap_id = sg.sap_id
-					where s.reason_ignore_in_calculate is null;
+					join #sap_id_group as sg on s.stock_sap_id = sg.sap_id
+					where s.stock_reason_ignore_in_calculate is null;
 
 
 					-- индекс
@@ -75,7 +80,7 @@ BEGIN
 					-- ОТГРУЗКА
 					IF OBJECT_ID('tempdb..#shipment','U') is not null drop table #shipment; 
 
-					select convert(int,   ROW_NUMBER() over (order by o.sap_id, o.shipment_date, o.shipment_priority, o.shipment_min_KOS, o.shipment_kg desc)   ) as shipment_id
+					select convert(int,   ROW_NUMBER() over (order by o.shipment_sap_id, o.shipment_date, o.shipment_priority, o.shipment_min_KOS, o.shipment_kg desc)   ) as shipment_id
 						  ,o.shipment_row_id
 						  ,o.sap_id
 						  ,sg.sap_id_group
@@ -84,8 +89,8 @@ BEGIN
 						  ,o.shipment_date
 						  ,o.shipment_kg
 					into #shipment
-					from project_plan_production_finished_products.data_import.shipments as o
-					join #sap_id_group as sg on o.sap_id = sg.sap_id
+					from project_plan_production_finished_products.data_import.shipment as o
+					join #sap_id_group as sg on o.shipment_sap_id = sg.sap_id
 					where o.shipment_stuffing_id_box_type in (0, 1)
 					  and o.shipment_delete = 0
 					  and o.shipment_reason_ignore_in_calculate is null;
@@ -253,7 +258,7 @@ BEGIN
 			-- ДОБАВЛЯЕМ ОТГРУЗКИ В ПОТРЕБНОСТЬ
 			update o
 			set o.shipment_from_stock_kg = l.shipment_from_stock_kg
-			from project_plan_production_finished_products.data_import.shipments as o
+			from project_plan_production_finished_products.data_import.shipment as o
 			join (
 					select l.shipment_row_id, sum(l.stock_shipment_kg) as shipment_from_stock_kg
 					from #stock_log_calculation as l
@@ -261,36 +266,21 @@ BEGIN
 				 ) as l
 				on o.shipment_row_id = l.shipment_row_id;
 			
-			---- заполняем коробки
-			--update s
-			--set s.stock_shipment_kg = ss.stock_shipment_kg
-			--from project_plan_production_finished_products.data_import.shipments_SAP as s
-			--join (
-			--		select
-			--				 ss.row_id
-			--				,max(ss.stock_shipment_kg) over (partition by ss.stuffing_id_box_row_id) *	
-			--				 ss.shipment_kg / 
-			--				 sum(ss.shipment_kg) over (partition by ss.stuffing_id_box_row_id, ss.stuffing_id_box_type) as stock_shipment_kg
-			--		from project_plan_production_finished_products.data_import.shipments_SAP as ss
-			--		where ss.stuffing_id_box_type in (1, 2)
-			--	 ) as ss on s.row_id = ss.row_id and s.stuffing_id_box_type in (2);
+			-- заполняем коробки
+			update s
+			set s.shipment_from_stock_kg = ss.shipment_from_stock_kg
+			from project_plan_production_finished_products.data_import.shipment as s
+			join (
+					select
+							 ss.shipment_row_id
+							,max(ss.shipment_from_stock_kg) over (partition by ss.shipment_stuffing_id_box_row_id) *	
+							 ss.shipment_kg / 
+							 sum(ss.shipment_kg) over (partition by ss.shipment_stuffing_id_box_row_id, ss.shipment_stuffing_id_box_type) as shipment_from_stock_kg
+					from project_plan_production_finished_products.data_import.shipment as ss
+					where ss.shipment_stuffing_id_box_type in (1, 2)
+				 ) as ss on s.shipment_row_id = ss.shipment_row_id and s.shipment_stuffing_id_box_type in (2);
 
 
-			
-			-- проверка
-			/*
-			select sum(stock_kg), sum(stock_shipment_kg),  sum(stock_after_shipment_kg),  sum(stock_kg)- sum(stock_shipment_kg)
-			from project_plan_production_finished_products.import_data.stock
-
-			select sum(o.shipment_kg) as shipment_kg, sum(o.stock_shipment_kg) as stock_shipment_kg, sum(o.stock_net_need) as stock_net_need, sum(o.shipment_kg) - sum(o.stock_net_need)
-			from (
-					select shipment_kg, stock_shipment_kg, stock_net_need from project_plan_production_finished_products.import_data.shipments_SAP
-					union all
-					select shipment_kg, stock_shipment_kg, stock_net_need from project_plan_production_finished_products.import_data.shipments_1C
-					union all
-					select shipment_kg, stock_shipment_kg, stock_net_need from project_plan_production_finished_products.import_data.shipments_sales_plan
-				 ) as o
-			*/
 end;
 
 

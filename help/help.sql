@@ -109,3 +109,20 @@ begin
 		
 
 end;
+
+
+
+----------------------------------------
+-- ПРИМЕВЕР ВОЗРАТА ЗНАЧЕНИЯ ИЗ ХРАНИМКИ
+----------------------------------------
+create procedure #ttt @t int, @t_out int OUTPUT
+as
+BEGIN
+		set @t_out = @t + 1
+end;
+
+declare @t int 
+set @t = 100
+exec #ttt @t = @t, @t_out = @t out
+
+select @t

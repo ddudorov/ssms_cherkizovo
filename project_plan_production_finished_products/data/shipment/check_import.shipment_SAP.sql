@@ -4,7 +4,7 @@
 
 go
 
-alter procedure check_import.shipment_SAP @path_file		varchar(300) = null
+alter procedure check_import.shipment_SAP @path_file	varchar(300) = null
 										 ,@data_on_date	datetime = null							
 as
 BEGIN
@@ -207,6 +207,84 @@ BEGIN
 			end;
 
 
+
+
+			---- РАЗБИВАЕМ КОРОБОЧКИ НА НАБИВКИ
+			begin
+					IF OBJECT_ID('tempdb..#stuffing_box','U') is not null drop table #stuffing_box;
+					select 
+							 s.shipment_row_id							
+							,s.shipment_data_type							
+							,s.shipment_reason_ignore_in_calculate		
+							,s.shipment_delete							
+							
+							,s.shipment_sap_id							
+							,s.shipment_product_status					
+							,s.shipment_sap_id_expiration_date_in_days	
+							
+							,t.stuffing_id				as shipment_stuffing_id						
+							,s.shipment_stuffing_id		as shipment_stuffing_id_box					
+							,s.shipment_row_id			as shipment_stuffing_id_box_row_id			
+							,2							as shipment_stuffing_id_box_type				
+							
+							,s.shipment_promo_status						
+							,s.shipment_promo								
+							,s.shipment_promo_kos_listing					
+							
+							,s.sap_id										
+							,s.position_dependent_id						
+							,s.individual_marking_id						
+							,s.article_nomenclature						
+							,s.article_packaging							
+							,s.product_finished_id						
+							
+							,s.shipment_branch_id							
+							,s.shipment_branch_name						
+							,s.shipment_sales_channel_id					
+							,s.shipment_sales_channel_name				
+							,s.shipment_customer_id						
+							,s.shipment_customer_name						
+							,s.shipment_delivery_address					
+							
+							,s.shipment_priority							
+							,s.shipment_min_KOS							
+							
+							,s.shipment_with_branch_date					
+							,s.shipment_date	
+							,s.shipment_kg
+							 * (t.stuffing_share_in_box / sum(t.stuffing_share_in_box) over (partition by s.shipment_row_id)) as shipment_kg
+					into #stuffing_box
+					from project_plan_production_finished_products.data_import.shipment as s
+					join project_plan_production_finished_products.info.stuffing as t on s.shipment_stuffing_id = t.stuffing_id_box
+					where s.shipment_data_type ='shipment_SAP';
+
+
+
+					-- собираеми список полей
+					declare @sql_columns_stuffing_box varchar(1000); set @sql_columns_stuffing_box = '';
+
+						select @sql_columns_stuffing_box = @sql_columns_stuffing_box + t.name  + ','
+						from tempdb.dbo.syscolumns as t
+						where id = object_id('tempdb..#stuffing_box')
+							and t.name <> 'shipment_row_id';
+
+						set @sql_columns_stuffing_box = left(@sql_columns_stuffing_box,len(@sql_columns_stuffing_box) - 1)
+
+					-- ВСТАВЛЯЕМ ДАННЫЕ
+					declare @sql_insert_stuffing_box varchar(max);
+						set @sql_insert_stuffing_box = 'insert into project_plan_production_finished_products.data_import.shipment ( ' + @sql_columns_stuffing_box + ' )  
+														select ' + @sql_columns_stuffing_box + ' from #stuffing_box as upv'
+						exec(@sql_insert_stuffing_box);
+
+						update project_plan_production_finished_products.data_import.shipment
+						set shipment_stuffing_id_box_type = 1
+						   ,shipment_stuffing_id_box_row_id = shipment_row_id
+						where shipment_row_id in (select shipment_stuffing_id_box_row_id from #stuffing_box);
+
+			end;
+
+
+
 			-- ПИШЕМ ОШИБКИ
 			begin
 			
@@ -233,80 +311,6 @@ BEGIN
 
 
 			end;
-
-
-			---- РАЗБИВАЕМ КОРОБОЧКИ НА НАБИВКИ
-			--begin
-
-			--		insert into project_plan_production_finished_products.data_import.shipment
-			--		(
-			--				 reason_ignore_in_calculate
-			--				,product_status
-			--				,sap_id
-			--				,sap_id_expiration_date_in_days
-			--				,stuffing_id
-			--				,stuffing_id_box_row_id
-			--				,stuffing_id_box
-
-			--				,position_dependent_id
-			--				,individual_marking_id
-			--				,shipment_delete
-			--				,shipment_sales_channel_id
-			--				,shipment_customer_id
-			--				,shipment_customer_name
-			--				,shipment_delivery_address
-			--				,shipment_priority
-			--				,shipment_date
-			--				,shipment_min_KOS
-			--				,shipment_kg
-
-			--		)
-
-			--		select 
-			--				 s.reason_ignore_in_calculate
-			--				,s.product_status
-			--				,s.sap_id
-			--				,s.sap_id_expiration_date_in_days
-			--				,t.stuffing_id
-			--				,s.row_id as stuffing_id_box_row_id
-			--				,t.stuffing_id_box
-
-			--				,s.position_dependent_id
-			--				,s.individual_marking_id
-			--				,s.shipment_delete
-			--				,s.shipment_sales_channel_id
-			--				,s.shipment_customer_id
-			--				,s.shipment_customer_name
-			--				,s.shipment_delivery_address
-			--				,s.shipment_priority
-			--				,s.shipment_date
-			--				,s.shipment_min_KOS
-			--				,s.shipment_kg
-			--				 * (t.stuffing_share_in_box / sum(t.stuffing_share_in_box) over (partition by s.row_id)) as shipment_kg
-			--		from project_plan_production_finished_products.data_import.shipments_SAP as s
-			--		join project_plan_production_finished_products.info.stuffing as t on s.stuffing_id = t.stuffing_id_box;
-
-					
-			--		-- проставляем row_id у группа набивок
-			--		update s
-			--		set s.stuffing_id_box_row_id = b.stuffing_id_box_row_id
-			--		from project_plan_production_finished_products.data_import.shipments_SAP as s
-			--		join (select distinct stuffing_id_box_row_id
-			--			  from project_plan_production_finished_products.data_import.shipments_SAP 
-			--			  where not stuffing_id_box is null) as b on s.row_id = b.stuffing_id_box_row_id;
-
-					
-			--		-- проставляем тип набивки
-			--		update project_plan_production_finished_products.data_import.shipments_SAP
-			--		set stuffing_id_box_type = case 
-			--										when stuffing_id_box_row_id is null then 0 -- набивка не коробка
-			--										when stuffing_id_box is null		then 1 -- набивка коробка
-			--										when not stuffing_id_box is null	then 2 -- набивка разбитая на коробки
-			--								   end;
-			--end;
-
-
-
 
 			-- ВЫГРУЖАЕМ РЕЗУЛЬТАТ
 			begin

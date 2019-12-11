@@ -3,6 +3,7 @@
 go
 
 -- exec project_plan_production_finished_products.report.for_marking_plan @type_report = 'report_main'
+-- exec project_plan_production_finished_products.report.for_marking_plan @type_report = 'report_for_pivot'
 
 ALTER PROCEDURE report.for_marking_plan @type_report varchar(50) = 'report_main'
 as
@@ -16,7 +17,7 @@ BEGIN
 																		 from (	select  isnull(min(stuffing_production_date_to),'29990101') as dt  from project_plan_production_finished_products.data_import.stuffing_fact union all
 																				select  isnull(min(stuffing_production_date_to),'29990101') as dt  from project_plan_production_finished_products.data_import.stuffing_plan ) as s 
 																		 order by dt);																 
-			declare @report_dt_to datetime;		set @report_dt_to =		(select			max(shipment_date)						from project_plan_production_finished_products.data_import.shipments_sales_plan);																 
+			declare @report_dt_to datetime;		set @report_dt_to =		(select			max(shipment_date)						from project_plan_production_finished_products.data_import.shipment);																 
 			declare @dt_while as datetime;
 
 			declare @sql varchar(max);
@@ -30,42 +31,45 @@ BEGIN
 			-- НАБИВКИ
 			begin
 					IF OBJECT_ID('tempdb..#stuffing','U') is not null drop table #stuffing;
+
 					select 
-							 s.sap_id
+							 s.stuffing_sap_id as sap_id
 							,s.stuffing_id
-							--,s.stuffing_production_name
 							,s.stuffing_production_date_to
-							--,s.stuffing_available_date
 							,sum(s.stuffing_surplus_kg) as stuffing_surplus_kg
 							,sum(s.stuffing_marking_kg) as stuffing_marking_kg
 					into #stuffing
 					from (
 							select 
-									 s.sap_id
+									 s.stuffing_sap_id
 									,s.stuffing_id
 									,s.stuffing_production_name
 									,s.stuffing_production_date_to
 									,s.stuffing_available_date
+									--,s.stuffing_kg
+									--,s.stuffing_marking_kg
+									--,s.stuffing_shipment_kg
 									,s.stuffing_surplus_kg
-									,case when not s.sap_id is null then   nullif( isnull( s.stuffing_marking_kg, 0) + isnull( s.stuffing_shipment_kg, 0) , 0)   end as stuffing_marking_kg
+									,case when not s.stuffing_sap_id is null then   nullif( isnull( s.stuffing_marking_kg, 0) + isnull( s.stuffing_shipment_kg, 0) , 0)   end as stuffing_marking_kg
 							from project_plan_production_finished_products.data_import.stuffing_fact as s
 							union all
 							select 
-									 s.sap_id
+									 s.stuffing_sap_id
 									,s.stuffing_id
 									,s.stuffing_production_name
 									,s.stuffing_production_date_to
 									,s.stuffing_available_date
+									--,s.stuffing_kg
+									--,s.stuffing_marking_kg
+									--,s.stuffing_shipment_kg
 									,s.stuffing_surplus_kg
-									,case when not s.sap_id is null then   nullif( isnull( s.stuffing_marking_kg, 0) + isnull( s.stuffing_shipment_kg, 0) , 0)   end as stuffing_marking_kg
+									,case when not s.stuffing_sap_id is null then   nullif( isnull( s.stuffing_marking_kg, 0) + isnull( s.stuffing_shipment_kg, 0) , 0)   end as stuffing_marking_kg
 							from project_plan_production_finished_products.data_import.stuffing_plan as s
 						 ) as s
 					group by 
-							 s.sap_id
+							 s.stuffing_sap_id
 							,s.stuffing_id
-							--,s.stuffing_production_name
 							,s.stuffing_production_date_to;
-							--,s.stuffing_available_date
 
 			end;
 
@@ -76,78 +80,85 @@ BEGIN
 
 						select
 								 p.sap_id
-								,p.sap_id_expiration_date_in_days
-								,p.stuffing_id
-								,p.shipment_min_KOS
-								,p.shipment_date - p.sap_id_expiration_date_in_days * p.shipment_min_KOS as stuffing_production_date_to_min
-								,p.shipment_date - st.transit_from_production_days - st.maturation_and_packaging_days + st.maturation_days as stuffing_production_date_to_max
-								,p.shipment_date as stuffing_available_date
+								,p.stuffing_id	
+								,p.stuffing_production_date_to
+								,p.stuffing_available_date
 								,sum(p.shipment_kg) as shipment_kg
-								,sum(p.stock_net_need_kg) as stock_net_need_kg
+								,sum(p.net_need_kg) as net_need_kg
 						into #shipments
 						from (
+
+								-- потребность которая не распределилась
 								select 
-										 p.sap_id
-										,p.sap_id_expiration_date_in_days
-										,p.stuffing_id
-										,p.shipment_min_KOS
-										,p.shipment_date
-										,p.shipment_kg
-										,p.stock_net_need_kg
-								from project_plan_production_finished_products.data_import.shipments_SAP as p 
-								where p.stuffing_id_box_type in (0, 1)
-								 --and p.stock_net_need_kg > 0 
-								 and p.shipment_delete = 0		
-								 and not p.sap_id is null 
-								 and not p.stuffing_id is null 
-								 and not p.sap_id_expiration_date_in_days is null						 
-								 and not isnull(p.product_status,'') in ('БлокирДляЗаготов/Склада','Устаревший')
+										 p.shipment_sap_id					as sap_id
+										,p.shipment_stuffing_id				as stuffing_id
+										,p.shipment_date - sf.transit_from_production_days - sf.maturation_and_packaging_days + sf.maturation_days as stuffing_production_date_to
+										,p.shipment_date					as stuffing_available_date
+										,p.shipment_from_stuffing_plan_kg	as shipment_kg
+										,p.shipment_from_stuffing_plan_kg	as net_need_kg
+								from project_plan_production_finished_products.data_import.shipment as p 
+								join project_plan_production_finished_products.info.stuffing as sf on p.shipment_stuffing_id = sf.stuffing_id
+								where p.shipment_stuffing_id_box_type in (0, 1)
+									and p.shipment_delete = 0		
+									and not p.shipment_sap_id is null 
+									and not p.shipment_stuffing_id is null 					 
+									and not isnull(p.shipment_product_status,'') in ('БлокирДляЗаготов/Склада','Устаревший')
+									and ISNUMERIC(left(isnull(p.shipment_stuffing_id,''), 5)) = 1	
+								    and not p.shipment_from_stuffing_plan_kg is null
+								
+									
+								union all
+								 
+								-- потребность из остатков она то и будет чистой после отгрузки остатков, есть аналог в группе, потребность закрылась из другого артикула
+								select 
+										 st.stock_sap_id
+										,st.stock_stuffing_id
+										,l.shipment_date - sf.transit_from_production_days - sf.maturation_and_packaging_days + sf.maturation_days as stuffing_production_date_to
+										,l.shipment_date as stuffing_available_date
+										,l.stock_shipment_kg as shipment_kg
+										,null as net_need_kg
+								from project_plan_production_finished_products.data_import.stock_log_calculation as l
+								join project_plan_production_finished_products.data_import.stock as st on l.stock_row_id = st.stock_row_id
+								join project_plan_production_finished_products.info.stuffing as sf on st.stock_stuffing_id = sf.stuffing_id
+								join cherkizovo.info.products_sap as ps	
+									on st.stock_sap_id = ps.sap_id 
+									and not isnull(ps.product_status,'') in ('БлокирДляЗаготов/Склада','Устаревший')
+									and ISNUMERIC(left(isnull(st.stock_stuffing_id,''), 5)) = 1	
 
 								union all
-
+								 
+								-- потребность из набивок факт, так как есть приоритеты и артикул может изменить
 								select 
-										 p.sap_id
-										,p.sap_id_expiration_date_in_days
-										,p.stuffing_id
-										,p.shipment_min_KOS
-										,p.shipment_date
-										,p.shipment_kg
-										,p.stock_net_need_kg
-								from project_plan_production_finished_products.data_import.shipments_1C as p
-								where p.stuffing_id_box_type in (0, 1)
-								 --and p.stock_net_need_kg > 0 
-								 and not p.sap_id is null 
-								 and not p.stuffing_id is null 
-								 and not p.sap_id_expiration_date_in_days is null						 
-								 and not isnull(p.product_status,'') in ('БлокирДляЗаготов/Склада','Устаревший')
+										 l.stuffing_sap_id
+										,st.stuffing_id
+										,l.shipment_date - DATEDIFF(day,st.stuffing_production_date_to, st.stuffing_available_date) as stuffing_production_date_to
+										,l.shipment_date as stuffing_available_date
+										,l.stuffing_shipment_kg as shipment_kg
+										,l.stuffing_shipment_kg as net_need_kg
+								from project_plan_production_finished_products.data_import.stuffing_fact_log_calculation as l
+								join project_plan_production_finished_products.data_import.stuffing_fact	as st on l.stuffing_sap_id = st.stuffing_sap_id and l.stuffing_row_id = st.stuffing_sap_id_row_id
+
 
 								union all
-
+								 
+								-- потребность из набивок факт, так как есть приоритеты и артикул может изменить
 								select 
-										 p.sap_id
-										,p.sap_id_expiration_date_in_days
-										,p.stuffing_id
-										,p.shipment_min_KOS
-										,p.shipment_date
-										,p.shipment_kg
-										,p.stock_net_need_kg
-								from project_plan_production_finished_products.data_import.shipments_sales_plan as p
-								where p.stuffing_id_box_type in (0, 1)
-								 --and p.stock_net_need_kg > 0 
-								 and not p.sap_id is null 
-								 and not p.stuffing_id is null 
-								 and not p.sap_id_expiration_date_in_days is null						 
-								 and not isnull(p.product_status,'') in ('БлокирДляЗаготов/Склада','Устаревший')
+										 l.stuffing_sap_id
+										,st.stuffing_id
+										,l.shipment_date - DATEDIFF(day,st.stuffing_production_date_to, st.stuffing_available_date) as stuffing_production_date_to
+										,l.shipment_date as stuffing_available_date
+										,l.stuffing_shipment_kg as shipment_kg
+										,l.stuffing_shipment_kg as net_need_kg
+								from project_plan_production_finished_products.data_import.stuffing_plan_log_calculation as l
+								join project_plan_production_finished_products.data_import.stuffing_plan	as st on l.stuffing_sap_id = st.stuffing_sap_id and l.stuffing_row_id = st.stuffing_sap_id_row_id
+
 
 							) as p join project_plan_production_finished_products.info.stuffing as st on p.stuffing_id = st.stuffing_id
-						where not st.transit_from_production_days is null and not st.maturation_and_packaging_days is null and not st.maturation_days is null
 						group by  
 								 p.sap_id
-								,p.sap_id_expiration_date_in_days
 								,p.stuffing_id
-								,p.shipment_min_KOS
-								,p.shipment_date - st.transit_from_production_days - st.maturation_and_packaging_days + st.maturation_days
-								,p.shipment_date;
+								,p.stuffing_production_date_to
+								,p.stuffing_available_date;
 
 
 			end;
@@ -164,14 +175,12 @@ BEGIN
 								select distinct stuffing_id, sap_id from #shipments
 								union 
 								select 
-										 sm2.stuffing_id
-										,s2.sap_id 
-								from cherkizovo.info.products_sap													as s1
-								join project_plan_production_finished_products.info.finished_products_sap_id_manual as sm1 on s1.sap_id = sm1.sap_id
-								join cherkizovo.info.products_sap													as s2  on isnull(sm1.sap_id_shipment_manual, sm1.SAP_id) = s2.sap_id 
-								join project_plan_production_finished_products.info.finished_products_sap_id_manual as sm2 on s2.sap_id = sm2.sap_id
-								where not isnull(s2.product_status,'') in ('БлокирДляЗаготов/Склада','Устаревший')
-								  and ISNUMERIC(LEFT(sm2.stuffing_id, 5)) = 1
+										 sm.stuffing_id
+										,s.sap_id 
+								from project_plan_production_finished_products.info.finished_products_sap_id_manual as sm
+								join cherkizovo.info.products_sap													as s  on sm.SAP_id = s.sap_id 
+								where not isnull(s.product_status,'') in ('БлокирДляЗаготов/Склада','Устаревший')
+								  and ISNUMERIC(LEFT(sm.stuffing_id, 5)) = 1
 								 
 						)
 
@@ -279,8 +288,8 @@ BEGIN
 									while @dt_while <= @report_dt_to
 									begin
 
-											set @sql = 'alter table #shipments_pivot add shipment_kg_'			+ format(@dt_while, 'yyyyMMdd') + ' dec(11, 5) null;';	exec (@sql);
-											set @sql = 'alter table #shipments_pivot add stock_net_need_kg_'	+ format(@dt_while, 'yyyyMMdd') + ' dec(11, 5) null;';	exec (@sql);
+											set @sql = 'alter table #shipments_pivot add shipment_kg_'	+ format(@dt_while, 'yyyyMMdd') + ' dec(11, 5) null;';	exec (@sql);
+											set @sql = 'alter table #shipments_pivot add net_need_kg_'	+ format(@dt_while, 'yyyyMMdd') + ' dec(11, 5) null;';	exec (@sql);
 											set @dt_while = @dt_while + 1;
 									end;
 									
@@ -291,8 +300,8 @@ BEGIN
 									set @dt_while = @report_dt_from;
 									while @dt_while <= @report_dt_to
 									begin
-											set @sql = @sql + char(10) + '		,sum(iif(st.stuffing_production_date_to_max = ''' + format(@dt_while, 'yyyyMMdd') + ''', st.shipment_kg			, null) ) as shipment_kg_' +  format(@dt_while, 'yyyyMMdd')
-											set @sql = @sql + char(10) + '		,sum(iif(st.stuffing_production_date_to_max = ''' + format(@dt_while, 'yyyyMMdd') + ''', st.stock_net_need_kg	, null) ) as stock_net_need_kg_' +  format(@dt_while, 'yyyyMMdd')
+											set @sql = @sql + char(10) + '		,sum(iif(st.stuffing_production_date_to = ''' + format(@dt_while, 'yyyyMMdd') + ''', st.shipment_kg	 , null) ) as shipment_kg_' +  format(@dt_while, 'yyyyMMdd')
+											set @sql = @sql + char(10) + '		,sum(iif(st.stuffing_production_date_to = ''' + format(@dt_while, 'yyyyMMdd') + ''', st.net_need_kg	 , null) ) as net_need_kg_' +  format(@dt_while, 'yyyyMMdd')
 
 											set @dt_while = @dt_while + 1;
 									end;
@@ -378,7 +387,7 @@ BEGIN
 								set @sql = @sql + char(10) + ',sum(sh.shipment_kg_'				+ format(@dt_while, 'yyyyMMdd') + ') as shipment_kg_'			+ format(@dt_while, 'yyyyMMdd')
 
 								-- потребность после остатков
-								set @sql = @sql + char(10) + ',sum(sh.stock_net_need_kg_'		+ format(@dt_while, 'yyyyMMdd') + ') as stock_net_need_kg_'		+ format(@dt_while, 'yyyyMMdd')
+								set @sql = @sql + char(10) + ',sum(sh.net_need_kg_'				+ format(@dt_while, 'yyyyMMdd') + ') as net_need_kg_'			+ format(@dt_while, 'yyyyMMdd')
 								
 								-- маркировка
 								set @sql = @sql + char(10) + ',null as marking_kg_'				+ format(@dt_while, 'yyyyMMdd')

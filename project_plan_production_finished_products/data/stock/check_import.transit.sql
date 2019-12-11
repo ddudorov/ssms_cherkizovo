@@ -37,7 +37,6 @@ BEGIN
 						-- ПОДТЯГИВАЕМ SAP ID К ДАННЫМ SAP
 						select 
 								 sm.sap_id 
-								,sm.active_before
 								,sm.product_1C_full_name
 								,sp.expiration_date_in_days
 								,sp.product_status
@@ -48,7 +47,6 @@ BEGIN
 									-- берем таблицу с ручными артикулами, подтягиваем варианты артикулов из другой системы и если у нормального артикула указано исключение отображаем ислючение
 									select distinct
 											 isnull(sm.sap_id_stock_manual, sm.sap_id) as sap_id
-											,null as active_before
 											,sp.product_1C_full_name
 									from project_plan_production_finished_products.info.finished_products_sap_id_manual as sm
 									join cherkizovo.info.products_sap as sp on sm.sap_id = sp.sap_id

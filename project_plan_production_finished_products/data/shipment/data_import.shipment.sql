@@ -11,6 +11,7 @@ create table project_plan_production_finished_products.data_import.shipment
 		,shipment_data_type							VARCHAR(30)			NOT NULL					-- shipment_SAP / shipment_1C / shipment_sales_plan
 		,shipment_reason_ignore_in_calculate		VARCHAR(300)			NULL					-- пишем ошибки
 		,shipment_delete							tinyint				NOT NULL default 0			-- 0 строка участвует в расчетах - для сверки SAP и План продаж
+		,shipment_exclude_for_stuffing_plan			tinyint				NOT NULL default 0			-- исключаем в плане продаж для плана набивок
 
 		,shipment_sap_id							BIGINT					NULL
 		,shipment_product_status					VARCHAR(100)			NULL					-- статус блокировки из РГП
@@ -50,16 +51,20 @@ create table project_plan_production_finished_products.data_import.shipment
 
 		-- расчетные поля
 		,shipment_from_stock_kg						dec(11,5)				NULL
-		,shipment_after_stock_kg					as nullif( shipment_kg - isnull(shipment_from_stock_kg, 0)   , 0)
+		,shipment_after_stock_kg					as iif(shipment_kg - isnull(shipment_from_stock_kg, 0) > 0
+														  ,shipment_kg - isnull(shipment_from_stock_kg, 0), null)
 		
 		,shipment_from_stuffing_fact_kg				dec(11,5)				NULL
-		,shipment_after_stuffing_fact_kg			as nullif( shipment_kg - isnull(shipment_from_stock_kg, 0) - isnull(shipment_from_stuffing_fact_kg, 0)  , 0)
+		,shipment_after_stuffing_fact_kg			as iif(shipment_kg - isnull(shipment_from_stock_kg, 0) - isnull(shipment_from_stuffing_fact_kg, 0) > 0
+														  ,shipment_kg - isnull(shipment_from_stock_kg, 0) - isnull(shipment_from_stuffing_fact_kg, 0), null)
 
 		,shipment_from_stuffing_plan_kg				dec(11,5)				NULL
-		,shipment_after_stuffing_plan_kg			as nullif( shipment_kg - isnull(shipment_from_stock_kg, 0) - isnull(shipment_from_stuffing_fact_kg, 0) - isnull(shipment_from_stuffing_plan_kg, 0) , 0)
+		,shipment_after_stuffing_plan_kg			as iif(shipment_kg - isnull(shipment_from_stock_kg, 0) - isnull(shipment_from_stuffing_fact_kg, 0) - isnull(shipment_from_stuffing_plan_kg, 0) > 0
+														  ,shipment_kg - isnull(shipment_from_stock_kg, 0) - isnull(shipment_from_stuffing_fact_kg, 0) - isnull(shipment_from_stuffing_plan_kg, 0), null)
 
 		,shipment_from_marking_kg					dec(11,5)				NULL
-		,shipment_after_marking_kg					as nullif( shipment_kg - isnull(shipment_from_stock_kg, 0) - isnull(shipment_from_marking_kg, 0)   , 0)
+		,shipment_after_marking_kg					as iif(shipment_kg - isnull(shipment_from_stock_kg, 0) - isnull(shipment_from_marking_kg, 0) > 0
+														  ,shipment_kg - isnull(shipment_from_stock_kg, 0) - isnull(shipment_from_marking_kg, 0), null)
 
 
 )
