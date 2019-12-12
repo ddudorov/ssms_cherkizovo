@@ -40,6 +40,7 @@ BEGIN
 
 					-- СОЗДАЕМ ГРУППУ АРТИКУЛОВ, ЧТО БЫ НЕ ЗАВИСИТЬ ОТ ПЛОЩАДКИ
 					IF OBJECT_ID('tempdb..#sap_id_group','U') is not null drop table #sap_id_group;
+
 					select 
 						 sp.sap_id
 						,DENSE_RANK() over (order by isnull(p.sap_id_group_name, sp.product_clean_full_name), sp.individual_marking_id) as sap_id_group
@@ -59,7 +60,6 @@ BEGIN
 							,s.stock_row_id
 							,s.stock_sap_id
 							,sg.sap_id_group
-							,sg.production_attribute
 							,s.stock_on_date
 							,s.stock_current_KOS
 							,s.stock_KOS_in_day
@@ -72,7 +72,7 @@ BEGIN
 
 					-- индекс
 					CREATE NONCLUSTERED INDEX NoCl_stock ON #stock (sap_id_group, stock_id asc, stock_on_date desc)
-					include(stock_current_KOS, stock_KOS_in_day, production_attribute); 
+					include(stock_current_KOS, stock_KOS_in_day); 
 					
 					CREATE CLUSTERED INDEX Cl_stock_id ON #stock (stock_id);  
 							
@@ -84,7 +84,6 @@ BEGIN
 						  ,o.shipment_row_id
 						  ,o.sap_id
 						  ,sg.sap_id_group
-						  ,sg.production_attribute
 						  ,o.shipment_min_KOS
 						  ,o.shipment_date
 						  ,o.shipment_kg
@@ -98,7 +97,6 @@ BEGIN
 
 					
 					-- индекс
-					--CREATE NONCLUSTERED INDEX NoCl_shipment_id ON #shipment (shipment_id); 
 					CREATE CLUSTERED INDEX Cl_shipment_id ON #shipment (shipment_id); 
 
 					
@@ -115,7 +113,6 @@ BEGIN
 			declare @shipment_id						int;			set @shipment_id = 1;
 			declare @shipment_sap_id					bigint; 
 			declare @shipment_sap_id_group				smallint; 
-			declare @shipment_production_attribute		varchar(4);
 			declare @shipment_date						datetime;		-- log
 			declare @shipment_min_KOS					DEC(7,6);
 			declare @shipment_kg						dec(11,5);
@@ -128,9 +125,6 @@ BEGIN
 			declare @stock_shipment_kg					dec(11,5);
 			
 
-
-
-
 			while not @shipment_id is null
 			begin
 						-- заполняем переменные по отгрузке
@@ -138,7 +132,6 @@ BEGIN
 								 @shipment_id						= max(o.shipment_id)
 								,@shipment_sap_id					= max(o.sap_id)
 								,@shipment_sap_id_group				= max(o.sap_id_group)
-								,@shipment_production_attribute		= max(o.production_attribute)
 								,@shipment_date						= max(o.shipment_date)
 								,@shipment_min_KOS					= max(o.shipment_min_KOS)
 								,@shipment_kg						= max(o.shipment_kg)
@@ -151,8 +144,7 @@ BEGIN
 						-- распределяем остатки --
 						-- ==================== --
 						set @stock_id = 0;
-
-						while not @stock_id is null and not @shipment_id is null -- 0 для входа в цикл, если остатки null, то выходим из цикла -- 
+						while isnull(@shipment_kg, 0) > 0.0
 						begin
 									 
 									-- ПИШЕМ ЛОГИ РАСПРДЕЛЕНИЯ ОСТАТКОВ | ЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГЛОГ
@@ -174,38 +166,13 @@ BEGIN
 											  and s.stock_id > @stock_id
 											  and s.stock_on_date <= @shipment_date
 											  and @shipment_min_KOS < s.stock_current_KOS - (s.stock_KOS_in_day * DATEDIFF(day, s.stock_on_date, @shipment_date))  --ПРОВЕРКА: КОС остатков больше мин КОС на отгрузку
-											/*
 											order by s.stock_id
-												 ,case @shipment_production_attribute
-														when 'П1' then 
-																		case s.production_attribute 
-																				when 'П4' then 1
-																				when 'П7' then 2
-																				when 'П1' then 3
-																		 end
-														when 'П4' then 
-																		case s.production_attribute 
-																				when 'П4' then 4
-																				when 'П7' then 5
-																				when 'П1' then 6
-																		 end
-																		 
-														when 'П7' then 
-																		case s.production_attribute 
-																				when 'П4' then 7
-																				when 'П1' then 8
-																				when 'П7' then 9
-																		 end
-												  end
-															--П1	ОАО ЧМПЗ Москва
-															--П4	ОАО ЧМПЗ Калининград 
-															--П7	ЗАО Черкизово-Кашира
-											*/
 										 ) as s;
 
 
 									-- ПРОВЕРКА: если остатков нет
-									if @stock_id is null CONTINUE;
+									if @stock_id is null BREAK; 
+
 
 									set @stock_shipment_kg = iif(@shipment_kg > @stock_kg, @stock_kg, @shipment_kg);
 															
@@ -214,19 +181,11 @@ BEGIN
 										  ( shipment_row_id, shipment_date,  shipment_kg,   stock_row_id,  stock_kg,  stock_shipment_kg)	
 									values(@shipment_row_id, @shipment_date, @shipment_kg, @stock_row_id, @stock_kg, @stock_shipment_kg);
 									
-									-- РАСПРЕДЕЛЯЕМ: если заказали больше чем на остатках, но берем кол-во на остатках или кол-во заказанного	
+									-- РАСПРЕДЕЛЯЕМ: вычитаем из остатков и потребности
 									update #shipment	set shipment_kg		= shipment_kg	- @stock_shipment_kg	where shipment_id = @shipment_id;
 									update #stock		set stock_kg		= stock_kg		- @stock_shipment_kg	where stock_id = @stock_id;
 														set @shipment_kg	= @shipment_kg	- @stock_shipment_kg;
-										
-						
-									-- если заказ больше 0, значит не все покрыли 
-									if @shipment_kg = 0
-									begin
-										set @stock_id = null
-										CONTINUE
-									end;
-
+									
 						end;
 
 						-- следующая отгрузка

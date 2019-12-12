@@ -9,338 +9,292 @@ as
 BEGIN
 			SET NOCOUNT ON;
 			
-			declare @max_dt_shipment datetime;
 
-			-- создаем таблицу куда будут загружены все данные
-			begin
+
+			
+			begin -- СОЗДАЕМ ТАБЛИЦУ КУДА БУДУТ ЗАГРУЖЕНЫ ВСЕ ДАННЫЕ
+
 					IF OBJECT_ID('tempdb..#union_data','U') is not null drop table #union_data; 
-					
-					select top 0
-								 sap_id															
-								,stuffing_id 																				
-								,shipment_customer_name															
-								,shipment_sales_channel_name	
-								,shipment_priority															
-								,convert(datetime, null) as dt																
+
+					create table #union_data
+					(
+								 sap_id							bigint			null														
+								,stuffing_id					varchar(40)		null												
+								,sales_channel_name				varchar(25)		null																				
+								,customer_name					varchar(100)	null								
+								,dt								datetime	not null		
 								
-								,shipment_kg as stock_total_kg	
-								,shipment_kg as stock_marking_total_kg															
-								,shipment_kg as stock_KOS__0_49_kg														
-								,shipment_kg as stock_KOS_50_59_kg														
-								,shipment_kg as stock_KOS_60_69_kg														
-								,shipment_kg as stock_KOS_70_79_kg														
-								,shipment_kg as stock_KOS_80_99_kg															
-								,shipment_kg as stock_KOS___100_kg														
-								,shipment_kg as shipment_kg																
-								,shipment_kg as net_need_kg																
-								,shipment_kg as stock_after_shipment_kg																
-																	
-					into #union_data
-					from project_plan_production_finished_products.data_import.shipments_sales_plan
+								,stock_total_kg					dec(11, 5)		null
+								,stock_marking_total_kg			dec(11, 5)		null						
+								,stock_KOS__0_49_kg				dec(11, 5)		null				
+								,stock_KOS_50_59_kg				dec(11, 5)		null				
+								,stock_KOS_60_69_kg				dec(11, 5)		null				
+								,stock_KOS_70_79_kg				dec(11, 5)		null				
+								,stock_KOS_80_99_kg				dec(11, 5)		null					
+								,stock_KOS___100_kg				dec(11, 5)		null				
+								,shipment_kg					dec(11, 5)		null					
+								,deficit_kg						dec(11, 5)		null				
+								,surplus_kg					    dec(11, 5)		null
+					);
 
 			end;
 
-			-- отгрузки в одну таблицу и добавляем в основную
-			begin
-					IF OBJECT_ID('tempdb..#shipments_union','U') is not null drop table #shipments_union; 
+			
+			begin -- ВСТАВЛЯЕМ ТО, ЧТО НЕ СМОГЛИ ОТГРУЗИТЬ, ОНО ИДЕТ КАК ОТГРУЗКА ТАК И ДЕФИЦИТ 
 
-					select
-						 row_id
-						,name_table
-						,sap_id
-						,stuffing_id
-						,shipment_sales_channel_name
-						,shipment_customer_name
-						,shipment_priority
-						,shipment_date
-						,shipment_kg
-						,marking_net_need_kg 
-					into #shipments_union
-					from (
-
-							select row_id, name_table, sap_id, stuffing_id, shipment_sales_channel_name, shipment_customer_name, shipment_priority, shipment_date, shipment_kg, marking_net_need_kg 
-							from project_plan_production_finished_products.data_import.shipments_SAP
-							where shipment_delete = 0 and stuffing_id_box_type in (0, 1)
-
-							union all
-
-							select row_id, name_table, sap_id, stuffing_id, shipment_sales_channel_name, shipment_customer_name, shipment_priority, shipment_date, shipment_kg, marking_net_need_kg 
-							from project_plan_production_finished_products.data_import.shipments_1C
-							where stuffing_id_box_type in (0, 1)
-
-							union all
-
-							select row_id, name_table, sap_id, stuffing_id, shipment_sales_channel_name, shipment_customer_name, shipment_priority, shipment_date, shipment_kg, marking_net_need_kg 
-							from project_plan_production_finished_products.data_import.shipments_sales_plan
-							where shipment_delete = 0 and stuffing_id_box_type in (0, 1)
-
-						 ) as o;
-
-
-					set @max_dt_shipment = (select max(shipment_date) from #shipments_union)
-
-					-- добавляем данные
 					insert into #union_data
 					(
-							 sap_id															
-							,stuffing_id 																				
-							,shipment_customer_name															
-							,shipment_sales_channel_name	
-							,shipment_priority															
-							,dt													
-							,shipment_kg																
-							,net_need_kg																
-					) 
+							 sap_id
+							,stuffing_id
+							,sales_channel_name
+							,customer_name
+							,dt
+							,shipment_kg
+							,deficit_kg
+					)
 
-					select
-						 sap_id
-						,stuffing_id
-						,shipment_customer_name
-						,shipment_sales_channel_name
-						,shipment_priority
-						,shipment_date
-						,sum(shipment_kg) as shipment_kg
-						,sum(marking_net_need_kg) as net_need_kg
-					from #shipments_union
+					select 
+							 shipment_sap_id
+							,shipment_stuffing_id
+							,shipment_sales_channel_name
+							,shipment_customer_name
+							,shipment_date
+							,sum(shipment_after_marking_kg) as shipment_kg
+							,sum(shipment_after_marking_kg) as deficit_kg 
+					from project_plan_production_finished_products.data_import.shipment
+					where shipment_delete = 0 and shipment_stuffing_id_box_type in (0, 1)
+						and not shipment_after_marking_kg is null
 					group by 
-						 sap_id
-						,stuffing_id
-						,shipment_customer_name
-						,shipment_sales_channel_name
-						,shipment_priority
-						,shipment_date;
+							 shipment_sap_id
+							,shipment_stuffing_id
+							,shipment_sales_channel_name
+							,shipment_customer_name
+							,shipment_date;
+
+			end;
+
+			begin -- ВСТАВЛЯЕМ ОТГРУЗКУ ИЗ ОСТАТКОВ И МАРКИРОВКИ, ОНА ИДЕТ КАК ПОТРЕБНОСТЬ, НО ТАК КАК SAP ID МОЖЕТ БЫТЬ РАЗНЫЙ ИЗ-ЗА ГРУППЫ АРТИКУЛОВ
+			
+					insert into #union_data
+					(
+							 sap_id
+							,stuffing_id
+							,sales_channel_name
+							,customer_name
+							,dt
+							,shipment_kg
+					)
+					select 
+							 st.stock_sap_id
+							,st.stock_stuffing_id
+							,sh.shipment_sales_channel_name
+							,sh.shipment_customer_name
+							,l.shipment_date
+							,l.stock_shipment_kg
+					from project_plan_production_finished_products.data_import.stock_log_calculation as l
+					join project_plan_production_finished_products.data_import.shipment as sh on l.shipment_row_id = sh.shipment_row_id
+					join project_plan_production_finished_products.data_import.stock	as st on l.stock_row_id = st.stock_row_id
+					where not l.stock_shipment_kg is null;
+
+
+					insert into #union_data
+					(
+							 sap_id
+							,stuffing_id
+							,sales_channel_name
+							,customer_name
+							,dt
+							,shipment_kg
+					)
+					select 
+							 st.marking_sap_id
+							,st.marking_stuffing_id
+							,sh.shipment_sales_channel_name
+							,sh.shipment_customer_name
+							,l.shipment_date
+							,l.marking_shipment_kg
+					from project_plan_production_finished_products.data_import.marking_log_calculation as l
+					join project_plan_production_finished_products.data_import.shipment as sh on l.shipment_row_id = sh.shipment_row_id
+					join project_plan_production_finished_products.data_import.marking  as st on l.marking_row_id = st.marking_row_id
+					where not l.marking_shipment_kg is null;
+
+			end;
+
+			begin -- ОСТАТКИ И МАРКИРОВКА
+					
+					IF OBJECT_ID('tempdb..#calendar','U') is not null drop table #calendar; 
+
+					select dt_tm as dt
+					into #calendar
+					from cherkizovo.info.calendar
+					where dt_tm between (select min(shipment_date) from project_plan_production_finished_products.data_import.shipment)
+					                and (select max(shipment_date) from project_plan_production_finished_products.data_import.shipment);
+
+
+					begin -- вставляем остатки 
+
+							insert into #union_data
+							(
+										 sap_id																	
+										,stuffing_id					
+										,dt		
+										,stock_total_kg		
+										,stock_KOS__0_49_kg				
+										,stock_KOS_50_59_kg				
+										,stock_KOS_60_69_kg				
+										,stock_KOS_70_79_kg				
+										,stock_KOS_80_99_kg					
+										,stock_KOS___100_kg	
+										,surplus_kg		
+							)
+							select
+									 st.stock_sap_id
+									,st.stock_stuffing_id
+									,st.dt
+									,sum(st.stock_kg - isnull(st.stock_log_shipment_kg, 0)) as stock_total_kg
+									,sum(iif(st.stock_KOS <  0.5						, st.stock_kg - isnull(st.stock_log_shipment_kg, 0), null)) as stock_KOS__0_49_kg
+									,sum(iif(st.stock_KOS >= 0.5 and st.stock_KOS < 0.6 , st.stock_kg - isnull(st.stock_log_shipment_kg, 0), null)) as stock_KOS_50_59_kg
+									,sum(iif(st.stock_KOS >= 0.6 and st.stock_KOS < 0.7 , st.stock_kg - isnull(st.stock_log_shipment_kg, 0), null)) as stock_KOS_60_69_kg
+									,sum(iif(st.stock_KOS >= 0.7 and st.stock_KOS < 0.8 , st.stock_kg - isnull(st.stock_log_shipment_kg, 0), null)) as stock_KOS_70_79_kg
+									,sum(iif(st.stock_KOS >= 0.8 and st.stock_KOS < 1   , st.stock_kg - isnull(st.stock_log_shipment_kg, 0), null)) as stock_KOS_80_99_kg
+									,sum(iif(st.stock_KOS >= 1							, st.stock_kg - isnull(st.stock_log_shipment_kg, 0), null)) as stock_KOS___100_kg
+									,sum(st.stock_after_shipment_kg) as surplus_kg
+							from (
+									select 
+											 st.stock_row_id
+											,st.stock_data_type
+											,st.stock_sap_id
+											,st.stock_stuffing_id
+											,c.dt
+											,iif(st.stock_current_KOS - DATEDIFF(day,st.stock_on_date, c.dt) * st.stock_KOS_in_day > 0
+												,st.stock_current_KOS - DATEDIFF(day,st.stock_on_date, c.dt) * st.stock_KOS_in_day, 0) as stock_KOS
+						
+											,st.stock_kg
+											,st.stock_shipment_kg
+											,st.stock_after_shipment_kg
+											,(select sum(l.stock_shipment_kg) 
+											  from project_plan_production_finished_products.data_import.stock_log_calculation as l
+											  where st.stock_row_id = l.stock_row_id
+												and c.dt > l.shipment_date + 1
+												and not l.stock_shipment_kg is null) as stock_log_shipment_kg
+									from project_plan_production_finished_products.data_import.stock as st
+									join #calendar as c on st.stock_on_date <= c.dt
+									where st.stock_reason_ignore_in_calculate is null
+								 ) as st
+							where st.stock_kg - isnull(st.stock_log_shipment_kg, 0) <> 0
+							group by 
+									 st.stock_sap_id
+									,st.stock_stuffing_id
+									,st.dt;
+
+					end;
+
+
+					begin -- вставляем маркировку 
+
+							insert into #union_data
+							(
+										 sap_id																	
+										,stuffing_id					
+										,dt		
+										,stock_total_kg
+										,stock_marking_total_kg		
+										,stock_KOS__0_49_kg				
+										,stock_KOS_50_59_kg				
+										,stock_KOS_60_69_kg				
+										,stock_KOS_70_79_kg				
+										,stock_KOS_80_99_kg					
+										,stock_KOS___100_kg	
+										,surplus_kg		
+							)
+							select
+									 st.marking_sap_id
+									,st.marking_stuffing_id
+									,st.dt
+									,sum(st.marking_kg - isnull(st.marking_log_shipment_kg, 0)) as marking_total_kg
+									,sum(st.marking_marking_total_kg) as marking_marking_total_kg
+									,sum(iif(st.marking_KOS <  0.5							, st.marking_kg - isnull(st.marking_log_shipment_kg, 0), null)) as marking_KOS__0_49_kg
+									,sum(iif(st.marking_KOS >= 0.5 and st.marking_KOS < 0.6	, st.marking_kg - isnull(st.marking_log_shipment_kg, 0), null)) as marking_KOS_50_59_kg
+									,sum(iif(st.marking_KOS >= 0.6 and st.marking_KOS < 0.7	, st.marking_kg - isnull(st.marking_log_shipment_kg, 0), null)) as marking_KOS_60_69_kg
+									,sum(iif(st.marking_KOS >= 0.7 and st.marking_KOS < 0.8	, st.marking_kg - isnull(st.marking_log_shipment_kg, 0), null)) as marking_KOS_70_79_kg
+									,sum(iif(st.marking_KOS >= 0.8 and st.marking_KOS < 1.0	, st.marking_kg - isnull(st.marking_log_shipment_kg, 0), null)) as marking_KOS_80_99_kg
+									,sum(iif(st.marking_KOS >= 1.0							, st.marking_kg - isnull(st.marking_log_shipment_kg, 0), null)) as marking_KOS___100_kg
+									,sum(st.marking_after_shipment_kg) as surplus_kg
+							from (
+									select 
+											 st.marking_row_id
+											,st.marking_data_type
+											,st.marking_sap_id
+											,st.marking_stuffing_id
+											,c.dt
+											,iif(st.marking_current_KOS - DATEDIFF(day,st.marking_on_date, c.dt) * st.marking_KOS_in_day > 0
+												,st.marking_current_KOS - DATEDIFF(day,st.marking_on_date, c.dt) * st.marking_KOS_in_day, 0) as marking_KOS
+											,iif(c.dt = st.marking_on_date, st.marking_kg, null) as marking_marking_total_kg
+											,st.marking_kg
+											,st.marking_shipment_kg
+											,st.marking_after_shipment_kg
+											,(select sum(l.marking_shipment_kg) 
+											  from project_plan_production_finished_products.data_import.marking_log_calculation as l
+											  where st.marking_row_id = l.marking_row_id
+												and c.dt > l.shipment_date + 1
+												and not l.marking_shipment_kg is null) as marking_log_shipment_kg
+									from project_plan_production_finished_products.data_import.marking as st
+									join #calendar as c on st.marking_on_date <= c.dt
+									where st.marking_reason_ignore_in_calculate is null
+								 ) as st
+							where st.marking_kg - isnull(st.marking_log_shipment_kg, 0) <> 0
+							group by 
+									 st.marking_sap_id
+									,st.marking_stuffing_id
+									,st.dt
+							order by 1,3;
+
+					end;
 
 
 			end;
 			
 
-			-- остатки по дням
-			begin
-
-					IF OBJECT_ID('tempdb..#stock','U') is not null drop table #stock; 
-					-- select * from #stock order by stock_on_date
-
-					select
-							 st.sap_id
-							,st.stuffing_id
-							,st.stock_on_date
-							,iif(st.KOS_on_date < 0, 0, st.KOS_on_date) as KOS_on_date
-							,sum(st.stock_kg) as stock_kg
-							,sum(st.stock_after_shipment_kg) as stock_after_shipment_kg
-					into #stock
-					from (
-
-							select 
-									 st.row_id
-									,st.name_table
-									,st.sap_id
-									,st.stuffing_id
-									,cl.dt_tm as stock_on_date
-									,st.stock_current_KOS - st.stock_KOS_in_day * DATEDIFF(day, st.stock_on_date, cl.dt_tm) as KOS_on_date
-									--,st.stock_kg
-									--,lst.shipment_kg
-									,st.stock_kg - isnull(   sum(lst.shipment_kg) over (partition by st.row_id, st.name_table order by cl.dt_tm ROWS UNBOUNDED PRECEDING),   0) as stock_kg
-									,iif(cl.dt_tm = st.stock_on_date, st.stock_after_shipment_kg, null) as stock_after_shipment_kg
-							from cherkizovo.info.calendar as cl
-							join (
-
-										select st.row_id, st.name_table, st.sap_id, st.stuffing_id, st.stock_on_date, st.stock_current_KOS, st.stock_KOS_in_day, st.stock_kg, st.stock_after_shipment_kg
-										from project_plan_production_finished_products.data_import.stock as st
-										union all
-										select st.row_id, st.name_table, st.sap_id, st.stuffing_id, st.stock_on_date, st.stock_current_KOS, st.stock_KOS_in_day, st.stock_kg, st.stock_after_shipment_kg
-										from project_plan_production_finished_products.data_import.transits as st
-
-								 ) as st on st.stock_on_date <= cl.dt_tm and cl.dt_tm <= @max_dt_shipment
-							left join (
-										select 
-												 lg.stock_row_id
-												,lg.stock_name_table
-												,lg.shipment_date + 1
-												,sum(lg.stock_shipment_kg) as shipment_kg
-										from project_plan_production_finished_products.data_import.stock_log_calculation as lg
-										where not lg.stock_shipment_kg is null
-										group by 
-												 lg.stock_row_id
-												,lg.stock_name_table
-												,lg.shipment_date
-									  ) as lst on st.row_id = lst.stock_row_id and st.name_table = lst.stock_name_table and cl.dt_tm = lst.shipment_date
-							--order by st.row_id
-						) as st
-					where st.stock_kg > 0
-					group by 
-							 st.sap_id
-							,st.stuffing_id
-							,st.stock_on_date
-							,iif(st.KOS_on_date < 0, 0, st.KOS_on_date);
-
-			end;
-
-			-- маркировка по дням
-			begin
-
-					IF OBJECT_ID('tempdb..#marking','U') is not null drop table #marking; 
-					-- select * from #marking order by stock_on_date
-					select
-							 st.sap_id		
-							,st.stuffing_id					
-							,st.stock_on_date
-							,iif(st.KOS_on_date < 0, 0, st.KOS_on_date) as KOS_on_date
-							,sum(st.stock_kg) as stock_kg
-							,sum(st.stock_after_shipment_kg) as stock_after_shipment_kg
-					into #marking
-					from (
-							select 
-									 st.row_id
-									,st.sap_id	
-									,st.stuffing_id								
-									,cl.dt_tm as stock_on_date
-									,st.marking_current_KOS - st.marking_KOS_in_day * DATEDIFF(day, st.marking_on_date, cl.dt_tm) as KOS_on_date
-									--,st.marking_kg
-									--,lst.shipment_kg
-									,st.marking_kg - isnull(   sum(lst.shipment_kg) over (partition by st.row_id order by cl.dt_tm ROWS UNBOUNDED PRECEDING),   0) as stock_kg
-									,iif(cl.dt_tm = st.marking_on_date, st.marking_after_shipment_kg, null) as stock_after_shipment_kg
-							from cherkizovo.info.calendar as cl
-							join project_plan_production_finished_products.data_import.marking as st on st.marking_on_date <= cl.dt_tm and cl.dt_tm <= @max_dt_shipment
-							left join (
-										select 
-												 lg.marking_row_id
-												,sh.shipment_date + 1 as shipment_date
-												,sum(lg.marking_shipment_kg) as shipment_kg
-										from project_plan_production_finished_products.data_import.marking_log_calculation as lg
-										join #shipments_union as sh on lg.shipment_row_id = sh.row_id and lg.shipment_name_table  = sh.name_table
-										group by 
-												 lg.marking_row_id
-												,sh.shipment_date
-									  ) as lst on st.row_id = lst.marking_row_id and cl.dt_tm = lst.shipment_date
-							--order by st.row_id
-						) as st
-					where st.stock_kg > 0
-					group by 
-							 st.sap_id
-							,st.stuffing_id
-							,st.stock_on_date
-							,iif(st.KOS_on_date < 0, 0, st.KOS_on_date);
-
-			end;
-
-			-- остатки + маркировка - вставляем в основную
-			begin
-
-					insert into #union_data
-					(
-
-								 sap_id															
-								,stuffing_id 																
-								,dt	
-								,stock_total_kg															
-								,stock_marking_total_kg															
-								,stock_KOS__0_49_kg														
-								,stock_KOS_50_59_kg														
-								,stock_KOS_60_69_kg														
-								,stock_KOS_70_79_kg														
-								,stock_KOS_80_99_kg															
-								,stock_KOS___100_kg		
-								,stock_after_shipment_kg													
-					)
+			
+			begin --выгружаем отчет 
 
 					select 
-							 st.sap_id
-							,st.stuffing_id
-							,st.stock_on_date as dt
-							,sum(st.stock_kg) as stock_total_kg
-							,sum(st.marking_kg) as stock_marking_total_kg 		
+							 'Общий итог'			= 'Общий итог'
+							,'Код набивки'			= ud.stuffing_id
+							,'SAP ID'				= convert(varchar(24),FORMAT(ud.sap_id, '000000000000000000000000')) 
+							,'Наименование SKU'		= ps.product_1C_full_name
+							,'Контрагент'			= ud.customer_name
+							,'Канал сбыта'			= ud.sales_channel_name
 
-							,sum(case st.category_KOS when '0% - 49%'	then st.stock_kg end) as stock_KOS__0_49_kg		
-							,sum(case st.category_KOS when '50% - 59%'	then st.stock_kg end) as stock_KOS_50_59_kg		
-							,sum(case st.category_KOS when '60% - 69%'	then st.stock_kg end) as stock_KOS_60_69_kg		
-							,sum(case st.category_KOS when '70% - 79%'	then st.stock_kg end) as stock_KOS_70_79_kg		
-							,sum(case st.category_KOS when '80% - 99%'	then st.stock_kg end) as stock_KOS_80_99_kg		
-							,sum(case st.category_KOS when '100%'		then st.stock_kg end) as stock_KOS___100_kg	
+							,'Наименование SKU ->'	= ps.product_1C_full_name
+							,'Контрагент ->'		= ud.customer_name
+							,'Канал сбыта ->'		= ud.sales_channel_name
+
+							,'ДТ'					= ud.dt
+
+							,'Тек ост'				= sum(ud.stock_total_kg)
+							,'Набивка ост'			= sum(ud.stock_marking_total_kg)
+
+							,'Ост КОС 0%-49%'		= sum(ud.stock_KOS__0_49_kg)												
+							,'Ост КОС 50%-59%'		= sum(ud.stock_KOS_50_59_kg)												
+							,'Ост КОС 60%-69%'		= sum(ud.stock_KOS_60_69_kg)												
+							,'Ост КОС 70%-79%'		= sum(ud.stock_KOS_70_79_kg)												
+							,'Ост КОС 80%-99%'		= sum(ud.stock_KOS_80_99_kg)													
+							,'Ост КОС 100%'			= sum(ud.stock_KOS___100_kg)			
 								
-							,sum(st.stock_after_shipment_kg) as stock_after_shipment_kg
-
-					from (
-							select 
-									 sap_id
-									,stuffing_id
-									,stock_on_date
-									,KOS_on_date
-									,stock_kg 
-									,null as marking_kg
-									,case 
-										when KOS_on_date <0.5	then	'0% - 49%'	
-										when KOS_on_date <0.6	then	'50% - 59%'	
-										when KOS_on_date <0.7	then	'60% - 69%'	
-										when KOS_on_date <0.8	then	'70% - 79%'	
-										when KOS_on_date <1		then	'80% - 99%'	
-										else							'100%'								
-									end category_KOS
-									,stock_after_shipment_kg
-							from #stock
-
-							union all
-
-							select 
-									 sap_id
-									,stuffing_id
-									,stock_on_date
-									,KOS_on_date
-									,stock_kg 
-									,stock_kg as marking_kg
-									,case 
-										when KOS_on_date <0.5	then	'0% - 49%'	
-										when KOS_on_date <0.6	then	'50% - 59%'	
-										when KOS_on_date <0.7	then	'60% - 69%'	
-										when KOS_on_date <0.8	then	'70% - 79%'	
-										when KOS_on_date <1		then	'80% - 99%'	
-										else							'100%'	
-									end category_KOS
-									,stock_after_shipment_kg
-							from #marking
-
-						 ) as st
-					group by 
-							 st.sap_id
-							,st.stuffing_id
-							,st.stock_on_date;
-
-			end;
-
-
-
-			--выгружаем отчет
-			begin
-
-					select 
-							 'Общий итог' = 'Общий итог'
-							,'Код набивки' = ud.stuffing_id
-							,'SAP ID' = convert(varchar(24),FORMAT(ud.sap_id, '000000000000000000000000')) 
-							,'Наименование SKU' = ps.product_1C_full_name
-							,'Контрагент' = ud.shipment_customer_name
-							,'Канал сбыта' = ud.shipment_sales_channel_name
-
-							,'Наименование SKU ->' = ps.product_1C_full_name
-							,'Контрагент ->' = ud.shipment_customer_name
-							,'Канал сбыта ->' = ud.shipment_sales_channel_name
-
-							,'ДТ' = ud.dt
-
-							,'Тек ост' = ud.stock_total_kg	
-							,'Набивка ост' = ud.stock_marking_total_kg	
-
-							,'Ост КОС 0%-49%'	= ud.stock_KOS__0_49_kg													
-							,'Ост КОС 50%-59%'	= ud.stock_KOS_50_59_kg													
-							,'Ост КОС 60%-69%'	= ud.stock_KOS_60_69_kg													
-							,'Ост КОС 70%-79%'	= ud.stock_KOS_70_79_kg													
-							,'Ост КОС 80%-99%'	= ud.stock_KOS_80_99_kg														
-							,'Ост КОС 100%'		= ud.stock_KOS___100_kg				
-								
-							,'Заявка/план' = ud.shipment_kg																
-							,'Дефицит' = ud.net_need_kg																	
-							,'Профицит' = ud.stock_after_shipment_kg																
+							,'Заявка/план'			= sum(ud.shipment_kg)																
+							,'Дефицит'				= sum(ud.deficit_kg)																
+							,'Профицит'				= sum(ud.surplus_kg)															
 					from #union_data as ud
-					left join cherkizovo.info.products_sap as ps on ud.sap_id = ps.sap_id;
-					--left join cherkizovo.info.stuffing as st on u.stuffing_id = st.stuffing_id
+					join cherkizovo.info.products_sap as ps on ud.sap_id = ps.sap_id
+					group by 
+							 ud.stuffing_id
+							,ud.sap_id
+							,ps.product_1C_full_name
+							,ud.customer_name
+							,ud.sales_channel_name
+							,ud.dt;
+							
 			end;
 
 

@@ -94,7 +94,7 @@ BEGIN
 										,p.shipment_stuffing_id				as stuffing_id
 										,p.shipment_date - sf.transit_from_production_days - sf.maturation_and_packaging_days + sf.maturation_days as stuffing_production_date_to
 										,p.shipment_date					as stuffing_available_date
-										,p.shipment_from_stuffing_plan_kg	as shipment_kg
+										,iif(not p.shipment_stuffing_id_box_row_id is null, p.shipment_after_stock_kg, p.shipment_from_stuffing_plan_kg) as shipment_kg
 										,p.shipment_from_stuffing_plan_kg	as net_need_kg
 								from project_plan_production_finished_products.data_import.shipment as p 
 								join project_plan_production_finished_products.info.stuffing as sf on p.shipment_stuffing_id = sf.stuffing_id
@@ -104,7 +104,7 @@ BEGIN
 									and not p.shipment_stuffing_id is null 					 
 									and not isnull(p.shipment_product_status,'') in ('БлокирДляЗаготов/Склада','Устаревший')
 									and ISNUMERIC(left(isnull(p.shipment_stuffing_id,''), 5)) = 1	
-								    and not p.shipment_from_stuffing_plan_kg is null
+								    and not iif(not p.shipment_stuffing_id_box_row_id is null, p.shipment_after_stock_kg, p.shipment_from_stuffing_plan_kg) is null
 								
 									
 								union all
@@ -137,7 +137,9 @@ BEGIN
 										,l.stuffing_shipment_kg as net_need_kg
 								from project_plan_production_finished_products.data_import.stuffing_fact_log_calculation as l
 								join project_plan_production_finished_products.data_import.stuffing_fact	as st on l.stuffing_sap_id = st.stuffing_sap_id and l.stuffing_row_id = st.stuffing_sap_id_row_id
-
+								where not l.shipment_row_id in (select s.shipment_stuffing_id_box_row_id
+																from project_plan_production_finished_products.data_import.shipment as s
+																where not s.shipment_stuffing_id_box_row_id is null)
 
 								union all
 								 
@@ -151,6 +153,9 @@ BEGIN
 										,l.stuffing_shipment_kg as net_need_kg
 								from project_plan_production_finished_products.data_import.stuffing_plan_log_calculation as l
 								join project_plan_production_finished_products.data_import.stuffing_plan	as st on l.stuffing_sap_id = st.stuffing_sap_id and l.stuffing_row_id = st.stuffing_sap_id_row_id
+								where not l.shipment_row_id in (select s.shipment_stuffing_id_box_row_id
+																from project_plan_production_finished_products.data_import.shipment as s
+																where not s.shipment_stuffing_id_box_row_id is null)
 
 
 							) as p join project_plan_production_finished_products.info.stuffing as st on p.stuffing_id = st.stuffing_id

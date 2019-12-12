@@ -50,6 +50,7 @@ BEGIN
 
 							from project_plan_production_finished_products.data_import.stock as s
 							join project_plan_production_finished_products.data_import.data_type as d on s.stock_data_type = d.data_type
+							where s.stock_reason_ignore_in_calculate is null
 
 						 ) pv
 					UNPIVOT(   label_caption for label_name in (lbl_stock_data_on_date, lbl_stock_kg, lbl_stock_shipment_kg, lbl_stock_after_shipment_kg)   ) as pv
