@@ -58,23 +58,75 @@ BEGIN
 
 							IF OBJECT_ID('tempdb..#shipment','U') is not null drop table #shipment; 
 
-							select   convert(int,   ROW_NUMBER() over (order by o.shipment_sap_id, o.shipment_date, o.shipment_priority, o.shipment_min_KOS, o.shipment_kg)   ) as shipment_id
+
+							select convert(int, ROW_NUMBER() over (order by o.shipment_sap_id
+																			,o.marking_on_date
+																			,o.before_next_shipment_priority
+																			,o.before_next_shipment_date
+																			,o.before_next_shipment_min_KOS
+
+																			,o.after_next_shipment_date
+																			,o.after_next_shipment_priority
+																			,o.after_next_shipment_min_KOS
+																)) as shipment_id
+									--,o.before_next_shipment_priority
+									--,o.before_next_shipment_date
+									--,o.before_next_shipment_min_KOS				
+									--,o.after_next_shipment_priority
+									--,o.after_next_shipment_date		
+									--,o.after_next_shipment_min_KOS	
+									
 									,o.shipment_row_id
 									,o.shipment_sap_id
-									,sg.sap_id_group
-									,o.shipment_priority
+									,o.sap_id_group
+									--,o.shipment_priority
 									,o.shipment_min_KOS
 									,o.shipment_date
-									,o.shipment_after_stock_kg as shipment_kg
+									,o.shipment_kg
 							into #shipment
-							from project_plan_production_finished_products.data_import.shipment as o
-							join #sap_id_group as sg on o.shipment_sap_id = sg.sap_id
-							where o.shipment_stuffing_id_box_type in (0, 1)
-								and o.shipment_delete = 0
-								and not o.shipment_after_stock_kg is null
-								and o.shipment_reason_ignore_in_calculate is null
-								and not isnull(o.shipment_product_status,'') in ('БлокирДляЗаготов/Склада','Устаревший')
-							  
+							from (
+
+									select   
+											
+											-- before_next
+											 iif(m.marking_next_available_date <> '29990101', o.shipment_priority		, 99999			) as before_next_shipment_priority
+											,iif(m.marking_next_available_date <> '29990101', o.shipment_date			, '29990101'	) as before_next_shipment_date
+											,iif(m.marking_next_available_date <> '29990101', o.shipment_min_KOS		, 1				) as before_next_shipment_min_KOS
+																																		
+																																		
+											-- after_next																						
+											,iif(m.marking_next_available_date =  '29990101', o.shipment_priority		, 99999			) as after_next_shipment_priority
+											,iif(m.marking_next_available_date =  '29990101', o.shipment_date			, '29990101'	) as after_next_shipment_date									
+											,iif(m.marking_next_available_date =  '29990101', o.shipment_min_KOS		, 1				) as after_next_shipment_min_KOS
+											
+											,m.marking_on_date
+											,o.shipment_row_id
+											,o.shipment_sap_id
+											,sg.sap_id_group
+											,o.shipment_priority
+											,o.shipment_min_KOS
+											,o.shipment_date
+											,o.shipment_after_stock_kg as shipment_kg
+									
+									from project_plan_production_finished_products.data_import.shipment as o
+									join #sap_id_group as sg on o.shipment_sap_id = sg.sap_id
+									left join (
+													select 
+															 marking_sap_id
+															,marking_on_date
+															,isnull(LEAD(marking_on_date) OVER (PARTITION BY marking_sap_id ORDER BY marking_on_date)  - 1 , '29990101') AS marking_next_available_date
+													from project_plan_production_finished_products.data_import.marking
+													group by  marking_sap_id, marking_on_date
+											  ) as m on o.shipment_sap_id = m.marking_sap_id and o.shipment_date between m.marking_on_date and m.marking_next_available_date
+									where o.shipment_stuffing_id_box_type in (0, 1)
+										and o.shipment_delete = 0
+										and not o.shipment_after_stock_kg is null
+										and o.shipment_reason_ignore_in_calculate is null
+										and not isnull(o.shipment_product_status,'') in ('БлокирДляЗаготов/Склада','Устаревший')
+								) as o;
+
+
+
 							-- индекс
 							CREATE CLUSTERED INDEX Cl_shipment_id ON #shipment (shipment_id); 
 					
@@ -113,7 +165,6 @@ BEGIN
 						
 			
 			end;
-
 
 
 			--------------------

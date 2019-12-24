@@ -81,6 +81,7 @@ BEGIN
 						select
 								 p.sap_id
 								,p.stuffing_id	
+								,p.stuffing_id_box	
 								,p.stuffing_production_date_to
 								,p.stuffing_available_date
 								,sum(p.shipment_kg) as shipment_kg
@@ -91,21 +92,37 @@ BEGIN
 								-- потребность которая не распределилась
 								select 
 										 p.shipment_sap_id					as sap_id
-										,p.shipment_stuffing_id				as stuffing_id
+										--,p.shipment_stuffing_id				as stuffing_id
+										,case 
+												when p.shipment_stuffing_id_box_type = 0 then p.shipment_stuffing_id
+												when p.shipment_stuffing_id_box_type = 1 then p.shipment_stuffing_id
+												when p.shipment_stuffing_id_box_type = 2 then p.shipment_stuffing_id_box
+										 end as stuffing_id
+										,case 
+												when p.shipment_stuffing_id_box_type = 2 then p.shipment_stuffing_id
+										 end as stuffing_id_box
 										,p.shipment_date - sf.transit_from_production_days - sf.maturation_and_packaging_days + sf.maturation_days as stuffing_production_date_to
-										,p.shipment_date					as stuffing_available_date
-										,iif(not p.shipment_stuffing_id_box_row_id is null, p.shipment_after_stock_kg, p.shipment_from_stuffing_plan_kg) as shipment_kg
-										,p.shipment_from_stuffing_plan_kg	as net_need_kg
+										,p.shipment_date as stuffing_available_date
+										,case 
+												when p.shipment_stuffing_id_box_type = 0 then p.shipment_after_stuffing_plan_kg
+												--when p.shipment_stuffing_id_box_type = 1 then p.shipment_after_stock_kg
+												when p.shipment_stuffing_id_box_type = 2 then p.shipment_kg
+										 end as shipment_kg
+										,case 
+												when p.shipment_stuffing_id_box_type = 0 then p.shipment_after_stuffing_plan_kg
+												--when p.shipment_stuffing_id_box_type = 1 then p.shipment_after_stuffing_plan_kg
+												when p.shipment_stuffing_id_box_type = 2 then p.shipment_after_stock_kg
+										 end as net_need_kg
 								from project_plan_production_finished_products.data_import.shipment as p 
 								join project_plan_production_finished_products.info.stuffing as sf on p.shipment_stuffing_id = sf.stuffing_id
-								where p.shipment_stuffing_id_box_type in (0, 1)
-									and p.shipment_delete = 0		
+								where p.shipment_delete = 0		
+									and p.shipment_stuffing_id_box_type in (0 ,2)
 									and not p.shipment_sap_id is null 
 									and not p.shipment_stuffing_id is null 					 
 									and not isnull(p.shipment_product_status,'') in ('БлокирДляЗаготов/Склада','Устаревший')
 									and ISNUMERIC(left(isnull(p.shipment_stuffing_id,''), 5)) = 1	
-								    and not iif(not p.shipment_stuffing_id_box_row_id is null, p.shipment_after_stock_kg, p.shipment_from_stuffing_plan_kg) is null
-								
+								    --and p.shipment_kg is not null
+									
 									
 								union all
 								 
@@ -113,6 +130,7 @@ BEGIN
 								select 
 										 st.stock_sap_id
 										,st.stock_stuffing_id
+										,null as stuffing_id_box
 										,l.shipment_date - sf.transit_from_production_days - sf.maturation_and_packaging_days + sf.maturation_days as stuffing_production_date_to
 										,l.shipment_date as stuffing_available_date
 										,l.stock_shipment_kg as shipment_kg
@@ -124,6 +142,9 @@ BEGIN
 									on st.stock_sap_id = ps.sap_id 
 									and not isnull(ps.product_status,'') in ('БлокирДляЗаготов/Склада','Устаревший')
 									and ISNUMERIC(left(isnull(st.stock_stuffing_id,''), 5)) = 1	
+								where not l.shipment_row_id in (select s.shipment_row_id
+																from project_plan_production_finished_products.data_import.shipment as s
+																where not s.shipment_stuffing_id_box_row_id is null) -- исключаем коробки
 
 								union all
 								 
@@ -131,37 +152,40 @@ BEGIN
 								select 
 										 l.stuffing_sap_id
 										,st.stuffing_id
+										,null as stuffing_id_box
 										,l.shipment_date - DATEDIFF(day,st.stuffing_production_date_to, st.stuffing_available_date) as stuffing_production_date_to
 										,l.shipment_date as stuffing_available_date
 										,l.stuffing_shipment_kg as shipment_kg
 										,l.stuffing_shipment_kg as net_need_kg
 								from project_plan_production_finished_products.data_import.stuffing_fact_log_calculation as l
 								join project_plan_production_finished_products.data_import.stuffing_fact	as st on l.stuffing_sap_id = st.stuffing_sap_id and l.stuffing_row_id = st.stuffing_sap_id_row_id
-								where not l.shipment_row_id in (select s.shipment_stuffing_id_box_row_id
+								where not l.shipment_row_id in (select s.shipment_row_id
 																from project_plan_production_finished_products.data_import.shipment as s
 																where not s.shipment_stuffing_id_box_row_id is null)
 
 								union all
 								 
-								-- потребность из набивок факт, так как есть приоритеты и артикул может изменить
+								-- потребность из набивок план, так как есть приоритеты и артикул может изменить
 								select 
 										 l.stuffing_sap_id
 										,st.stuffing_id
+										,null as stuffing_id_box
 										,l.shipment_date - DATEDIFF(day,st.stuffing_production_date_to, st.stuffing_available_date) as stuffing_production_date_to
 										,l.shipment_date as stuffing_available_date
 										,l.stuffing_shipment_kg as shipment_kg
 										,l.stuffing_shipment_kg as net_need_kg
 								from project_plan_production_finished_products.data_import.stuffing_plan_log_calculation as l
 								join project_plan_production_finished_products.data_import.stuffing_plan	as st on l.stuffing_sap_id = st.stuffing_sap_id and l.stuffing_row_id = st.stuffing_sap_id_row_id
-								where not l.shipment_row_id in (select s.shipment_stuffing_id_box_row_id
+								where not l.shipment_row_id in (select s.shipment_row_id
 																from project_plan_production_finished_products.data_import.shipment as s
-																where not s.shipment_stuffing_id_box_row_id is null)
+																where not s.shipment_stuffing_id_box_row_id is null) -- исключаем коробки
 
 
 							) as p join project_plan_production_finished_products.info.stuffing as st on p.stuffing_id = st.stuffing_id
 						group by  
 								 p.sap_id
 								,p.stuffing_id
+								,p.stuffing_id_box
 								,p.stuffing_production_date_to
 								,p.stuffing_available_date;
 
@@ -171,16 +195,24 @@ BEGIN
 			-- СТОЛБЦЫ ДЛЯ ОТЧЕТА
 			begin
 
-						IF OBJECT_ID('tempdb..#columns','U') is not null drop table #columns;				
+						IF OBJECT_ID('tempdb..#columns','U') is not null drop table #columns;		
+						-- select * from #columns order by 1,2	
+						-- select stuffing_id, stuffing_id_box, sap_id  from #columns order by 1,2
+
 
 						with clm as 
 						(
-								select distinct stuffing_id, sap_id from #stuffing
+								select distinct stuffing_id, stuffing_id_box, sap_id from #shipments
+
 								union 
-								select distinct stuffing_id, sap_id from #shipments
+
+								select distinct stuffing_id, null,			  sap_id from #stuffing
+
 								union 
+
 								select 
 										 sm.stuffing_id
+										,null			  
 										,s.sap_id 
 								from project_plan_production_finished_products.info.finished_products_sap_id_manual as sm
 								join cherkizovo.info.products_sap													as s  on sm.SAP_id = s.sap_id 
@@ -191,6 +223,7 @@ BEGIN
 
 						select 
 								 c.stuffing_id
+								,c.stuffing_id_box
 								,t.mml
 								,t.stuffing_name
 								,t.production_name as stuffing_production_name
@@ -211,18 +244,20 @@ BEGIN
 								,t.marking_line_type
 
 								,c.sap_id
-								,p.position_dependent_id
+								,convert(bigint,p.position_dependent_id) * 100 + p.individual_marking_id as position_dependent_id_and_individual_marking_id
+								,p.individual_marking_name
 								,p.product_1C_full_name
 								,p.product_SAP_full_name
 								,p.production_name as product_production_name
 								,p.expiration_date_in_days
 
 						into #columns
-						from (
-								select stuffing_id, sap_id	from clm						
-								union
-								select stuffing_id, null	from clm
-							 ) as c
+						from clm as c
+						--from (
+						--		select stuffing_id, stuffing_id_box, sap_id	from clm						
+						--		union
+						--		select stuffing_id, null		   , null	from clm
+						--	 ) as c
 						left join project_plan_production_finished_products.info.stuffing as t on c.stuffing_id = t.stuffing_id
 						left join cherkizovo.info.products_sap as p on c.sap_id = p.SAP_id
 			end;
@@ -283,8 +318,9 @@ BEGIN
 									IF OBJECT_ID('tempdb..#shipments_pivot','U') is not null drop table #shipments_pivot;
 									create table #shipments_pivot
 									(	
-											 stuffing_id	VARCHAR(40)	NOT NULL		
-											,sap_id			BIGINT		NOT NULL
+											 stuffing_id		VARCHAR(40)	NOT NULL	
+											,stuffing_id_box	VARCHAR(40)		NULL	
+											,sap_id				BIGINT		NOT NULL
 
 									);
 
@@ -301,7 +337,7 @@ BEGIN
 									-- НАПОЛНЯЕМ ДАННЫМИ
 											set @sql = ''
 											set @sql = @sql + char(10) + 'insert into #shipments_pivot
-																		  select st.stuffing_id, st.sap_id'
+																		  select st.stuffing_id, st.stuffing_id_box, st.sap_id'
 									set @dt_while = @report_dt_from;
 									while @dt_while <= @report_dt_to
 									begin
@@ -311,7 +347,7 @@ BEGIN
 											set @dt_while = @dt_while + 1;
 									end;
 											set @sql = @sql + char(10) + 'from #shipments as st 
-																		  group by st.stuffing_id, st.sap_id'
+																		  group by st.stuffing_id, st.stuffing_id_box, st.sap_id'
 											exec (@sql);
 											
 									IF OBJECT_ID('tempdb..#shipments','U') is not null drop table #shipments;
@@ -323,26 +359,33 @@ BEGIN
 								set @sql = ''
 								set @sql = @sql + char(10) + 'select' 
 								set @sql = @sql + char(10) + '			 case		
-																				when GROUPING_ID(c.stuffing_production_name) = 1	then 0
-																				when GROUPING_ID(c.stuffing_type) = 1				then 1
-																				when GROUPING_ID(c.stuffing_id) = 1					then 2
-																				when GROUPING_ID(c.sap_id) = 1						then 3
-																				when GROUPING_ID(c.sap_id) = 0						then 4
+																				when GROUPING_ID(c.stuffing_production_name) = 1				then 0
+																				when GROUPING_ID(c.stuffing_type) = 1							then 1
+																				when GROUPING_ID(c.stuffing_id) = 1								then 2
+																				when GROUPING_ID(c.sap_id) = 1									then 3
+																				when GROUPING_ID(c.sap_id) = 0 and c.stuffing_id_box is null	then 4
+																				when GROUPING_ID(c.sap_id) = 0									then 5
 																		 end as frm_id'
+
 								set @sql = @sql + char(10) + '			,case		
-																				when GROUPING_ID(c.stuffing_production_name) = 1	then null
-																				when GROUPING_ID(c.stuffing_type) = 1				then isnull(c.stuffing_production_name, ''Завод не указан'')
-																				when GROUPING_ID(c.stuffing_id) = 1					then isnull(c.stuffing_production_name, ''Завод не указан'') + ''|'' + isnull(c.stuffing_type , ''Тип набивки не указан'')
-																				when GROUPING_ID(c.sap_id) = 1						then isnull(c.stuffing_production_name, ''Завод не указан'') + ''|'' + isnull(c.stuffing_type , ''Тип набивки не указан'') + ''|'' + isnull(c.stuffing_id , ''Код набивки не указан'')
-																				when GROUPING_ID(c.sap_id) = 0						then isnull(c.stuffing_production_name, ''Завод не указан'') + ''|'' + isnull(c.stuffing_type , ''Тип набивки не указан'') + ''|'' + isnull(c.stuffing_id , ''Код набивки не указан'') + ''|'' + FORMAT(c.sap_id, ''000000000000000000000000'')
+																				when GROUPING_ID(c.sap_id) = 0 and c.stuffing_id_box is null	then isnull(c.stuffing_id , ''Код набивки не указан'') + ''|'' + FORMAT(c.sap_id, ''000000000000000000000000'')  
+																		 end as stuffing_id_sap_id_for_number_row' 
+
+								set @sql = @sql + char(10) + '			,case		
+																				when GROUPING_ID(c.stuffing_production_name) = 1				then null
+																				when GROUPING_ID(c.stuffing_type) = 1							then isnull(c.stuffing_production_name, ''Завод не указан'') + ''|''
+																				when GROUPING_ID(c.stuffing_id) = 1								then isnull(c.stuffing_production_name, ''Завод не указан'') + ''|'' + isnull(c.stuffing_type , ''Тип набивки не указан'') + ''|''
+																				when GROUPING_ID(c.sap_id) = 1									then isnull(c.stuffing_production_name, ''Завод не указан'') + ''|'' + isnull(c.stuffing_type , ''Тип набивки не указан'') + ''|'' + isnull(c.stuffing_id , ''Код набивки не указан'') + ''|''
+																				when GROUPING_ID(c.sap_id) = 0 and c.stuffing_id_box is null	then isnull(c.stuffing_production_name, ''Завод не указан'') + ''|'' + isnull(c.stuffing_type , ''Тип набивки не указан'') + ''|'' + isnull(c.stuffing_id , ''Код набивки не указан'') + ''|'' + FORMAT(c.sap_id, ''000000000000000000000000'') + ''|''
+																				when GROUPING_ID(c.sap_id) = 0									then isnull(c.stuffing_production_name, ''Завод не указан'') + ''|'' + isnull(c.stuffing_type , ''Тип набивки не указан'') + ''|'' + isnull(c.stuffing_id , ''Код набивки не указан'') + ''|'' + FORMAT(c.sap_id, ''000000000000000000000000'') + ''|'' + isnull(c.stuffing_id_box, '''') + ''|''
 																		 end as data_hierarchy'
 
 								set @sql = @sql + char(10) + '			,case		
-																				when GROUPING_ID(c.stuffing_production_name) = 1	then ''Общий итог''
-																				when GROUPING_ID(c.stuffing_type) = 1				then isnull(c.stuffing_production_name, ''Завод не указан'')
-																				when GROUPING_ID(c.stuffing_id) = 1					then isnull(c.stuffing_type , ''Тип набивки не указан'')
-																				when GROUPING_ID(c.sap_id) = 1						then isnull(c.stuffing_id , ''Код набивки не указан'')
-																				when GROUPING_ID(c.sap_id) = 0						then FORMAT(c.sap_id, ''000000000000000000000000'')
+																				when GROUPING_ID(c.stuffing_production_name) = 1				then ''Общий итог''
+																				when GROUPING_ID(c.stuffing_type) = 1							then isnull(c.stuffing_production_name, ''Завод не указан'')
+																				when GROUPING_ID(c.stuffing_id) = 1								then isnull(c.stuffing_type , ''Тип набивки не указан'')
+																				when GROUPING_ID(c.sap_id) = 1									then isnull(c.stuffing_id , ''Код набивки не указан'')
+																				when GROUPING_ID(c.sap_id) = 0									then FORMAT(c.sap_id, ''000000000000000000000000'')
 																		 end as data_id'	
 																		 	
 								set @sql = @sql + char(10) + '			,case		
@@ -354,6 +397,7 @@ BEGIN
 																		 end as data_name'
 
 								set @sql = @sql + char(10) + '			,(select top 1 s.mml										from #columns as s where c.stuffing_id = s.stuffing_id) as mml
+																		,c.stuffing_id_box
 																		,(select top 1 s.product_production_name					from #columns as s where c.sap_id	   = s.sap_id	  ) as product_production_name
 																		,(select top 1 s.stuffing_group								from #columns as s where c.stuffing_id = s.stuffing_id) as stuffing_group
 																		,(select top 1 s.maturation_days							from #columns as s where c.stuffing_id = s.stuffing_id) as maturation_days
@@ -370,7 +414,7 @@ BEGIN
 																		,(select top 1 s.marking_line_productivity_kg				from #columns as s where c.stuffing_id = s.stuffing_id) as marking_line_productivity_kg'
 
 
-						--set @report_dt_to = @dt_while + 3; -- для теста
+						--set @report_dt_to = @report_dt_from + 2; -- для теста
 						set @dt_while = @report_dt_from;
 						while @dt_while <= @report_dt_to
 						begin
@@ -411,15 +455,17 @@ BEGIN
 								set @sql = @sql + char(10) + 'left join #stuffing_pivot as st on c.stuffing_id = st.stuffing_id and isnull(c.sap_id, 0) = isnull(st.sap_id, 0)'
 
 								-- ПОТРЕБНОСТЬ ----------------------------------------------------------------------
-								set @sql = @sql + char(10) + 'left join #shipments_pivot as sh on c.stuffing_id = sh.stuffing_id and isnull(c.sap_id, 0) = isnull(sh.sap_id, 0)'
+								set @sql = @sql + char(10) + 'left join #shipments_pivot as sh on c.stuffing_id = sh.stuffing_id and isnull(c.stuffing_id_box, ''0'') = isnull(sh.stuffing_id_box, ''0'') and isnull(c.sap_id, 0) = isnull(sh.sap_id, 0)'
 
-								set @sql = @sql + char(10) + 'group by rollup(   c.stuffing_production_name
-																				,c.stuffing_type
-																				,c.stuffing_id	
-																				,c.sap_id)'
+
+								set @sql = @sql + char(10) + 'GROUP BY	GROUPING SETS (()
+																					  ,(c.stuffing_production_name)
+																					  ,(c.stuffing_production_name, c.stuffing_type)
+																					  ,(c.stuffing_production_name, c.stuffing_type, c.stuffing_id)
+																					  ,(c.stuffing_production_name, c.stuffing_type, c.stuffing_id, c.stuffing_id_box,c.sap_id)
+																					  )'
 
 								set @sql = @sql + char(10) + 'having not (GROUPING_ID(c.sap_id) = 0 and c.sap_id is null)'
-																		--and not (GROUPING_ID(c.stuffing_production_name) = 1)'
 																 
 					
 								--print  (@sql);
@@ -437,7 +483,7 @@ BEGIN
 			begin
 					
 					select 
-							 'для впр' = isnull(c.stuffing_production_name, 'Завод не указан') + '|' + isnull(c.stuffing_type , 'Тип набивки не указан') + '|' + isnull(c.stuffing_id , 'Код набивки не указан') + '|' + FORMAT(c.sap_id, '000000000000000000000000') 
+							 'для впр' = isnull(c.stuffing_production_name, 'Завод не указан') + '|' + isnull(c.stuffing_type , 'Тип набивки не указан') + '|' + isnull(c.stuffing_id , 'Код набивки не указан') + '|' + FORMAT(c.sap_id, '000000000000000000000000') + '|'
 							,'Код набивки' = c.stuffing_id
 							,'MML' = c.mml
 							,'Название набивки' = c.stuffing_name
@@ -450,63 +496,26 @@ BEGIN
 							,'Кратность маркировки' = c.step_marking_kg
 							,'Упаковочная линия кг в час' = c.marking_line_productivity_kg
 							,'Тип упаковочной линии' = c.marking_line_type
-							,'SAP ID' = '''' + FORMAT(c.sap_id, '000000000000000000000000')
-							,'Код зависимой позиции' = c.position_dependent_id
+							,'SAP ID' = FORMAT(c.sap_id, '000000000000000000000000')
+							,'Заготовка пф' = (select top 1 'Заготовка пф' from #columns as b where c.stuffing_id = b.stuffing_id_box and c.sap_id = b.sap_id)
+							,'Код зависимой позиции + ИМ' = c.position_dependent_id_and_individual_marking_id
+							,'Название ИМ' = c.individual_marking_name
 							,'Название SKU 1С' = c.product_1C_full_name
 							,'Общий срок годности' = c.expiration_date_in_days
 							,'Дата производства' = cl.dt_tm
 							,'Дата доступности' = cl.dt_tm + transit_from_production_days + 1
-							,'Годен до' = cl.dt_tm + c.expiration_date_in_days
-							,'Закладка (замес)' = convert(dec(15,5), null)
+							,'Годен до' = cl.dt_tm + c.expiration_date_in_days							
 							,'Итог' = convert(dec(15,5), null)
 					from #columns as c
 					cross join cherkizovo.info.calendar as cl
 					where cl.dt_tm between @report_dt_from and @report_dt_to
-					  and not c.sap_id is null;
+					  and not c.sap_id is null
+					  and c.stuffing_id_box is null;
 			end;						 
 
 end;
 
 		
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

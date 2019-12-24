@@ -1,10 +1,10 @@
 ﻿use project_plan_production_finished_products
 
--- exec project_plan_production_finished_products.report.analytics		
+-- exec project_plan_production_finished_products.report.for_analytics_total_day		
 
 go
 
-alter procedure report.analytics													
+alter procedure report.for_analytics_total_day												
 as
 BEGIN
 			SET NOCOUNT ON;
@@ -15,7 +15,7 @@ BEGIN
 
 						create table #analytics_total
 						(
-								 year_week_number					int				null
+								 dt									datetime	not null
 								 
 								,stock_on_monday_total_kg			dec(15,5)		null	-- итого остатков на понедельник		
 								,stock_on_monday_for_shipment_kg	as stock_on_monday_total_kg - isnull(stock_on_monday_unclaimed_kg, 0)
@@ -27,7 +27,8 @@ BEGIN
 								,marking_kg							dec(11,5)		null	-- маркировка
 
 								,shipment_kg						dec(15,5)		null	-- потребность всего	
-								,deficit_kg							dec(15,5)		null	-- потребность всего		
+								,deficit_kg							dec(15,5)		null	-- дефицит		
+								,deficit_blocked_kg					dec(15,5)		null	-- дефицит на блокированных артикулах
 
 						);
 
@@ -40,44 +41,41 @@ BEGIN
 
 						-- набивки факт
 						insert into #analytics_total 
-								( year_week_number, stuffing_fact_kg)
+								( dt, stuffing_fact_kg)
 
-						select	c.year_week_number, sum(f.stuffing_kg)
+						select	f.stuffing_available_date, sum(f.stuffing_kg)
 						from project_plan_production_finished_products.data_import.stuffing_fact as f
-						join cherkizovo.info.calendar as c on f.stuffing_available_date = c.dt_tm
-						group by c.year_week_number;
+						group by f.stuffing_available_date;
 
 
 						-- набивки план
 						insert into #analytics_total 
-								( year_week_number, stuffing_plan_kg)
+								( dt, stuffing_plan_kg)
 
-						select	c.year_week_number, sum(f.stuffing_kg)
+						select	f.stuffing_available_date, sum(f.stuffing_kg)
 						from project_plan_production_finished_products.data_import.stuffing_plan as f
-						join cherkizovo.info.calendar as c on f.stuffing_available_date = c.dt_tm
-						group by c.year_week_number;
+						group by f.stuffing_available_date;
 
 
 						-- маркировка
 						insert into #analytics_total 
-								( year_week_number, marking_kg)
+								( dt, marking_kg)
 
-						select	c.year_week_number, sum(f.marking_kg)
+						select	f.marking_on_date, sum(f.marking_kg)
 						from project_plan_production_finished_products.data_import.marking as f
-						join cherkizovo.info.calendar as c on f.marking_on_date = c.dt_tm
-						group by c.year_week_number;
+						group by f.marking_on_date;
 
 
 						-- потребность
 						insert into #analytics_total 
-								( year_week_number, shipment_kg, deficit_kg)
+								( dt, shipment_kg, deficit_kg, deficit_blocked_kg)
 
-						select	c.year_week_number, sum(f.shipment_kg), sum(f.shipment_after_marking_kg)
+						select	f.shipment_date, sum(f.shipment_kg), sum(f.shipment_after_marking_kg), sum(iif( isnull(s.product_status,'') in ('БлокирДляЗаготов/Склада','Устаревший'), f.shipment_after_marking_kg, null))
 						from project_plan_production_finished_products.data_import.shipment as f
-						join cherkizovo.info.calendar as c on f.shipment_date = c.dt_tm
+						join cherkizovo.info.products_sap as s on f.shipment_sap_id = s.sap_id
 						where f.shipment_delete = 0
 						  and f.shipment_stuffing_id_box_type in (0, 1)
-						group by c.year_week_number;
+						group by f.shipment_date;
 
 			end;
 
@@ -97,14 +95,14 @@ BEGIN
 
 							insert into #analytics_total
 							(
-								 year_week_number			
+								 dt			
 								 
 								,stock_on_monday_total_kg		
 								,stock_on_monday_unclaimed_kg	
 							)
 					
 							select
-									 c.year_week_number
+									 st.dt_tm
 									,sum(st.stock_kg - isnull(st.stock_log_shipment_kg, 0)) as stock_total_kg
 									,sum(st.stock_after_shipment_kg) as unclaimed_kg
 							from (
@@ -119,16 +117,14 @@ BEGIN
 											,(select sum(l.stock_shipment_kg) 
 											  from project_plan_production_finished_products.data_import.stock_log_calculation as l
 											  where st.stock_row_id = l.stock_row_id
-												and c.dt_tm > l.shipment_date + 1
+												and c.dt_tm > l.shipment_date
 												and not l.stock_shipment_kg is null) as stock_log_shipment_kg
 									from project_plan_production_finished_products.data_import.stock as st
 									join #calendar as c on st.stock_on_date <= c.dt_tm
 									where st.stock_reason_ignore_in_calculate is null
 								 ) as st
-							join cherkizovo.info.calendar as c on st.dt_tm = c.dt_tm and c.week_day = 1
 							where st.stock_kg - isnull(st.stock_log_shipment_kg, 0) <> 0
-
-							group by c.year_week_number;
+							group by st.dt_tm;
 
 					end;
 
@@ -137,14 +133,14 @@ BEGIN
 
 							insert into #analytics_total
 							(
-								 year_week_number			
+								 dt			
 								 
 								,stock_on_monday_total_kg		
 								,stock_on_monday_unclaimed_kg	
 							)
 					
 							select
-									 c.year_week_number
+									 st.dt_tm
 									,sum(st.marking_kg - isnull(st.marking_log_shipment_kg, 0)) as marking_on_monday_total_kg
 									,sum(st.marking_after_shipment_kg)							as marking_on_monday_unclaimed_kg
 							from (
@@ -159,15 +155,14 @@ BEGIN
 											,(select sum(l.marking_shipment_kg) 
 											  from project_plan_production_finished_products.data_import.marking_log_calculation as l
 											  where st.marking_row_id = l.marking_row_id
-												and c.dt_tm > l.shipment_date + 1
+												and c.dt_tm > l.shipment_date
 												and not l.marking_shipment_kg is null) as marking_log_shipment_kg
 									from project_plan_production_finished_products.data_import.marking as st
 									join #calendar as c on st.marking_on_date <= c.dt_tm
 									where st.marking_reason_ignore_in_calculate is null
 								 ) as st
-							join cherkizovo.info.calendar as c on st.dt_tm = c.dt_tm and c.week_day = 1
 							where st.marking_kg - isnull(st.marking_log_shipment_kg, 0) <> 0
-							group by c.year_week_number;
+							group by st.dt_tm;
 
 					end;
 
@@ -178,7 +173,7 @@ BEGIN
 
 
 					select 
-							 'Год|№ недели'										= left(o.year_week_number, 4) + '|' + RIGHT(o.year_week_number, 2)
+							 'Дата:'											= o.dt
 																												
 							,'Подходящий остаток для отгрузки с понедельника'	= sum(o.stock_on_monday_for_shipment_kg)			
 							,'Невостребованный остаток (накопительно)'			= sum(o.stock_on_monday_unclaimed_kg)
@@ -187,25 +182,19 @@ BEGIN
 							,'Выход (в камерах)'								= sum(o.stuffing_fact_kg)																			
 							,'Выход (план)'										= sum(o.stuffing_plan_kg)
 
-							,'Итого выход ГП'									= sum(o.marking_kg)									
+							,'Итого приход маркированной ГП'					= sum(o.marking_kg)									
 																																	
 							,'План отгрузок'									= sum(o.shipment_kg)	
 																										
-							,'Дефицит'											= - sum(o.deficit_kg)			
-							,'Уровень сервиса (SL)'								= 1 - isnull(sum(o.deficit_kg), 0) / isnull(sum(o.shipment_kg) ,0)
+							,'Дефицит'											= - sum(o.deficit_kg)	
+							,'Дефицит на заблокированных артикулах'				= - sum(o.deficit_blocked_kg)			
+							
+							,'Уровень сервиса (SL)'								= 1 - isnull(sum(o.deficit_kg), 0) / sum(o.shipment_kg)
 																																									
 					from #analytics_total as o 
-					group by o.year_week_number
+					group by o.dt
 
 			end;
-
-
-			select *
-			from #analytics_total
-			where not stock_on_monday_for_shipment_kg is null
-			order by 1
-			
-
 
 end;
 

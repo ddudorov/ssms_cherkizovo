@@ -1,94 +1,107 @@
-﻿set language russian;
-SET DATEFIRST 1 ;
+﻿use cherkizovo;
 
-drop table cherkizovo.info.calendar
-
-
+-- drop table cherkizovo.info.calendar
 create table cherkizovo.info.calendar
 (
-		 dt_tm						datetime not null
-		,dt							as convert(date, dt_tm)
-		,dt_int						as convert(int, format(dt_tm,'yyyyMMdd'))
+		 dt_tm						datetime	not null
+		,dt							date		not null
+		,dt_int						int			not null
 
 		-- year
-		,year_number				as year(dt_tm)
-		,year_fisrt_day				as DATETIMEFROMPARTS ( year(dt_tm), 1, 1, 0, 0, 0, 0 )  
-		,year_last_day				as DATETIMEFROMPARTS ( year(dt_tm), 12, day( EOMONTH( DATEFROMPARTS( year(dt_tm), 12, 1) )  ) , 0, 0, 0, 0 )  
+		,year_number				smallint	not null
+		,year_fisrt_day				date		not null
+		,year_last_day				date		not null 
 
-		,year_month_number			as year(dt_tm) * 100 + month(dt_tm)
-
-
+		,year_month_number			int			not null
+		
 		-- month
-		,month_number				as month(dt_tm)
-		,month_short_name			as left(DATENAME (mm, dt_tm) ,3)
-		,month_full_name			as DATENAME (mm, dt_tm)
-		,month_fisrt_day			as DATETIMEFROMPARTS ( year(dt_tm), month(dt_tm), 1, 0, 0, 0, 0 )  
-		,month_last_day				as DATETIMEFROMPARTS ( year(dt_tm), month(dt_tm), day( EOMONTH( DATEFROMPARTS( year(dt_tm), month(dt_tm), 1) )  ) , 0, 0, 0, 0 )  
-		,month_count_days			as day( EOMONTH(dt_tm) )  
+		,month_number				tinyint		not null 
+		,month_short_name			varchar(3)	not null 
+		,month_full_name			varchar(10)	not null 
+		,month_fisrt_day			date		not null
+		,month_last_day				date		not null 
+		,month_count_days			tinyint		not null 
 
 		-- week
-		,year_week_number			as case 
-											when month(dt_tm) = 12 and DATEPART(isowk, dt_tm) in (1)	  then (year(dt_tm) + 1) * 100 + DATEPART(isowk, dt_tm) 
-											when month(dt_tm) =  1 and DATEPART(isowk, dt_tm) in (52 ,53) then (year(dt_tm) - 1) * 100 + DATEPART(isowk, dt_tm)  
-											else year(dt_tm) * 100 + DATEPART(isowk, dt_tm) 
-									   end 
-		,week_number				as DATEPART(ISO_WEEK, dt_tm)
+		,year_week_number			int			not null
+		,week_number				tinyint		not null 
+		,week_fisrt_day				date		not null
+		,week_last_day				date		not null
 
+		,week_day					tinyint		not null 
 
-		,week_fisrt_day				as DATEADD(day, -DATEPART(dw,dt_tm) + 1 , dt_tm)
-		,week_last_day				as DATEADD(day, -DATEPART(dw,dt_tm)		, dt_tm) + 7
+		-- day
+		,day_type					tinyint		not null 
+		,day_type_name				varchar(3)	not null
 
-		,week_day					as datepart(dw, dt_tm)
-
-
-		--,[имя номер недели]			as 'W' + right('0' + convert(varchar(2),DATEPART(isowk, dt_tm)),2)
-
-		--,[имя дня недели полное]	as DATENAME(weekday, dt_tm)
 
 		CONSTRAINT [PK calendar |  dt_tm]	PRIMARY KEY CLUSTERED ( dt_tm) 
 )
 
 
 
-go
 
+set language russian;
+SET DATEFIRST 1 ;
 
 
 declare @datetime datetime;
-set @datetime = '20180101';
+set @datetime = '20170101';
 
 
 while  @datetime<'20260101'
 begin
 	
-	insert into cherkizovo.info.calendar (dt_tm)
-	values (@datetime)
+		insert into cherkizovo.info.calendar 
+		select 
+			 dt_tm				= @datetime			
+			,dt					= @datetime	
+			,dt_int				= format(@datetime,'yyyyMMdd')		
 
-	set @datetime = DATEADD(day,1,@datetime)
+			-- year
+			,year_number		= year(@datetime)	
+			,year_fisrt_day		= DATETIMEFROMPARTS (year(@datetime) + 0, 1, 1, 0, 0, 0, 0 ) 	
+			,year_last_day		= DATETIMEFROMPARTS (year(@datetime) + 1, 1, 1, 0, 0, 0, 0 ) - 1
+
+			,year_month_number	= year(@datetime) * 100 + month(@datetime)
+
+			-- month
+			,month_number		= month(@datetime)
+			,month_short_name	= left(DATENAME (mm, @datetime) ,3)
+			,month_full_name	= DATENAME (mm, @datetime)
+			,month_fisrt_day	= DATETIMEFROMPARTS ( year(@datetime), month(@datetime), 1, 0, 0, 0, 0 ) 
+			,month_last_day		= DATETIMEFROMPARTS ( year(@datetime), month(@datetime), day(EOMONTH(@datetime)), 0, 0, 0, 0 ) 
+			,month_count_days	= day( EOMONTH(@datetime) )  
+	
+
+			-- week
+			,year_week_number	= case 
+										when month(@datetime) = 12 and DATEPART(ISO_WEEK, @datetime) in (1)			then (year(@datetime) + 1) * 100 + DATEPART(ISO_WEEK, @datetime)
+										when month(@datetime) =  1 and DATEPART(ISO_WEEK, @datetime) in (52 ,53)	then (year(@datetime) - 1) * 100 + DATEPART(ISO_WEEK, @datetime)
+										else																			  year(@datetime)	   * 100 + DATEPART(ISO_WEEK, @datetime)
+								  end 
+			,week_number		= DATEPART(ISO_WEEK, @datetime)
+			,week_fisrt_day		= DATEADD(day, - DATEPART(dw, @datetime) + 1, @datetime)
+			,week_last_day		= DATEADD(day, - DATEPART(dw, @datetime)	, @datetime) + 7
+			,week_day			= DATEPART(dw, @datetime)
+
+			-- day
+			,day_type			= case 
+										when DATEPART(dw, @datetime) in (1, 2, 3, 4, 5) then 0
+										when DATEPART(dw, @datetime) in (6, 7)			then 1
+								  end		
+			,day_type_name		= case 
+										--when @datetime in ('20170101' )then 'Прз'										
+										when DATEPART(dw, @datetime) in (1, 2, 3, 4, 5) then 'Раб'
+										when DATEPART(dw, @datetime) in (6, 7)			then 'Вых'
+								  end
+
+		set @datetime = DATEADD(day,1,@datetime)
 
 end;
 
-go
 
 
-select *
-from cherkizovo.info.calendar
-where isnull(week_number,0) in (1)
-
-
---select DATENAME (mm, getdate());
-
---set language russian;
-
-
---use cherkizovo
-
---create view dbo.[календарь]
---with language russian
---as 
---begin
-		
-
---		select * from cherkizovo.information.[календарь]
-
---end
+select  * from cherkizovo.info.calendar
+where week_number in (52,53,1)
+order by 1

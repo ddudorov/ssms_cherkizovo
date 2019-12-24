@@ -6,6 +6,7 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "help", "help", "{40B9C307-EC75-4DA8-AC58-7ADCB2D5868E}"
 	ProjectSection(SolutionItems) = preProject
 		help\help.sql = help\help.sql
+		help\json.sql = help\json.sql
 		help\template.sql = help\template.sql
 	EndProjectSection
 EndProject
@@ -28,8 +29,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "data", "data", "{6BAF1633-5
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "report", "report", "{D60E8A76-9A4B-4D19-93EC-E7C72455D88F}"
 	ProjectSection(SolutionItems) = preProject
-		project_plan_production_finished_products\report\report.analytics.sql = project_plan_production_finished_products\report\report.analytics.sql
-		project_plan_production_finished_products\report\report.for_deficit_and_surplus.sql = project_plan_production_finished_products\report\report.for_deficit_and_surplus.sql
+		project_plan_production_finished_products\report\report.for_analytics_movement_day.sql = project_plan_production_finished_products\report\report.for_analytics_movement_day.sql
+		project_plan_production_finished_products\report\report.for_analytics_movement_week.sql = project_plan_production_finished_products\report\report.for_analytics_movement_week.sql
+		project_plan_production_finished_products\report\report.for_analytics_total_day.sql = project_plan_production_finished_products\report\report.for_analytics_total_day.sql
+		project_plan_production_finished_products\report\report.for_analytics_total_week.sql = project_plan_production_finished_products\report\report.for_analytics_total_week.sql
 		project_plan_production_finished_products\report\report.for_form.sql = project_plan_production_finished_products\report\report.for_form.sql
 		project_plan_production_finished_products\report\report.for_marking_plan.sql = project_plan_production_finished_products\report\report.for_marking_plan.sql
 		project_plan_production_finished_products\report\report.for_sales_plan_exclude_stuffing_plan.sql = project_plan_production_finished_products\report\report.for_sales_plan_exclude_stuffing_plan.sql
@@ -94,10 +97,14 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shipment", "shipment", "{4111D899-0799-4751-BD5B-8399E2F00014}"
 	ProjectSection(SolutionItems) = preProject
 		project_plan_production_finished_products\data\shipment\check_import.shipment_1C.sql = project_plan_production_finished_products\data\shipment\check_import.shipment_1C.sql
-		project_plan_production_finished_products\data\shipment\check_import.shipment_del.sql = project_plan_production_finished_products\data\shipment\check_import.shipment_del.sql
 		project_plan_production_finished_products\data\shipment\check_import.shipment_sales_plan.sql = project_plan_production_finished_products\data\shipment\check_import.shipment_sales_plan.sql
 		project_plan_production_finished_products\data\shipment\check_import.shipment_SAP.sql = project_plan_production_finished_products\data\shipment\check_import.shipment_SAP.sql
 		project_plan_production_finished_products\data\shipment\data_import.shipment.sql = project_plan_production_finished_products\data\shipment\data_import.shipment.sql
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "project_export_quotation", "project_export_quotation", "{D4823DAF-014E-4269-880D-07DBF1617083}"
+	ProjectSection(SolutionItems) = preProject
+		project_export_quotation\project_export_quotation.sql = project_export_quotation\project_export_quotation.sql
 	EndProjectSection
 EndProject
 Global

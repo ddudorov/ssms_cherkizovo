@@ -19,6 +19,8 @@ select @@version						-- версия сервера Microsoft SQL Server 2017 (
 use cherkizovo;							-- подключение к БД
 kill 800								-- завершить № сессию
 
+select STRING_AGG(convert(varchar(max),id),',')
+from cherkizovo.info.products_sap
 
 
 --------------------

@@ -9,9 +9,15 @@ select * from project_plan_production_finished_products.info.stuffing
 CREATE TABLE project_plan_production_finished_products.info.stuffing
 (
 		 stuffing_id						VARCHAR(40)		NOT NULL	
-		,stuffing_name						VARCHAR(200)	NOT NULL	
-		,stuffing_id_box					varchar(40)			NULL
-		,stuffing_share_in_box				decimal(8, 7)		NULL
+		,stuffing_name						VARCHAR(200)	NOT NULL
+
+		,stuffing_box_1						varchar(100)		NULL
+		,stuffing_share_box_1				decimal(8, 7)		NULL
+		,stuffing_box_2						varchar(100)		NULL	
+		,stuffing_share_box_2				decimal(8, 7)		NULL
+		,stuffing_box_3						varchar(100)		NULL	
+		,stuffing_share_box_3				decimal(8, 7)		NULL
+
 		,stuffing_type						VARCHAR(50)			NULL
 		,mml								VARCHAR(3)			null
 		,production_name					VARCHAR(15)			null
@@ -34,18 +40,24 @@ CREATE TABLE project_plan_production_finished_products.info.stuffing
 		,marking_line_type					VARCHAR(20)			null	
 		,marking_line_productivity_kg		dec(11,5)			null
 
-		CONSTRAINT [PK stuffing | stuffing_id] PRIMARY KEY CLUSTERED (stuffing_id) 
+		,CONSTRAINT [PK stuffing | stuffing_id] PRIMARY KEY CLUSTERED (stuffing_id)
 );
 
 
+
+select * from info_view.stuffing
 -- набивка
 ALTER VIEW info_view.stuffing
 AS
 
 	SELECT 'Код набивки' = s.stuffing_id
 		  ,'Название набивки' = s.stuffing_name
-		  ,'Код набивки коробка' = s.stuffing_id_box
-		  ,'Доля набивки в коробке' = s.stuffing_share_in_box
+		  ,'Коробка 1' = s.stuffing_box_1					
+		  ,'Доля 1' = s.stuffing_share_box_1			
+		  ,'Коробка 2' = s.stuffing_box_2					
+		  ,'Доля 2' = s.stuffing_share_box_2			
+		  ,'Коробка 3' = s.stuffing_box_3					
+		  ,'Доля 3' = s.stuffing_share_box_3			
 		  ,'Тип набивки' = s.stuffing_type
 		  ,'MML' = s.mml
 		  ,'Производитель' = s.production_name

@@ -22,6 +22,7 @@ BEGIN
 						values ('stuffing_plan', 'Excel'	, @path_file, @data_on_date);
 			
 						-- удаляем и выгружаем
+						TRUNCATE TABLE project_plan_production_finished_products.data_import.stuffing_plan_log_calculation;
 						TRUNCATE TABLE project_plan_production_finished_products.data_import.stuffing_plan;
 						SELECT TOP 0 * FROM project_plan_production_finished_products.data_import.stuffing_plan;
 

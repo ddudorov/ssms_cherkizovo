@@ -211,6 +211,22 @@ BEGIN
 
 			---- РАЗБИВАЕМ КОРОБОЧКИ НА НАБИВКИ
 			begin
+					
+					IF OBJECT_ID('tempdb..#stuffing_share_box','U') is not null drop table #stuffing_share_box;
+
+					select 
+							 s.stuffing_id as stuffing_id_box
+							,s.stuffing_box_1 as stuffing_id
+							,s.stuffing_share_box_1 / sum(s.stuffing_share_box_1) over (partition by s.stuffing_id) as stuffing_share_in_box
+					into #stuffing_share_box
+					from (
+							select stuffing_id, stuffing_box_1, stuffing_share_box_1 from project_plan_production_finished_products.info.stuffing where not stuffing_box_1 is null union all
+							select stuffing_id, stuffing_box_2, stuffing_share_box_2 from project_plan_production_finished_products.info.stuffing where not stuffing_box_2 is null union all
+							select stuffing_id, stuffing_box_3, stuffing_share_box_3 from project_plan_production_finished_products.info.stuffing where not stuffing_box_3 is null
+						 ) as s;
+
+
+
 					IF OBJECT_ID('tempdb..#stuffing_box','U') is not null drop table #stuffing_box;
 					select 
 							 s.shipment_row_id							
@@ -251,11 +267,10 @@ BEGIN
 							
 							,s.shipment_with_branch_date					
 							,s.shipment_date	
-							,s.shipment_kg
-							 * (t.stuffing_share_in_box / sum(t.stuffing_share_in_box) over (partition by s.shipment_row_id)) as shipment_kg
+							,s.shipment_kg * t.stuffing_share_in_box as shipment_kg
 					into #stuffing_box
 					from project_plan_production_finished_products.data_import.shipment as s
-					join project_plan_production_finished_products.info.stuffing as t on s.shipment_stuffing_id = t.stuffing_id_box
+					join #stuffing_share_box as t on s.shipment_stuffing_id = t.stuffing_id_box
 					where s.shipment_data_type ='shipment_SAP';
 
 

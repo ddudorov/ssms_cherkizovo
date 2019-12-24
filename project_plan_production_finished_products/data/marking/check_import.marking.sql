@@ -22,6 +22,7 @@ BEGIN
 						values ('marking', 'Excel',		@path_file, @data_on_date);
 			
 						-- удаляем и выгружаем
+						TRUNCATE TABLE project_plan_production_finished_products.data_import.marking_log_calculation;
 						TRUNCATE TABLE project_plan_production_finished_products.data_import.marking;
 						SELECT TOP 0 * FROM project_plan_production_finished_products.data_import.marking;
 

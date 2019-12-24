@@ -2,7 +2,7 @@
 
 go
 
--- exec project_plan_production_finished_products.report.for_stuffing_plan @ProductionDateFrom_Kashira = '20191127',  @ProductionDateFrom_CHMPZ = '20191125' 
+-- exec project_plan_production_finished_products.report.for_stuffing_plan @ProductionDateFrom_Kashira = '20191217',  @ProductionDateFrom_CHMPZ = '20191211' 
 
 ALTER PROCEDURE report.for_stuffing_plan  @ProductionDateFrom_Kashira datetime
 										 ,@ProductionDateFrom_CHMPZ datetime										 
@@ -12,8 +12,8 @@ BEGIN
 			SET NOCOUNT ON;
 			
 			-- для теста
-			--declare @ProductionDateFrom_Kashira datetime;	set @ProductionDateFrom_Kashira = '20191127'
-			--declare @ProductionDateFrom_CHMPZ datetime;		set @ProductionDateFrom_CHMPZ = '20191125'
+			--declare @ProductionDateFrom_Kashira datetime;	set @ProductionDateFrom_Kashira = '20191217'
+			--declare @ProductionDateFrom_CHMPZ datetime;		set @ProductionDateFrom_CHMPZ = '20191211'
 			--declare @type_report varchar(50);				set @type_report = 'report_for_pivot' --report_for_pivot   report_main
 			
 			declare @report_dt_from datetime;	set @report_dt_from =	(select min(stuffing_production_date_from)	from project_plan_production_finished_products.data_import.stuffing_fact);	
@@ -51,7 +51,7 @@ BEGIN
 									on p.shipment_sap_id = s.SAP_id 
 									and not s.number_days_normative_stock is null
 									and p.shipment_data_type = 'shipment_sales_plan'
-								where p.shipment_stuffing_id_box_type in (0,2)
+								where p.shipment_stuffing_id_box_type in (0, 2)
 							 ) as p
 						where not p.normative_stock_kg is null
 						group by p.shipment_stuffing_id
@@ -72,10 +72,10 @@ BEGIN
 												,st.stuffing_production_name
 												,st.stuffing_id
 												,st.stuffing_sap_id
-												,sum(st.stuffing_surplus_kg)				as stuffing_surplus_kg
-												,sum(st.stuffing_marking_kg)				as stuffing_marking_kg
-												,sum(st.shipment_after_stuffing_fact_kg)	as shipment_after_stuffing_fact_kg
-												,sum(st.stuffing_count_planned)				as stuffing_count_planned
+												,nullif(	sum(	isnull(st.stuffing_surplus_kg				,0)		)	,0)	as stuffing_surplus_kg
+												,nullif(	sum(	isnull(st.stuffing_marking_kg				,0)		)	,0)	as stuffing_marking_kg
+												,nullif(	sum(	isnull(st.shipment_after_stuffing_fact_kg	,0)		)	,0)	as shipment_after_stuffing_fact_kg
+												,nullif(	sum(	isnull(st.stuffing_count_planned			,0)		)	,0)	as stuffing_count_planned
 									into #data
 									from (
 												-- ЭТО ИСХОДНЫЕ ДАННЫЕ НАБИВОК / ВЫХОД НАБИВКИ
@@ -123,7 +123,7 @@ BEGIN
 												join project_plan_production_finished_products.info.stuffing as st on s.shipment_stuffing_id = st.stuffing_id			   
 												WHERE s.shipment_delete = 0
 													and s.shipment_stuffing_id_box_type in (0, 2) -- берем не коробки
-													and s.shipment_after_stuffing_fact_kg > 0
+													and not s.shipment_after_stuffing_fact_kg is null
 													and s.shipment_exclude_for_stuffing_plan = 0
 													and not st.transit_from_production_days is null	
 													and not st.maturation_and_packaging_days is null
@@ -152,8 +152,8 @@ BEGIN
 												 st.stuffing_production_date_from
 												,st.stuffing_production_name
 												,st.stuffing_id
-												,st.stuffing_sap_id--;
-									order by 3,1,4
+												,st.stuffing_sap_id;--order by 3,1,4;
+									
 						end;
 
 						-- переворачиваем таблицу
@@ -197,26 +197,34 @@ BEGIN
 									while @while_dt_CHMPZ <= @report_dt_to
 									begin
 
-											set @sql = @sql + char(10) + '		,sum(case 
-																						when d.stuffing_production_date_from <= ''' + format(@while_dt_Kashira, 'yyyyMMdd') + ''' and	  d.stuffing_production_name in (''Кашира'') then d.stuffing_surplus_kg
-																						when d.stuffing_production_date_from <= ''' + format(@while_dt_CHMPZ  , 'yyyyMMdd') + ''' and not d.stuffing_production_name in (''Кашира'') then d.stuffing_surplus_kg
-																					 end) as stuffing_surplus_kg'
+											set @sql = @sql + char(10) + '		,nullif(
+																					sum(case 
+																						when d.stuffing_production_date_from <= ''' + format(@while_dt_Kashira, 'yyyyMMdd') + ''' and	  d.stuffing_production_name in (''Кашира'') then isnull( d.stuffing_surplus_kg, 0)
+																						when d.stuffing_production_date_from <= ''' + format(@while_dt_CHMPZ  , 'yyyyMMdd') + ''' and not d.stuffing_production_name in (''Кашира'') then isnull( d.stuffing_surplus_kg, 0)
+																						else 0
+																					 end), 0) as stuffing_surplus_kg'
 																					 
 									
-											set @sql = @sql + char(10) + '		,sum(case 
-																						when d.stuffing_production_date_from <= ''' + format(@while_dt_Kashira, 'yyyyMMdd') + ''' and	  d.stuffing_production_name in (''Кашира'') then d.stuffing_marking_kg
-																						when d.stuffing_production_date_from <= ''' + format(@while_dt_CHMPZ  , 'yyyyMMdd') + ''' and not d.stuffing_production_name in (''Кашира'') then d.stuffing_marking_kg
-																					 end) as stuffing_marking_kg'
+											set @sql = @sql + char(10) + '		,nullif(
+																					sum(case 
+																						when d.stuffing_production_date_from <= ''' + format(@while_dt_Kashira, 'yyyyMMdd') + ''' and	  d.stuffing_production_name in (''Кашира'') then isnull( d.stuffing_marking_kg, 0)
+																						when d.stuffing_production_date_from <= ''' + format(@while_dt_CHMPZ  , 'yyyyMMdd') + ''' and not d.stuffing_production_name in (''Кашира'') then isnull( d.stuffing_marking_kg, 0)
+																						else 0
+																					 end), 0) as stuffing_marking_kg'
 																					 
-											set @sql = @sql + char(10) + '		,sum(case 
-																						when d.stuffing_production_date_from =  ''' + format(@while_dt_Kashira, 'yyyyMMdd') + ''' and	  d.stuffing_production_name in (''Кашира'') then d.shipment_after_stuffing_fact_kg
-																						when d.stuffing_production_date_from =  ''' + format(@while_dt_CHMPZ  , 'yyyyMMdd') + ''' and not d.stuffing_production_name in (''Кашира'') then d.shipment_after_stuffing_fact_kg
-																					 end) as shipment_after_stuffing_fact_kg'
+											set @sql = @sql + char(10) + '		,nullif(
+																					sum(case 
+																						when d.stuffing_production_date_from =  ''' + format(@while_dt_Kashira, 'yyyyMMdd') + ''' and	  d.stuffing_production_name in (''Кашира'') then isnull( d.shipment_after_stuffing_fact_kg, 0)
+																						when d.stuffing_production_date_from =  ''' + format(@while_dt_CHMPZ  , 'yyyyMMdd') + ''' and not d.stuffing_production_name in (''Кашира'') then isnull( d.shipment_after_stuffing_fact_kg, 0)
+																						else 0
+																					 end), 0) as shipment_after_stuffing_fact_kg'
 																					 
-											set @sql = @sql + char(10) + '		,sum(case 
-																						when d.stuffing_production_date_from =  ''' + format(@while_dt_Kashira, 'yyyyMMdd') + ''' and	  d.stuffing_production_name in (''Кашира'') then d.stuffing_count_planned
-																						when d.stuffing_production_date_from =  ''' + format(@while_dt_CHMPZ  , 'yyyyMMdd') + ''' and not d.stuffing_production_name in (''Кашира'') then d.stuffing_count_planned
-																					 end) as stuffing_count_planned'
+											set @sql = @sql + char(10) + '		,nullif(
+																					sum(case 
+																						when d.stuffing_production_date_from =  ''' + format(@while_dt_Kashira, 'yyyyMMdd') + ''' and	  d.stuffing_production_name in (''Кашира'') then isnull( d.stuffing_count_planned, 0)
+																						when d.stuffing_production_date_from =  ''' + format(@while_dt_CHMPZ  , 'yyyyMMdd') + ''' and not d.stuffing_production_name in (''Кашира'') then isnull( d.stuffing_count_planned, 0)
+																						else 0
+																					 end), 0) as stuffing_count_planned'
 						
 											set @while_dt_Kashira = @while_dt_Kashira + 1;
 											set @while_dt_CHMPZ = @while_dt_CHMPZ + 1; 
@@ -245,7 +253,7 @@ BEGIN
 								 t.production_name as stuffing_production_name
 								,t.stuffing_name
 								,c.stuffing_id
-								,t.stuffing_id_box
+								--,t.stuffing_id_box
 								,t.mml
 								,t.stuffing_type
 								,t.stuffing_group	

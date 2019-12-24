@@ -193,7 +193,6 @@ begin
 
 
 
-
 			---------------------------------------------------
 			-- ОТПРАВКА ПИСЬМА
 			---------------------------------------------------
@@ -225,44 +224,13 @@ begin
 				set @recipients = @recipients + 's.v.smirnova@cherkizovo.com;' 
 				set @recipients = @recipients + 'o.zakharova@cherkizovo.com;'
 
-
-
-
-			declare @copy_recipients varchar(max);
-				set @copy_recipients = ''
-				set @copy_recipients = @copy_recipients + 'm.roshchin@cherkizovo.com;'
-				set @copy_recipients = @copy_recipients + 'd.dudorov@cherkizovo.com;'
-					
-
-			declare @subject varchar(500);
-				set @subject = 'Регламент готовой продукции'
-
 				
-
-			declare @body varchar(max);
-				set @body = ''
-				set @body = @body + '<html>'
-				set @body = @body + '<b>Добрый день!<br>Данное письмо было отправлено автоматически</b><br><br>'
-				set @body = @body + 'Данную рассылку осуществляет:<br>'
-				set @body = @body + 'Дирекция закупок и логистики<br>'
-				set @body = @body + 'Управление цепями поставок<br>'
-				set @body = @body + 'Направление развития логистики и цепи поставок<br><br>'
-				set @body = @body + '<a href="mailto:m.roshchin@cherkizovo.com;d.dudorov@cherkizovo.com
-											 ?subject=Изменить список получателей: Регламент готовой продукции
-											 &body=Укажите ФИО пользователя и причину">Изменить список получателей</a>'
-				set @body = @body + '</html>'
-
-
-			exec msdb.dbo.sp_send_dbmail @recipients		= @recipients
-										,@copy_recipients	= @copy_recipients
-										,@subject			= @subject
-										,@file_attachments	= @file_attachments
-										,@body				= @body   
-										,@body_format		= 'html' 
-
+			exec monitoring.dbo.send_mail @recipients = @recipients
+										 ,@copy_recipients = 'm.roshchin@cherkizovo.com;d.dudorov@cherkizovo.com;'
+										 ,@subject = 'Регламент готовой продукции' 
+										 ,@file_attachments	= @file_attachments
 
 end;
-
 
 
 

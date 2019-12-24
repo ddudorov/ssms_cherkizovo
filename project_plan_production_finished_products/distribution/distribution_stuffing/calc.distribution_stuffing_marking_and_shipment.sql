@@ -21,7 +21,7 @@ as
 BEGIN
 
 			SET NOCOUNT ON;
-			
+
 			declare @stuffing_new_marking_kg	dec(11,5);
 			declare @stuffing_shipment_kg		dec(11,5);
 

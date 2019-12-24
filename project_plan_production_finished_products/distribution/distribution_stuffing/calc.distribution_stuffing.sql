@@ -10,7 +10,8 @@ as
 BEGIN
 			
 			-- declare @type_stuffing varchar(15); set @type_stuffing = 'fact'
-
+			
+			--SET STATISTICS IO ON;
 			SET NOCOUNT ON;
 			--------------------
 			-- ПОДГОТОВКА ДАННЫХ
@@ -487,14 +488,13 @@ BEGIN
 						select
 								 @shipment_id						= max(o.shipment_id)
 								,@shipment_sap_id					= max(o.shipment_sap_id)
-								,@shipment_stuffing_id_box_row_id	= max(o.shipment_stuffing_id_box_row_id)
+								,@shipment_stuffing_id_box_row_id	= nullif(   max(   isnull(o.shipment_stuffing_id_box_row_id,0 )   )   ,0 )
 								,@shipment_date_min					= max(o.shipment_date_min)
 								,@shipment_date_max					= max(o.shipment_date_max)
 								,@shipment_kg						= max(o.shipment_kg)
 								,@shipment_row_id					= max(o.shipment_row_id)		
 						from #shipment as o
 						where o.shipment_id = @shipment_id;
-
 
 						-- ==================== --
 						-- распределяем набивки --
@@ -527,14 +527,6 @@ BEGIN
 						end;
 
 						set @shipment_id = @shipment_id + 1; 
-
-						--if @shipment_id % 10 = 0
-						--begin
-						--	select @shipment_id
-						--end
-
-							--select @shipment_id
-					
 
 			end;
 			

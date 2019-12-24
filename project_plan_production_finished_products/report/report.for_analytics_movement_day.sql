@@ -2,14 +2,15 @@
 
 go
 
--- exec project_plan_production_finished_products.report.for_deficit_and_surplus
+-- exec project_plan_production_finished_products.report.for_analytics_movement_day
 
-ALTER PROCEDURE report.for_deficit_and_surplus
+
+ALTER PROCEDURE report.for_analytics_movement_day
 as
 BEGIN
 			SET NOCOUNT ON;
 			
-
+			set language Russian;
 
 			
 			begin -- СОЗДАЕМ ТАБЛИЦУ КУДА БУДУТ ЗАГРУЖЕНЫ ВСЕ ДАННЫЕ
@@ -38,8 +39,7 @@ BEGIN
 					);
 
 			end;
-
-			
+						
 			begin -- ВСТАВЛЯЕМ ТО, ЧТО НЕ СМОГЛИ ОТГРУЗИТЬ, ОНО ИДЕТ КАК ОТГРУЗКА ТАК И ДЕФИЦИТ 
 
 					insert into #union_data
@@ -54,22 +54,22 @@ BEGIN
 					)
 
 					select 
-							 shipment_sap_id
-							,shipment_stuffing_id
-							,shipment_sales_channel_name
-							,shipment_customer_name
-							,shipment_date
-							,sum(shipment_after_marking_kg) as shipment_kg
-							,sum(shipment_after_marking_kg) as deficit_kg 
-					from project_plan_production_finished_products.data_import.shipment
+							 s.shipment_sap_id
+							,s.shipment_stuffing_id
+							,s.shipment_sales_channel_name
+							,s.shipment_customer_name
+							,s.shipment_date
+							,sum(s.shipment_after_marking_kg) as shipment_kg
+							,sum(s.shipment_after_marking_kg) as deficit_kg 
+					from project_plan_production_finished_products.data_import.shipment as s
 					where shipment_delete = 0 and shipment_stuffing_id_box_type in (0, 1)
 						and not shipment_after_marking_kg is null
 					group by 
-							 shipment_sap_id
-							,shipment_stuffing_id
-							,shipment_sales_channel_name
-							,shipment_customer_name
-							,shipment_date;
+							 s.shipment_sap_id
+							,s.shipment_stuffing_id
+							,s.shipment_sales_channel_name
+							,s.shipment_customer_name
+							,s.shipment_date;
 
 			end;
 
@@ -175,7 +175,7 @@ BEGIN
 											,(select sum(l.stock_shipment_kg) 
 											  from project_plan_production_finished_products.data_import.stock_log_calculation as l
 											  where st.stock_row_id = l.stock_row_id
-												and c.dt > l.shipment_date + 1
+												and c.dt > l.shipment_date 
 												and not l.stock_shipment_kg is null) as stock_log_shipment_kg
 									from project_plan_production_finished_products.data_import.stock as st
 									join #calendar as c on st.stock_on_date <= c.dt
@@ -236,7 +236,7 @@ BEGIN
 											,(select sum(l.marking_shipment_kg) 
 											  from project_plan_production_finished_products.data_import.marking_log_calculation as l
 											  where st.marking_row_id = l.marking_row_id
-												and c.dt > l.shipment_date + 1
+												and c.dt > l.shipment_date
 												and not l.marking_shipment_kg is null) as marking_log_shipment_kg
 									from project_plan_production_finished_products.data_import.marking as st
 									join #calendar as c on st.marking_on_date <= c.dt
@@ -246,8 +246,7 @@ BEGIN
 							group by 
 									 st.marking_sap_id
 									,st.marking_stuffing_id
-									,st.dt
-							order by 1,3;
+									,st.dt;
 
 					end;
 
@@ -260,11 +259,13 @@ BEGIN
 
 					select 
 							 'Общий итог'			= 'Общий итог'
-							,'Код набивки'			= ud.stuffing_id
-							,'SAP ID'				= convert(varchar(24),FORMAT(ud.sap_id, '000000000000000000000000')) 
-							,'Наименование SKU'		= ps.product_1C_full_name
-							,'Контрагент'			= ud.customer_name
-							,'Канал сбыта'			= ud.sales_channel_name
+							,'Наименование набивки'	= st.stuffing_name						
+							,'Наименование SKU'		= ps.product_1C_full_name									
+							,'Контрагент'			= isnull(ud.customer_name,' остатки')
+							,'Канал сбыта'			= isnull(ud.sales_channel_name,' остатки')
+							
+							--,'Код набивки'			= ud.stuffing_id
+							--,'SAP ID'				= convert(varchar(24),FORMAT(ud.sap_id, '000000000000000000000000')) 
 
 							,'Наименование SKU ->'	= ps.product_1C_full_name
 							,'Контрагент ->'		= ud.customer_name
@@ -273,7 +274,7 @@ BEGIN
 							,'ДТ'					= ud.dt
 
 							,'Тек ост'				= sum(ud.stock_total_kg)
-							,'Набивка ост'			= sum(ud.stock_marking_total_kg)
+							,'Приход ГП'			= sum(ud.stock_marking_total_kg)
 
 							,'Ост КОС 0%-49%'		= sum(ud.stock_KOS__0_49_kg)												
 							,'Ост КОС 50%-59%'		= sum(ud.stock_KOS_50_59_kg)												
@@ -287,10 +288,12 @@ BEGIN
 							,'Профицит'				= sum(ud.surplus_kg)															
 					from #union_data as ud
 					join cherkizovo.info.products_sap as ps on ud.sap_id = ps.sap_id
+					left join project_plan_production_finished_products.info.stuffing as st on ud.stuffing_id = st.stuffing_id
 					group by 
-							 ud.stuffing_id
-							,ud.sap_id
+							 st.stuffing_name
 							,ps.product_1C_full_name
+							--,ud.stuffing_id	
+							--,ud.sap_id
 							,ud.customer_name
 							,ud.sales_channel_name
 							,ud.dt;

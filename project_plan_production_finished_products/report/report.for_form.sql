@@ -34,14 +34,6 @@ BEGIN
 
 
 							select 
-									-- stock
-									-- isnull(format(max(	iif(s.stock_data_type = 'stock',	d.data_on_date				, null)	),'dd.MM.yyyy'			),'') as 'lbl_stock_data_on_date'
-
-									--,isnull(format(sum(	iif(s.stock_data_type = 'stock',	s.stock_kg					, null)	),'### ### ### ### ###'	),'') as 'lbl_stock_kg'
-									--,isnull(format(sum(	iif(s.stock_data_type = 'stock',	s.stock_shipment_kg			, null)	),'### ### ### ### ###'	),'') as 'lbl_stock_shipment_kg'
-									--,isnull(format(sum(	iif(s.stock_data_type = 'stock',	s.stock_after_shipment_kg	, null)	),'### ### ### ### ###'	),'') as 'lbl_stock_after_shipment_kg'
-
-									
 									 isnull(format(min(		d.data_on_date				),'dd.MM.yyyy'			),'') as 'lbl_stock_data_on_date'
 
 									,isnull(format(sum(		s.stock_kg					),'### ### ### ### ###'	),'') as 'lbl_stock_kg'
