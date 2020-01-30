@@ -4,9 +4,9 @@ go
 
 
 
--- exec project_plan_production_finished_products.report.for_SAP_sales_plan_select
--- exec project_plan_production_finished_products.report.for_SAP_sales_plan_select @type_report = 'main'
--- exec project_plan_production_finished_products.report.for_SAP_sales_plan_select @type_report = 'list_production_name'
+-- exec .report.for_SAP_sales_plan_select
+-- exec .report.for_SAP_sales_plan_select @type_report = 'main'
+-- exec .report.for_SAP_sales_plan_select @type_report = 'list_production_name'
 
 
 alter PROCEDURE report.for_SAP_sales_plan_select @type_report varchar(50), @production_name varchar(50) = '%'
@@ -22,8 +22,8 @@ BEGIN
 					select sp.production_name
 					from (
 							select distinct isnull(f.production_name, 'Завод не указан') as production_name
-							from project_plan_production_finished_products.data_import.shipment as sp
-							join project_plan_production_finished_products.info.stuffing as f on sp.shipment_stuffing_id = f.stuffing_id and ISNUMERIC(left(sp.shipment_stuffing_id,5)) = 1
+							from .data_import.shipment as sp
+							join .info.stuffing as f on sp.shipment_stuffing_id = f.stuffing_id and ISNUMERIC(left(sp.shipment_stuffing_id,5)) = 1
 							where sp.shipment_reason_ignore_in_calculate is null
 							 and (sp.shipment_data_type in ('shipment_SAP')   or   (sp.shipment_data_type in ('shipment_sales_plan') and sp.shipment_branch_name = 'ЧМПЗ Москва'))
 
@@ -42,7 +42,7 @@ BEGIN
 			if @type_report = 'main'
 			begin
 
-					declare @dt_from datetime;  set @dt_from = (select data_on_date  from project_plan_production_finished_products.data_import.data_type where data_type = 'shipment_SAP');
+					declare @dt_from datetime;  set @dt_from = (select data_on_date  from .data_import.data_type where data_type = 'shipment_SAP');
 					declare @dt_to datetime;	set @dt_to   = @dt_from  + 13;
 					declare @sql varchar(max);
 					declare @yyyyMMdd varchar(8);
@@ -63,9 +63,9 @@ BEGIN
 									,s.shipment_date
 									,iif(s.shipment_stuffing_id_box_type in (0, 1), s.shipment_kg, null) as shipment_kg
 							into #union_shipment
-							from project_plan_production_finished_products.data_import.shipment as s
-							join project_plan_production_finished_products.info.stuffing as f on s.shipment_stuffing_id = f.stuffing_id and ISNUMERIC(left(s.shipment_stuffing_id, 5)) = 1
-							join cherkizovo.info.products_sap as p on s.shipment_sap_id = p.SAP_id
+							from .data_import.shipment as s
+							join .info.stuffing as f on s.shipment_stuffing_id = f.stuffing_id and ISNUMERIC(left(s.shipment_stuffing_id, 5)) = 1
+							join .info_view.sap_id as p on s.shipment_sap_id = p.SAP_id and p.sap_id_type = 'основной'
 							where s.shipment_reason_ignore_in_calculate is null
 								and s.shipment_date between @dt_from and @dt_to
 								and (s.shipment_data_type in ('shipment_SAP')   or   (s.shipment_data_type in ('shipment_sales_plan') and s.shipment_branch_name = 'ЧМПЗ Москва'))

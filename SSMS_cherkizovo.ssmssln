@@ -12,6 +12,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "help", "help", "{40B9C307-E
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "monitoring", "monitoring", "{D5677127-6173-41C5-868B-0C1EC37A25A6}"
 	ProjectSection(SolutionItems) = preProject
+		monitoring\dbo.sending_mail.sql = monitoring\dbo.sending_mail.sql
 		monitoring\dbo.user_activity.sql = monitoring\dbo.user_activity.sql
 	EndProjectSection
 EndProject
@@ -22,23 +23,25 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "info", "info", "{375E7F4C-F
 		project_plan_production_finished_products\info\info.branches.sql = project_plan_production_finished_products\info\info.branches.sql
 		project_plan_production_finished_products\info\info.customers.sql = project_plan_production_finished_products\info\info.customers.sql
 		project_plan_production_finished_products\info\info.finished_products_sap_id_manual.sql = project_plan_production_finished_products\info\info.finished_products_sap_id_manual.sql
+		project_plan_production_finished_products\info\info.sap_id.sql = project_plan_production_finished_products\info\info.sap_id.sql
 		project_plan_production_finished_products\info\info.stuffing.sql = project_plan_production_finished_products\info\info.stuffing.sql
+		project_plan_production_finished_products\info\info_view.sap_id.sql = project_plan_production_finished_products\info\info_view.sap_id.sql
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "data", "data", "{6BAF1633-51A7-4D43-AB85-981299F91516}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "report", "report", "{D60E8A76-9A4B-4D19-93EC-E7C72455D88F}"
 	ProjectSection(SolutionItems) = preProject
-		project_plan_production_finished_products\report\report.for_analytics_movement_day.sql = project_plan_production_finished_products\report\report.for_analytics_movement_day.sql
+		project_plan_production_finished_products\report\report.for_analytics_movement.sql = project_plan_production_finished_products\report\report.for_analytics_movement.sql
 		project_plan_production_finished_products\report\report.for_analytics_movement_week.sql = project_plan_production_finished_products\report\report.for_analytics_movement_week.sql
-		project_plan_production_finished_products\report\report.for_analytics_total_day.sql = project_plan_production_finished_products\report\report.for_analytics_total_day.sql
-		project_plan_production_finished_products\report\report.for_analytics_total_week.sql = project_plan_production_finished_products\report\report.for_analytics_total_week.sql
+		project_plan_production_finished_products\report\report.for_analytics_total.sql = project_plan_production_finished_products\report\report.for_analytics_total.sql
 		project_plan_production_finished_products\report\report.for_form.sql = project_plan_production_finished_products\report\report.for_form.sql
 		project_plan_production_finished_products\report\report.for_marking_plan.sql = project_plan_production_finished_products\report\report.for_marking_plan.sql
 		project_plan_production_finished_products\report\report.for_sales_plan_exclude_stuffing_plan.sql = project_plan_production_finished_products\report\report.for_sales_plan_exclude_stuffing_plan.sql
 		project_plan_production_finished_products\report\report.for_SAP_sales_plan_select.sql = project_plan_production_finished_products\report\report.for_SAP_sales_plan_select.sql
 		project_plan_production_finished_products\report\report.for_stuffing_plan.sql = project_plan_production_finished_products\report\report.for_stuffing_plan.sql
 		project_plan_production_finished_products\report\report.log_distribution.sql = project_plan_production_finished_products\report\report.log_distribution.sql
+		project_plan_production_finished_products\report\report.surplus_with_production_date.sql = project_plan_production_finished_products\report\report.surplus_with_production_date.sql
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "marking", "marking", "{C43266B9-F0B5-4F8A-9903-4EF934F0FA81}"
@@ -92,6 +95,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "info", "info", "{5E0A723A-9
 	ProjectSection(SolutionItems) = preProject
 		cherkizovo\info\info.calendar.sql = cherkizovo\info\info.calendar.sql
 		cherkizovo\info\info.products_sap.sql = cherkizovo\info\info.products_sap.sql
+		cherkizovo\info\info.products_sap_from_excel.sql = cherkizovo\info\info.products_sap_from_excel.sql
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shipment", "shipment", "{4111D899-0799-4751-BD5B-8399E2F00014}"
@@ -107,12 +111,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "project_export_quotation", 
 		project_export_quotation\project_export_quotation.sql = project_export_quotation\project_export_quotation.sql
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "admin", "admin", "{99E5D18C-1F9D-47C2-AE2B-5AA51C3D5E60}"
+	ProjectSection(SolutionItems) = preProject
+		monitoring\admin\admin.run_vbscript.sql = monitoring\admin\admin.run_vbscript.sql
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Default|Default = Default|Default
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{6F57848F-55B9-4A40-969D-912AA687856D}.Default|Default.ActiveCfg = Default
+		{32B8AE9E-99B7-4695-8852-BAD0193963A9}.Default|Default.ActiveCfg = Default
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -130,5 +139,6 @@ Global
 		{BBCD301B-09BD-4E87-8A79-5A20CAAC4BDB} = {AA1A981B-4C1A-4788-A516-6EE058B7EADE}
 		{5E0A723A-9E7C-436C-8961-1E139EB890C0} = {5E2D2B2B-F23C-49D5-9000-A5C9DFCAB56A}
 		{4111D899-0799-4751-BD5B-8399E2F00014} = {6BAF1633-51A7-4D43-AB85-981299F91516}
+		{99E5D18C-1F9D-47C2-AE2B-5AA51C3D5E60} = {D5677127-6173-41C5-868B-0C1EC37A25A6}
 	EndGlobalSection
 EndGlobal

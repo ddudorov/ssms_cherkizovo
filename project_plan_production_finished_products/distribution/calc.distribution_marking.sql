@@ -2,7 +2,7 @@
 
 go
 
--- exec project_plan_production_finished_products.calc.distribution_marking
+-- exec .calc.distribution_marking
 
 ALTER PROCEDURE calc.distribution_marking
 as
@@ -13,27 +13,28 @@ BEGIN
 			begin 
 
 					-- ОЧИЩАЕМ ЕСЛИ РАНЬШЕ УЖЕ БЫЛ РАСЧЕТ
-					update project_plan_production_finished_products.data_import.marking	set marking_shipment_kg = null;			
-					update project_plan_production_finished_products.data_import.shipment	set shipment_from_marking_kg = null;	
+					update .data_import.marking		set marking_shipment_kg = null;			
+					update .data_import.shipment	set shipment_from_marking_kg = null;	
 
-					begin -- СОЗДАЕМ ГРУППУ АРТИКУЛОВ, ЧТО БЫ НЕ ЗАВИСИТЬ ОТ ПЛОЩАДКИ
+					begin -- СОЗДАЕМ ГРУППУ АРТИКУЛОВ, ЧТО БЫ НЕ ЗАВИСИТЬ ОТ ПЛОЩАДКИ 
 
 							IF OBJECT_ID('tempdb..#sap_id_group','U') is not null drop table #sap_id_group;
 
 							select 
 								 sp.sap_id
-								,DENSE_RANK() over (order by isnull(p.sap_id_group_name, sp.product_clean_full_name), sp.individual_marking_id) as sap_id_group
-								,sp.production_attribute
-								,isnull(p.sap_id_group_name, sp.product_clean_full_name) as product_clean_full_name
-								,sp.individual_marking_id
+								,DENSE_RANK() over (order by isnull(sp.product_name_analog, sp.product_clean_full_name), sp.individual_marking_id) as sap_id_group		
+								--,sp.product_name_analog
+								--,sp.product_clean_full_name
+								--,sp.individual_marking_id														
 							into #sap_id_group
-							from cherkizovo.info.products_sap as sp
-							left join project_plan_production_finished_products.info.finished_products_sap_id_manual as p on sp.sap_id = p.sap_id;
+							from info_view.sap_id as sp
+							where sp.sap_id_type = 'Основной';
+
 
 					end;
 
 
-					begin -- МАРКИРОВКА
+					begin -- МАРКИРОВКА 
 
 							IF OBJECT_ID('tempdb..#marking','U') is not null drop table #marking; 
 				
@@ -46,7 +47,7 @@ BEGIN
 								  ,s.marking_KOS_in_day
 								  ,s.marking_kg
 							into #marking
-							from project_plan_production_finished_products.data_import.marking as s
+							from .data_import.marking as s
 							join #sap_id_group as sg on s.marking_sap_id = sg.sap_id
 							where s.marking_reason_ignore_in_calculate is null;
 							
@@ -54,32 +55,16 @@ BEGIN
 					end;	
 
 					
-					begin -- ПОТРЕБНОСТЬ
+					begin -- ПОТРЕБНОСТЬ 
+
 
 							IF OBJECT_ID('tempdb..#shipment','U') is not null drop table #shipment; 
 
-
-							select convert(int, ROW_NUMBER() over (order by o.shipment_sap_id
-																			,o.marking_on_date
-																			,o.before_next_shipment_priority
-																			,o.before_next_shipment_date
-																			,o.before_next_shipment_min_KOS
-
-																			,o.after_next_shipment_date
-																			,o.after_next_shipment_priority
-																			,o.after_next_shipment_min_KOS
-																)) as shipment_id
-									--,o.before_next_shipment_priority
-									--,o.before_next_shipment_date
-									--,o.before_next_shipment_min_KOS				
-									--,o.after_next_shipment_priority
-									--,o.after_next_shipment_date		
-									--,o.after_next_shipment_min_KOS	
-									
+							select 
+									convert(int,   ROW_NUMBER() over (order by o.sort_1, o.sort_2, o.sort_3, o.sort_4, o.sort_5, o.shipment_min_KOS)   ) as shipment_id
 									,o.shipment_row_id
 									,o.shipment_sap_id
 									,o.sap_id_group
-									--,o.shipment_priority
 									,o.shipment_min_KOS
 									,o.shipment_date
 									,o.shipment_kg
@@ -87,35 +72,30 @@ BEGIN
 							from (
 
 									select   
-											
-											-- before_next
-											 iif(m.marking_next_available_date <> '29990101', o.shipment_priority		, 99999			) as before_next_shipment_priority
-											,iif(m.marking_next_available_date <> '29990101', o.shipment_date			, '29990101'	) as before_next_shipment_date
-											,iif(m.marking_next_available_date <> '29990101', o.shipment_min_KOS		, 1				) as before_next_shipment_min_KOS
-																																		
-																																		
-											-- after_next																						
-											,iif(m.marking_next_available_date =  '29990101', o.shipment_priority		, 99999			) as after_next_shipment_priority
-											,iif(m.marking_next_available_date =  '29990101', o.shipment_date			, '29990101'	) as after_next_shipment_date									
-											,iif(m.marking_next_available_date =  '29990101', o.shipment_min_KOS		, 1				) as after_next_shipment_min_KOS
-											
-											,m.marking_on_date
-											,o.shipment_row_id
+											 o.shipment_row_id
 											,o.shipment_sap_id
 											,sg.sap_id_group
-											,o.shipment_priority
+									
+											,DENSE_RANK() over (order by o.shipment_sap_id, m.marking_on_date) as sort_1
+
+											,iif(m.marking_next_available_date <> '29990101', o.shipment_priority	, 99999)		as sort_2
+											,iif(m.marking_next_available_date <> '29990101', o.shipment_date		,'29990101')	as sort_3
+						  
+											,iif(m.marking_next_available_date =  '29990101', o.shipment_date		,'29990101')	as sort_4
+											,iif(m.marking_next_available_date =  '29990101', o.shipment_priority	,99999)			as sort_5
+											
 											,o.shipment_min_KOS
 											,o.shipment_date
 											,o.shipment_after_stock_kg as shipment_kg
-									
-									from project_plan_production_finished_products.data_import.shipment as o
+
+									from .data_import.shipment as o
 									join #sap_id_group as sg on o.shipment_sap_id = sg.sap_id
 									left join (
 													select 
 															 marking_sap_id
 															,marking_on_date
 															,isnull(LEAD(marking_on_date) OVER (PARTITION BY marking_sap_id ORDER BY marking_on_date)  - 1 , '29990101') AS marking_next_available_date
-													from project_plan_production_finished_products.data_import.marking
+													from .data_import.marking
 													group by  marking_sap_id, marking_on_date
 											  ) as m on o.shipment_sap_id = m.marking_sap_id and o.shipment_date between m.marking_on_date and m.marking_next_available_date
 									where o.shipment_stuffing_id_box_type in (0, 1)
@@ -133,9 +113,9 @@ BEGIN
 					end;		
 						
 					
-					begin -- ЛОГ
+					begin -- ЛОГ 
 					
-							TRUNCATE TABLE project_plan_production_finished_products.data_import.marking_log_calculation;
+							TRUNCATE TABLE .data_import.marking_log_calculation;
 
 							IF OBJECT_ID('tempdb..#marking_log_calculation','U') is not null drop table #marking_log_calculation;
 
@@ -151,19 +131,7 @@ BEGIN
 							);	
 
 					end;	
-						
-						
-
-
-
-					-- индекс
-					--CREATE NONCLUSTERED INDEX NoCl_marking ON #marking (sap_id_group,  marking_id asc, marking_on_date desc)
-					--include(marking_current_KOS, marking_KOS_in_day, production_attribute); 
 					
-					
-
-						
-			
 			end;
 
 
@@ -260,13 +228,13 @@ BEGIN
 
 			-- добавляем в основную таблицу
 			-- логи маркировка
-			insert into project_plan_production_finished_products.data_import.marking_log_calculation
+			insert into .data_import.marking_log_calculation
 			select * from #marking_log_calculation;
 
 			-- маркировка
 			update s
 			set s.marking_shipment_kg = l.marking_shipment_kg
-			from project_plan_production_finished_products.data_import.marking as s
+			from .data_import.marking as s
 			join (
 					select l.marking_row_id, sum(l.marking_shipment_kg) as marking_shipment_kg
 					from #marking_log_calculation as l
@@ -279,7 +247,7 @@ BEGIN
 			-- отгрузка
 			update o
 			set o.shipment_from_marking_kg = l.shipment_from_marking_kg
-			from project_plan_production_finished_products.data_import.shipment as o
+			from .data_import.shipment as o
 			join (
 					select l.shipment_row_id, sum(l.marking_shipment_kg) as shipment_from_marking_kg
 					from #marking_log_calculation as l
@@ -288,9 +256,11 @@ BEGIN
 				 ) as l
 				on o.shipment_row_id = l.shipment_row_id;
 			
-			
+			-- добавляем данные в общию таблицу, которую выводим на форму
+			exec report.for_form
+
 			-- не имеет смысла заполнять коробки разбитые на набивки, так как они не используются
-		
+
 
 end;
 

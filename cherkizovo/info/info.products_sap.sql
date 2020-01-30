@@ -77,9 +77,9 @@ begin
 			,article_nomenclature				VARCHAR(20)			NULL	-- Артикул номенклатуры
 			,article_packaging					VARCHAR(25)			NULL	-- Артикул тары
 			
-			,product_SAP_full_name				VARCHAR(200)		NULL	-- Полное наименование зависимой продукта
-			,product_clean_full_name 			VARCHAR(200)		NULL	
-			,product_1C_full_name 				VARCHAR(200)		NULL
+			,product_SAP_full_name				VARCHAR(500)		NULL	-- Полное наименование зависимой продукта
+			,product_clean_full_name 			VARCHAR(500)		NULL	
+			,product_1C_full_name 				VARCHAR(500)		NULL
 
 			,product_GOST_name					VARCHAR(100)		NULL	-- ГОСТ/ТУ продукции
 			,GTIN_CU_id							DEC(13)				NULL	-- GTIN (ШК) штуки (CU)	
@@ -96,7 +96,7 @@ begin
 			,unit_length_mm						DEC(6,3)			NULL		
 			,unit_width_mm						DEC(6,3)			NULL	
 			,unit_height_mm						DEC(6,3)			NULL
-			,unit_volume_m						as unit_length_mm * unit_width_mm * unit_height_mm / 1000000000
+			,unit_volume_m						as nullif(unit_length_mm * unit_width_mm * unit_height_mm, 0) / 1000000000
 		
 			,unit_net_weight_kg					DEC(7,3)			NULL	-- Вес единицы продукции нетто (кг)
 			,packaging_unit_net_weight_kg		DEC(7,3)			NULL	-- Вес упаковки с единицы продукции (кг)
@@ -109,14 +109,14 @@ begin
 
 
 	
-			,product_storage_description		VARCHAR(300)		NULL	-- Срок хранения и температурные режимы
+			,product_storage_description		VARCHAR(500)		NULL	-- Срок хранения и температурные режимы
 			,freezing_type_id					TINYINT				NULL	-- Термосостояние
 			,freezing_type_name					VARCHAR(15)			NULL	-- Термосостояние1
 
 			,expiration_date_type				VARCHAR(5)			NULL	-- Срок хранения
 			,expiration_date_in_days			SMALLINT			NULL	-- Общий срок годности1
 			,KOS_in_day							AS case 
-														when expiration_date_type = 'сутки' then 1.0 / expiration_date_in_days 
+														when expiration_date_type = 'сутки' then 1.0 / nullif(expiration_date_in_days, 0)
 													end
 			,expiration_date_in_days_from		SMALLINT			NULL
 			,expiration_date_in_days_to			SMALLINT			NULL
@@ -124,7 +124,7 @@ begin
 		
 			,vat								DEC(3,2)			NULL	-- Ставка налога
 
-			,update_dt_tm						datetime2(0)		DEFAULT		GETDATE()
+			,update_dt_tm						datetime			DEFAULT		GETDATE()
 			,update_user						VARCHAR(50)			DEFAULT		ORIGINAL_LOGIN()
 
 			 CONSTRAINT [PK products_sap | sap_id] PRIMARY KEY CLUSTERED (sap_id) 
@@ -132,6 +132,9 @@ begin
 
 
 end;
+
+
+
 
 
 use cherkizovo
@@ -222,7 +225,13 @@ begin
 				set @recipients = @recipients + 'o.medvedeva@cherkizovo.com;'
 				set @recipients = @recipients + 'ya.turik@cherkizovo.com;'
 				set @recipients = @recipients + 's.v.smirnova@cherkizovo.com;' 
-				set @recipients = @recipients + 'o.zakharova@cherkizovo.com;'
+				set @recipients = @recipients + 'o.zakharova@cherkizovo.com;' 
+				set @recipients = @recipients + 'n.solbakova@cherkizovo.com;'
+				set @recipients = @recipients + 'm.timurgalieva@cherkizovo.com;'
+				set @recipients = @recipients + 'm.votiakova@cherkizovo.com;'
+				
+				
+				
 
 				
 			exec monitoring.dbo.send_mail @recipients = @recipients
@@ -230,8 +239,10 @@ begin
 										 ,@subject = 'Регламент готовой продукции' 
 										 ,@file_attachments	= @file_attachments
 
-end;
+										 
 
+
+end;
 
 
 
@@ -360,104 +371,6 @@ end
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--- sql к excel
-
-
-select
-	 [SAP ID]										as sap_id					
-													
-	,[Код 1 уровня]									as category_1_level_id 	
-	,[Название 1 уровня]							as category_1_level_name 	
-	,[Код 2 уровня]									as category_2_level_id 	
-	,[Название 2 уровня]							as category_2_level_name 		
-	,[Код 3 уровня]									as category_3_level_id 	
-	,[Название 3 уровня]							as category_3_level_name 		
-	,[Код 4 уровня]									as category_4_level_id 	
-	,[Название 4 уровня]							as category_4_level_name 		
-	,[Код 5 уровня]									as category_5_level_id 	
-	,[Название 5 уровня]							as category_5_level_name 	
-	,[Категория]									as category_full_name 	
-												
-	,[Код завода]									as production_id			
-	,[Площадка]										as production_name
-	,[Цех производства 1С]							as production_shop_1C_name
-												
-	,[1С УПП]										as upp_1C_id					
-	,[Код 1С УПП ТМ]								as upp_tm_1C_id				
-	,[Код csb]										as csb_id					
-	,[Юнит]											as unit_id				
-	,[Код базовой позиции]							as position_basic_id		
-	,[Код зависимой позиции]						as position_dependent_id	
-	,[Код PIM Z011]									as product_finished_id	
-	,[Код PIM Z013]									as product_not_packaged_id
-	
-
-	,[Код индивидуальной маркировки]				as individual_marking_id			
-	,[Индивидуальная маркировка]					as individual_marking_name		
-
-	,[Бренд (Торговая марка)]						as brand_trademark_short_name		
-	,[Бренд (Торговая марка)1]						as brand_trademark_full_name		
-
-	,[Бренд (назначение)]							as brand_destination_short_name	
-	,[Бренд (назначение)1]							as brand_destination_full_name	
-
-	,[Артикул номенклатуры]							as article_nomenclature			
-	,[Артикул тары]									as article_packaging				
-																				   		
-	,[Полное наименование зависимой продукта]		as product_sap_full_name			
-
-	,[ГОСТ/ТУ продукции]							as product_gost_name	
-	,[GTIN (ШК) штуки (CU)]							as gtin_cu_id			
-	,[GTIN (ШК) штуки (SKU)]						as gtin_sku_id		
-	,[Код ТНВЭД]									as feacn_id			
-	,[Название ТНВЭД]								as feacn_name			
-	,[VAD/VOL]										as vad_vol			
-
-	,[Статус материала]								as product_status
-
-	,[Единица хранения остатков]					as product_storage_type
-	
-	,[Размер единицы продукции ДхШхВ (мм)]			as unit_size_name
-
-	,[Вес единицы продукции нетто (кг)]				as unit_net_weight_kg				
-	,[Вес упаковки с единицы продукции (кг)]		as packaging_unit_net_weight_kg	
-	,[Вес продукции в коробе нетто (кг)]			as product_net_weight_in_box_kg	
-	,[Вес дополнительной упаковки в коробе (кг)]	as packaging_net_weight_in_box_kg	
-	,[Вес нетто продукции на поддоне (кг)]			as product_net_weight_on_pallet_kg
-	,[Количество вложений в короб (шт)]				as quantity_in_box				
-	,[Количество коробов на поддоне (шт)]			as quantity_box_on_pallet			
-	,[Наименование и вес тары без продукции]		as box_name						
-
-	,[Срок хранения и температурные режимы]			as product_storage_description
-	,[Термосостояние]								as freezing_type_id			
-	,[Термосостояние1]								as freezing_type_name			
-
-	,[Срок хранения]								as expiration_date_type		
-	,[Общий срок годности1]							as expiration_date_in_days	
-
-	,[Ставка налога]								as vat
-
-from [Sheet1$]
 
 
 

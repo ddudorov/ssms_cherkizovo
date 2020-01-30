@@ -99,11 +99,13 @@ BEGIN
 			where id = @id;
 
 			---- обновляем остатки
-			--update monitoring.admin.run_script
-			--set par_1_dt = par_1_dt - 1
-			--   ,run_status = 1
-			--where id = @id and path_script like 'import_stock_SQL%'
-			--  and par_1_dt>= getdate() - 120;
+			update monitoring.admin.run_script
+			set par_1_dt = par_1_dt + 1
+			   ,run_status = 1
+			where id = @id and path_script like 'import_stock_%'
+			  and par_1_dt < '20190501' and not par_1_dt is null;
+			  --and par_1_dt < getdate() and not par_1_dt is null;
+
 
 
 
@@ -118,3 +120,7 @@ BEGIN
 			
 end;
 
+
+
+update [monitoring].[admin].[run_script]
+set [run_status] = 0

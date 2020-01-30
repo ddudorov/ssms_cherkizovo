@@ -41,7 +41,7 @@ begin
 				,dt_tm							datetime			not null 	default getdate()
 				,year_from_dt_tm												as datepart(year,dt_tm) 
 				 PRIMARY KEY (id)
-				,UNIQUE (id_text) 
+				,CONSTRAINT [AK #test | id_text] UNIQUE(id_text)
 			);
 			
 			TRUNCATE TABLE #table											-- очистить таблицу всю без условий -- работает быстрее чем delete from [table]
@@ -128,3 +128,21 @@ set @t = 100
 exec #ttt @t = @t, @t_out = @t out
 
 select @t
+
+
+
+--------------------------------
+-- КАК ПОЛУЧИТЬ ВРЕМЯ ВЫПОЛНЕНИЯ 
+--------------------------------
+declare @start_tm time(0); set @start_tm = getdate() ;
+declare @stop_tm time(0); set @stop_tm = getdate() + 0.12569 ;
+
+
+select format( DATEDIFF(second,	@start_tm, @stop_tm) / 3600 		,'00') + ':' + 
+	   format( DATEDIFF(second, @start_tm, @stop_tm) % 3600 / 60 	,'00') + ':' + 
+	   format( DATEDIFF(second, @start_tm, @stop_tm) % 60 			,'00');
+
+
+select format(5,'00')
+
+select convert(time(0),'12:23:43') + 0.1

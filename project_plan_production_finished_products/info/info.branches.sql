@@ -1,8 +1,9 @@
 ﻿use project_plan_production_finished_products;
+--use project_plan_production_finished_products_development
 
 go
 
-CREATE TABLE project_plan_production_finished_products.info.branches
+CREATE TABLE info.branches
 (
 		 branch_id			varchar(20)		not null	
 		,branch_name		varchar(100)	not null
@@ -11,19 +12,19 @@ CREATE TABLE project_plan_production_finished_products.info.branches
 );
 
 
-CREATE VIEW info_view.branches
+ALTER VIEW info_view.branches
 AS
-	SELECT branch_id as 'Код филиала'
-		  ,branch_name as 'Название филиала'
-		  ,to_branch_days  as 'Доставка от ТДЧ, дней'
-	FROM project_plan_production_finished_products.info.branches
+	SELECT 
+		   'Дейcтвие'				= ''
+		  ,'Код филиала'			= branch_id 
+		  ,'Название филиала'		= branch_name 
+		  ,'Доставка от ТДЧ, дней'	= to_branch_days 
+	FROM info.branches;
 
 
 
 
 select *
-from project_plan_production_finished_products.info.branches
+from info.branches
 
-select *
-from project_plan_production_finished_products.info_view.branches
 

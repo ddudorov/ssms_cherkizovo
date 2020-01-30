@@ -1,5 +1,4 @@
 ﻿use project_plan_production_finished_products
-
 --exec project_plan_production_finished_products.check_import.marking
 
 go
@@ -14,17 +13,17 @@ BEGIN
 			if not @path_file is null	 
 			begin
 						-- удаляем данные
-						delete project_plan_production_finished_products.data_import.data_type where data_type = 'marking';
+						delete data_import.data_type where data_type = 'marking';
 						
 						-- добавляем данные
-						insert into project_plan_production_finished_products.data_import.data_type
+						insert into data_import.data_type
 							   (data_type, source_data,  path_file,  data_on_date)
 						values ('marking', 'Excel',		@path_file, @data_on_date);
 			
 						-- удаляем и выгружаем
-						TRUNCATE TABLE project_plan_production_finished_products.data_import.marking_log_calculation;
-						TRUNCATE TABLE project_plan_production_finished_products.data_import.marking;
-						SELECT TOP 0 * FROM project_plan_production_finished_products.data_import.marking;
+						TRUNCATE TABLE data_import.marking_log_calculation;
+						TRUNCATE TABLE data_import.marking;
+						SELECT TOP 0 * FROM data_import.marking;
 
 						return(0);
 			end;
@@ -33,22 +32,13 @@ BEGIN
 			-- подтягиваем набивку
 			update c
 			set  c.marking_stuffing_id = sm.stuffing_id
-			from project_plan_production_finished_products.data_import.marking as c
-			join project_plan_production_finished_products.info.finished_products_sap_id_manual as sm on c.marking_SAP_id = sm.SAP_id;
+			from data_import.marking as c
+			join info_view.sap_id as sm on c.marking_SAP_id = sm.sap_id_for_join
 
 
-
-			---- пишем ошибки ---------------------------------------------------------------
-			--update project_plan_production_finished_products.data_import.marking
-			--Set reason_ignore_in_calculate = 
-			--	nullif(
-			--			  case when sap_id is null then 'Не найден sap id | ' else '' end
-			--			+ case when stuffing_id is null then 'Код набивки отсутствует | ' else '' end
-			--			+ case when marking_current_KOS is null then 'КОС некорректный | ' else '' end
-			--			+ case when marking_current_KOS < 0.1 then 'КОС меньше 10% | ' else '' end
-			--			, '');
-
-
+			-- добавляем данные в общию таблицу, которую выводим на форму
+			exec report.for_form
+			
 
 
 			-- ВЫГРУЖАЕМ ДАННЫЕ ---------------------------------------------------------------
@@ -65,8 +55,8 @@ BEGIN
 					,s.marking_kg		
 					,ie.path_file
 					,ie.data_on_date
-			from project_plan_production_finished_products.data_import.marking as s
-			join project_plan_production_finished_products.data_import.data_type as ie on s.marking_data_type = ie.data_type
-			left join cherkizovo.info.products_sap as sp on s.marking_sap_id = sp.sap_id;
+			from data_import.marking as s
+			join data_import.data_type as ie on s.marking_data_type = ie.data_type
+			left join info_view.sap_id as sp on s.marking_SAP_id = sp.sap_id_for_join;
 
 end;

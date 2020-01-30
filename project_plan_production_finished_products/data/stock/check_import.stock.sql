@@ -1,6 +1,6 @@
 ﻿use project_plan_production_finished_products
 
---exec project_plan_production_finished_products.check_import.stock @date_stock = '20190918'
+--exec check_import.stock @date_stock = '20190918'
 
 go
 
@@ -13,20 +13,20 @@ BEGIN
 			-- ИНФОРМАЦИЯ О ФАЙЛЕ: УДАЛЯЕМ И ВСТАВЛЯЕМ ДАННЫЕ О ДАННЫХ
 			begin
 						-- удаляем данные
-						delete project_plan_production_finished_products.data_import.data_type where data_type = 'stock';
+						delete data_import.data_type where data_type = 'stock';
 						
 						-- добавляем данные
-						insert into project_plan_production_finished_products.data_import.data_type
+						insert into data_import.data_type
 							   (data_type,  source_data,  data_on_date)
 						values ('stock',	'mssql',	 @date_stock);
 			
 						-- удаляем и выгружаем
-						delete from project_plan_production_finished_products.data_import.stock where stock_data_type = 'stock';
+						delete from data_import.stock where stock_data_type = 'stock';
 
 			end;
 
 			-- вставляем данные
-			insert into project_plan_production_finished_products.data_import.stock
+			insert into data_import.stock
 			(		
 					 stock_data_type	
 					,product_finished_id
@@ -65,23 +65,21 @@ BEGIN
 
 			-- ПОДТЯГИВАЕМ SAP ID К ДАННЫМ 
 			begin 
-					
-						update s
-						set s.stock_sap_id = p.sap_id
-						   ,s.stock_stuffing_id = m.stuffing_id
-						from project_plan_production_finished_products.data_import.stock as s
-						join cherkizovo.info.products_sap as p on s.product_finished_id = p.product_finished_id
-						left join project_plan_production_finished_products.info.finished_products_sap_id_manual as m on p.sap_id = m.sap_id
-						where s.stock_data_type = 'stock';
-
-
+	
+						update st
+						set st.stock_sap_id = s.sap_id
+						   ,st.stock_stuffing_id = s.stuffing_id_manual
+						from data_import.stock as st
+						join info_view.sap_id as s on st.product_finished_id = s.product_finished_id and s.sap_id_type = 'Основной'
+						where st.stock_data_type = 'stock';
+						
 			end;
 
 
 
 
 			---- ПИШЕМ ОШИБКИ ---------------------------------------------------------------
-			update project_plan_production_finished_products.data_import.stock
+			update data_import.stock
 			Set stock_reason_ignore_in_calculate = 
 				nullif(
 						  case when stock_sap_id is null then 'Не найден sap id | ' else '' end
@@ -90,25 +88,28 @@ BEGIN
 						, '')
 			where stock_data_type = 'stock' ;
 
+			
+			-- добавляем данные в общию таблицу, которую выводим на форму
+			exec report.for_form
 
 
 			-- ВЫГРУЖАЕМ ДАННЫЕ ---------------------------------------------------------------
 			select 
-					 s.stock_reason_ignore_in_calculate	
-					,convert(varchar(24), FORMAT(s.stock_sap_id, '000000000000000000000000')) as sap_id
-					,sp.product_1C_full_name
-					,s.stock_stuffing_id
-					,s.product_finished_id	
-					,s.stock_warehouse_name
-					,s.stock_storage_area_name	
-					,s.stock_branch_name
-					,s.stock_production_date
-					,s.stock_on_date
-					,s.stock_expiration_date
-					,s.stock_current_KOS
-					,s.stock_kg		
-			from project_plan_production_finished_products.data_import.stock as s
-			left join cherkizovo.info.products_sap as sp on s.stock_sap_id = sp.sap_id
+					'Ошибки'				= s.stock_reason_ignore_in_calculate	
+					,'SAP ID'				= convert(varchar(24), FORMAT(s.stock_sap_id, '000000000000000000000000'))
+					,'1С название'			= sp.product_1C_full_name
+					,'Код набивки'			= s.stock_stuffing_id
+					,'Код PIM Z011'			= s.product_finished_id	
+					,'Склад'				= s.stock_warehouse_name
+					,'Зона хранения'		= s.stock_storage_area_name	
+					,'Название филиала'		= s.stock_branch_name
+					,'Дата производства'	= s.stock_production_date
+					,'Дата доступности'		= s.stock_on_date
+					,'Дата срок годности'	= s.stock_expiration_date
+					,'КОС остатков'			= s.stock_current_KOS
+					,'Остаток, кг'			= s.stock_kg		
+			from data_import.stock as s
+			left join info_view.sap_id as sp on s.stock_sap_id = sp.sap_id_for_join
 			where s.stock_data_type = 'stock';
 
 		

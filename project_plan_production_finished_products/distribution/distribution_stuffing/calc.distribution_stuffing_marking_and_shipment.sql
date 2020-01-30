@@ -2,8 +2,8 @@
 
 go
 
--- exec project_plan_production_finished_products.calc.distribution_stuffing @type_stuffing = 'fact' 
--- exec project_plan_production_finished_products.calc.distribution_stuffing @type_stuffing = 'plan'
+-- exec .calc.distribution_stuffing @type_stuffing = 'fact' 
+-- exec .calc.distribution_stuffing @type_stuffing = 'plan'
 
 ALTER PROCEDURE calc.distribution_stuffing_marking_and_shipment  @shipment_id						int
 																,@shipment_sap_id					bigint			-- log

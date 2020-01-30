@@ -2,9 +2,9 @@
 
 go
 
-
---drop table project_plan_production_finished_products.data_import.stock
-create table project_plan_production_finished_products.data_import.stock
+select * from data_import.stock 
+--drop table data_import.stock
+create table data_import.stock
 (
 
 		 stock_row_id							INT					NOT NULL IDENTITY(1,1)
@@ -13,7 +13,6 @@ create table project_plan_production_finished_products.data_import.stock
 
 		,stock_sap_id							BIGINT					NULL
 		,stock_stuffing_id						VARCHAR(40)				NULL
-		,product_1C_full_name					varchar(200)			NULL
 		,product_finished_id					decimal(14, 0)			NULL
 		
 		--- остатки ---
@@ -45,9 +44,9 @@ create table project_plan_production_finished_products.data_import.stock
 
 
 --- логи остатки
-select * from project_plan_production_finished_products.data_import.stock_log_calculation
-drop table project_plan_production_finished_products.data_import.stock_log_calculation
-create table project_plan_production_finished_products.data_import.stock_log_calculation
+select * from data_import.stock_log_calculation
+drop table data_import.stock_log_calculation
+create table data_import.stock_log_calculation
 ( 
 		 sort_id				INT				NOT NULL	
 		,shipment_row_id		INT				NOT NULL		

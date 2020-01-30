@@ -2,8 +2,8 @@
 
 go
 
--- exec project_plan_production_finished_products.report.for_marking_plan @type_report = 'report_main'
--- exec project_plan_production_finished_products.report.for_marking_plan @type_report = 'report_for_pivot'
+-- exec .report.for_marking_plan @type_report = 'report_main'
+-- exec .report.for_marking_plan @type_report = 'report_for_pivot'
 
 ALTER PROCEDURE report.for_marking_plan @type_report varchar(50) = 'report_main'
 as
@@ -14,10 +14,10 @@ BEGIN
 			--declare @type_report varchar(50); set @type_report = 'report_main'
 			
 			declare @report_dt_from datetime;	set @report_dt_from =	(select top 1 dt 
-																		 from (	select  isnull(min(stuffing_production_date_to),'29990101') as dt  from project_plan_production_finished_products.data_import.stuffing_fact union all
-																				select  isnull(min(stuffing_production_date_to),'29990101') as dt  from project_plan_production_finished_products.data_import.stuffing_plan ) as s 
+																		 from (	select  isnull(min(stuffing_production_date_to),'29990101') as dt  from .data_import.stuffing_fact union all
+																				select  isnull(min(stuffing_production_date_to),'29990101') as dt  from .data_import.stuffing_plan ) as s 
 																		 order by dt);																 
-			declare @report_dt_to datetime;		set @report_dt_to =		(select			max(shipment_date)						from project_plan_production_finished_products.data_import.shipment);																 
+			declare @report_dt_to datetime;		set @report_dt_to =		(select			max(shipment_date)						from .data_import.shipment);																 
 			declare @dt_while as datetime;
 
 			declare @sql varchar(max);
@@ -51,7 +51,8 @@ BEGIN
 									--,s.stuffing_shipment_kg
 									,s.stuffing_surplus_kg
 									,case when not s.stuffing_sap_id is null then   nullif( isnull( s.stuffing_marking_kg, 0) + isnull( s.stuffing_shipment_kg, 0) , 0)   end as stuffing_marking_kg
-							from project_plan_production_finished_products.data_import.stuffing_fact as s
+							from .data_import.stuffing_fact as s
+							
 							union all
 							select 
 									 s.stuffing_sap_id
@@ -64,7 +65,7 @@ BEGIN
 									--,s.stuffing_shipment_kg
 									,s.stuffing_surplus_kg
 									,case when not s.stuffing_sap_id is null then   nullif( isnull( s.stuffing_marking_kg, 0) + isnull( s.stuffing_shipment_kg, 0) , 0)   end as stuffing_marking_kg
-							from project_plan_production_finished_products.data_import.stuffing_plan as s
+							from .data_import.stuffing_plan as s
 						 ) as s
 					group by 
 							 s.stuffing_sap_id
@@ -101,7 +102,7 @@ BEGIN
 										,case 
 												when p.shipment_stuffing_id_box_type = 2 then p.shipment_stuffing_id
 										 end as stuffing_id_box
-										,p.shipment_date - sf.transit_from_production_days - sf.maturation_and_packaging_days + sf.maturation_days as stuffing_production_date_to
+										,p.shipment_date - sf.transit_days - sf.packaging_days as stuffing_production_date_to
 										,p.shipment_date as stuffing_available_date
 										,case 
 												when p.shipment_stuffing_id_box_type = 0 then p.shipment_after_stuffing_plan_kg
@@ -113,8 +114,8 @@ BEGIN
 												--when p.shipment_stuffing_id_box_type = 1 then p.shipment_after_stuffing_plan_kg
 												when p.shipment_stuffing_id_box_type = 2 then p.shipment_after_stock_kg
 										 end as net_need_kg
-								from project_plan_production_finished_products.data_import.shipment as p 
-								join project_plan_production_finished_products.info.stuffing as sf on p.shipment_stuffing_id = sf.stuffing_id
+								from .data_import.shipment as p 
+								join .info.stuffing as sf on p.shipment_stuffing_id = sf.stuffing_id
 								where p.shipment_delete = 0		
 									and p.shipment_stuffing_id_box_type in (0 ,2)
 									and not p.shipment_sap_id is null 
@@ -131,19 +132,18 @@ BEGIN
 										 st.stock_sap_id
 										,st.stock_stuffing_id
 										,null as stuffing_id_box
-										,l.shipment_date - sf.transit_from_production_days - sf.maturation_and_packaging_days + sf.maturation_days as stuffing_production_date_to
+										,l.shipment_date - sf.transit_days - sf.packaging_days as stuffing_production_date_to
 										,l.shipment_date as stuffing_available_date
 										,l.stock_shipment_kg as shipment_kg
 										,null as net_need_kg
-								from project_plan_production_finished_products.data_import.stock_log_calculation as l
-								join project_plan_production_finished_products.data_import.stock as st on l.stock_row_id = st.stock_row_id
-								join project_plan_production_finished_products.info.stuffing as sf on st.stock_stuffing_id = sf.stuffing_id
-								join cherkizovo.info.products_sap as ps	
-									on st.stock_sap_id = ps.sap_id 
-									and not isnull(ps.product_status,'') in ('БлокирДляЗаготов/Склада','Устаревший')
-									and ISNUMERIC(left(isnull(st.stock_stuffing_id,''), 5)) = 1	
+								from .data_import.stock_log_calculation as l
+								join .data_import.stock					as st on l.stock_row_id = st.stock_row_id
+								join .info.stuffing						as sf on st.stock_stuffing_id = sf.stuffing_id
+								join .info_view.sap_id					as ps on st.stock_sap_id = ps.sap_id_for_join 
+																	and not isnull(ps.product_status,'') in ('БлокирДляЗаготов/Склада','Устаревший')
+																	and ISNUMERIC(left(isnull(st.stock_stuffing_id,''), 5)) = 1	
 								where not l.shipment_row_id in (select s.shipment_row_id
-																from project_plan_production_finished_products.data_import.shipment as s
+																from .data_import.shipment as s
 																where not s.shipment_stuffing_id_box_row_id is null) -- исключаем коробки
 
 								union all
@@ -157,10 +157,10 @@ BEGIN
 										,l.shipment_date as stuffing_available_date
 										,l.stuffing_shipment_kg as shipment_kg
 										,l.stuffing_shipment_kg as net_need_kg
-								from project_plan_production_finished_products.data_import.stuffing_fact_log_calculation as l
-								join project_plan_production_finished_products.data_import.stuffing_fact	as st on l.stuffing_sap_id = st.stuffing_sap_id and l.stuffing_row_id = st.stuffing_sap_id_row_id
+								from .data_import.stuffing_fact_log_calculation as l
+								join .data_import.stuffing_fact	as st on l.stuffing_sap_id = st.stuffing_sap_id and l.stuffing_row_id = st.stuffing_sap_id_row_id
 								where not l.shipment_row_id in (select s.shipment_row_id
-																from project_plan_production_finished_products.data_import.shipment as s
+																from .data_import.shipment as s
 																where not s.shipment_stuffing_id_box_row_id is null)
 
 								union all
@@ -174,14 +174,14 @@ BEGIN
 										,l.shipment_date as stuffing_available_date
 										,l.stuffing_shipment_kg as shipment_kg
 										,l.stuffing_shipment_kg as net_need_kg
-								from project_plan_production_finished_products.data_import.stuffing_plan_log_calculation as l
-								join project_plan_production_finished_products.data_import.stuffing_plan	as st on l.stuffing_sap_id = st.stuffing_sap_id and l.stuffing_row_id = st.stuffing_sap_id_row_id
+								from .data_import.stuffing_plan_log_calculation as l
+								join .data_import.stuffing_plan	as st on l.stuffing_sap_id = st.stuffing_sap_id and l.stuffing_row_id = st.stuffing_sap_id_row_id
 								where not l.shipment_row_id in (select s.shipment_row_id
-																from project_plan_production_finished_products.data_import.shipment as s
+																from .data_import.shipment as s
 																where not s.shipment_stuffing_id_box_row_id is null) -- исключаем коробки
 
 
-							) as p join project_plan_production_finished_products.info.stuffing as st on p.stuffing_id = st.stuffing_id
+							) as p join .info.stuffing as st on p.stuffing_id = st.stuffing_id
 						group by  
 								 p.sap_id
 								,p.stuffing_id
@@ -196,13 +196,17 @@ BEGIN
 			begin
 
 						IF OBJECT_ID('tempdb..#columns','U') is not null drop table #columns;		
-						-- select * from #columns order by 1,2	
+						-- select * from #columns where sap_id = 000000001030603716300101 order by 1,2	
 						-- select stuffing_id, stuffing_id_box, sap_id  from #columns order by 1,2
 
 
 						with clm as 
 						(
-								select distinct stuffing_id, stuffing_id_box, sap_id from #shipments
+								select distinct stuffing_id, stuffing_id_box, sap_id from #shipments 
+
+								union
+								
+								select distinct stuffing_id_box, null, sap_id from #shipments where not stuffing_id_box is null
 
 								union 
 
@@ -211,13 +215,14 @@ BEGIN
 								union 
 
 								select 
-										 sm.stuffing_id
+										 sp.stuffing_id
 										,null			  
-										,s.sap_id 
-								from project_plan_production_finished_products.info.finished_products_sap_id_manual as sm
-								join cherkizovo.info.products_sap													as s  on sm.SAP_id = s.sap_id 
-								where not isnull(s.product_status,'') in ('БлокирДляЗаготов/Склада','Устаревший')
-								  and ISNUMERIC(LEFT(sm.stuffing_id, 5)) = 1
+										,sp.sap_id 
+								from info_view.sap_id as sp	
+								where not isnull(sp.product_status,'') in ('БлокирДляЗаготов/Склада','Устаревший')
+								  and sp.sap_id_corrected_need is null
+								  and not sp.sap_id_for_join is null
+								  and ISNUMERIC(LEFT(sp.stuffing_id, 5)) = 1 
 								 
 						)
 
@@ -230,16 +235,16 @@ BEGIN
 								,t.stuffing_type
 								,t.stuffing_group	
 
-								,t.maturation_days
-								,t.maturation_and_packaging_days
-								,t.transit_from_production_days
+								,t.fermentation_and_maturation_days as maturation_days
+								,t.fermentation_and_maturation_days + t.packaging_days as maturation_and_packaging_days
+								,t.transit_days as transit_from_production_days
 
-								,t.count_chamber
-								,t.minimum_preparation_materials_kg
-								,t.minimum_volume_for_chamber_kg
+								,t.chamber_count as count_chamber
+								,t.stuffing_minimum_volume_kg as  minimum_preparation_materials_kg
+								,t.chamber_minimum_volume_kg as minimum_volume_for_chamber_kg
 								
-								,t.minimum_volume_for_marking_kg
-								,t.step_marking_kg
+								,t.marking_minimum_kg as minimum_volume_for_marking_kg
+								,t.marking_step_kg as step_marking_kg
 								,t.marking_line_productivity_kg
 								,t.marking_line_type
 
@@ -247,8 +252,7 @@ BEGIN
 								,convert(bigint,p.position_dependent_id) * 100 + p.individual_marking_id as position_dependent_id_and_individual_marking_id
 								,p.individual_marking_name
 								,p.product_1C_full_name
-								,p.product_SAP_full_name
-								,p.production_name as product_production_name
+								,p.production_full_name as product_production_name
 								,p.expiration_date_in_days
 
 						into #columns
@@ -258,8 +262,8 @@ BEGIN
 						--		union
 						--		select stuffing_id, null		   , null	from clm
 						--	 ) as c
-						left join project_plan_production_finished_products.info.stuffing as t on c.stuffing_id = t.stuffing_id
-						left join cherkizovo.info.products_sap as p on c.sap_id = p.SAP_id
+						left join .info.stuffing as t on c.stuffing_id = t.stuffing_id
+						left join info_view.sap_id as p on c.sap_id = p.sap_id_for_join
 			end;
 			
 			-- ОСНОВНОЙ ОТЧЕТ

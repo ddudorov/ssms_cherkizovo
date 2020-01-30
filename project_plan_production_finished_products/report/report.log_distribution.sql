@@ -1,7 +1,7 @@
 ﻿use project_plan_production_finished_products 
 
---exec project_plan_production_finished_products.report.log_distribution @log_type = 'stuffing_plan'
---exec project_plan_production_finished_products.report.log_distribution @log_type = 'stock'
+--exec .report.log_distribution @log_type = 'stuffing_plan'
+--exec .report.log_distribution @log_type = 'stock'
 
 go
 
@@ -30,16 +30,17 @@ BEGIN
 
 								,st.stock_on_date
 								,st.stock_current_KOS
+								,st.stock_current_KOS - DATEDIFF(day,st.stock_on_date, sh.shipment_date) * st.stock_KOS_in_day as KOS_on_date_shipment
 								,l.stock_kg
 							
 								,l.stock_shipment_kg
 
-						FROM project_plan_production_finished_products.data_import.stock_log_calculation	as l
-						left join project_plan_production_finished_products.data_import.stock				as st  on l.stock_row_id = st.stock_row_id
-						left join cherkizovo.info.products_sap												as sts on st.stock_sap_id = sts.sap_id
+						FROM .data_import.stock_log_calculation	as l
+						left join .data_import.stock			as st  on l.stock_row_id = st.stock_row_id
+						left join .info_view.sap_id				as sts on st.stock_sap_id = sts.sap_id and sts.sap_id_type = 'основной'
 
-						left join project_plan_production_finished_products.data_import.shipment			as sh  on l.shipment_row_id = sh.shipment_row_id
-						left join cherkizovo.info.products_sap												as shs on sh.shipment_sap_id = shs.sap_id
+						left join .data_import.shipment			as sh  on l.shipment_row_id = sh.shipment_row_id
+						left join .info_view.sap_id				as shs on sh.shipment_sap_id = shs.sap_id and shs.sap_id_type = 'основной'
 						order by l.sort_id;
 
 
@@ -77,12 +78,12 @@ BEGIN
 				
 					
 
-						FROM project_plan_production_finished_products.data_import.stuffing_fact_log_calculation	as l
-						left join project_plan_production_finished_products.data_import.stuffing_fact				as st on l.stuffing_row_id = st.stuffing_row_id
-						left join cherkizovo.info.products_sap														as sts on l.stuffing_sap_id = sts.sap_id
+						FROM .data_import.stuffing_fact_log_calculation	as l
+						left join .data_import.stuffing_fact			as st on l.stuffing_row_id = st.stuffing_row_id
+						left join .info_view.sap_id						as sts on l.stuffing_sap_id = sts.sap_id and sts.sap_id_type = 'основной'
 
-						left join project_plan_production_finished_products.data_import.shipment					as sh on l.shipment_row_id = sh.shipment_row_id	
-						left join cherkizovo.info.products_sap														as shs on sh.shipment_sap_id = shs.sap_id	
+						left join .data_import.shipment					as sh on l.shipment_row_id = sh.shipment_row_id	
+						left join .info_view.sap_id						as shs on sh.shipment_sap_id = shs.sap_id and shs.sap_id_type = 'основной'
 						order by l.sort_id
 
 			end;
@@ -117,12 +118,12 @@ BEGIN
 				
 					
 
-						FROM project_plan_production_finished_products.data_import.stuffing_plan_log_calculation	as l
-						left join project_plan_production_finished_products.data_import.stuffing_plan				as st on l.stuffing_row_id = st.stuffing_row_id
-						left join cherkizovo.info.products_sap														as sts on l.stuffing_sap_id = sts.sap_id
+						FROM .data_import.stuffing_plan_log_calculation	as l
+						left join .data_import.stuffing_plan			as st on l.stuffing_row_id = st.stuffing_row_id
+						left join .info_view.sap_id						as sts on l.stuffing_sap_id = sts.sap_id and sts.sap_id_type = 'основной'
 
-						left join project_plan_production_finished_products.data_import.shipment					as sh on l.shipment_row_id = sh.shipment_row_id	
-						left join cherkizovo.info.products_sap														as shs on sh.shipment_sap_id = shs.sap_id	
+						left join .data_import.shipment					as sh on l.shipment_row_id = sh.shipment_row_id	
+						left join .info_view.sap_id						as shs on sh.shipment_sap_id = shs.sap_id and shs.sap_id_type = 'основной'
 						order by l.sort_id;
 
 			end;
@@ -151,13 +152,14 @@ BEGIN
 							
 								,l.marking_shipment_kg
 
-						FROM project_plan_production_finished_products.data_import.marking_log_calculation	as l
-						left join project_plan_production_finished_products.data_import.marking				as st  on l.marking_row_id = st.marking_row_id
-						left join cherkizovo.info.products_sap												as sts on st.marking_sap_id = sts.sap_id
+						FROM .data_import.marking_log_calculation	as l
+						left join .data_import.marking				as st  on l.marking_row_id = st.marking_row_id
+						left join .info_view.sap_id					as sts on st.marking_sap_id = sts.sap_id and sts.sap_id_type = 'основной'
 
-						left join project_plan_production_finished_products.data_import.shipment			as sh  on l.shipment_row_id = sh.shipment_row_id
-						left join cherkizovo.info.products_sap												as shs on sh.shipment_sap_id = shs.sap_id
+						left join .data_import.shipment				as sh  on l.shipment_row_id = sh.shipment_row_id
+						left join .info_view.sap_id					as shs on sh.shipment_sap_id = shs.sap_id and shs.sap_id_type = 'основной'
 						order by l.sort_id;
+
 			end;
 end;
 

@@ -26,7 +26,7 @@ create table project_plan_production_finished_products.data_import.shipment
 		,shipment_promo								VARCHAR(100)			NULL	-- план продаж	
 		,shipment_promo_kos_listing					VARCHAR(100)			NULL	-- план продаж	
 
-		,sap_id										BIGINT					NULL	-- ПЛАН ПРОДАЖ		
+		,sap_id_from_sales_plan						BIGINT					NULL	-- ПЛАН ПРОДАЖ		
 		,position_dependent_id						INT						NULL	-- SAP / ПЛАН ПРОДАЖ	
 		,individual_marking_id						TINYINT					NULL	-- SAP / ПЛАН ПРОДАЖ
 		,article_nomenclature						VARCHAR(20)				NULL	-- ПЛАН ПРОДАЖ

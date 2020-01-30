@@ -1,6 +1,6 @@
 ﻿use project_plan_production_finished_products
 
---exec project_plan_production_finished_products.check_import.stuffing_fact
+--exec .check_import.stuffing_fact
 
 go
 
@@ -15,29 +15,22 @@ BEGIN
 			if not @path_file is null	 
 			begin
 						-- удаляем данные
-						delete project_plan_production_finished_products.data_import.data_type where data_type = 'stuffing_fact';
+						delete .data_import.data_type where data_type = 'stuffing_fact';
 						
 						-- добавляем данные
-						insert into project_plan_production_finished_products.data_import.data_type
+						insert into .data_import.data_type
 							   (	data_type,   source_data,  path_file,  data_on_date)
 						values ('stuffing_fact', 'Excel'	, @path_file, @data_on_date);
 			
 						-- удаляем и выгружаем						
-						TRUNCATE TABLE project_plan_production_finished_products.data_import.stuffing_fact_log_calculation;
-						TRUNCATE TABLE project_plan_production_finished_products.data_import.stuffing_fact;
-						SELECT TOP 0 * FROM project_plan_production_finished_products.data_import.stuffing_fact;
+						TRUNCATE TABLE .data_import.stuffing_fact_log_calculation;
+						TRUNCATE TABLE .data_import.stuffing_fact;
+						SELECT TOP 0 * FROM .data_import.stuffing_fact;
 
 						return(0);
 			end;
 
-
-			-- проставляем срок годности
-			Update h
-			Set h.stuffing_expiration_date = DateAdd(Day, i.expiration_date_in_days, h.stuffing_production_date_to)
-			from project_plan_production_finished_products.data_import.stuffing_fact as h
-			join project_plan_production_finished_products.info.stuffing as i on h.stuffing_id = i.stuffing_id;
-
-					
+								
 			-- пишем ошибки
 			Update h
 			Set h.stuffing_reason_ignore_in_calculate = 
@@ -47,23 +40,26 @@ BEGIN
 								and h.stuffing_production_name <> i.production_name
 															then 'Производитель отличается в справочнике | ' else '' end 
 						, '')
-			from project_plan_production_finished_products.data_import.stuffing_fact as h
-			left join project_plan_production_finished_products.info.stuffing as i on h.stuffing_id = i.stuffing_id;
+			from .data_import.stuffing_fact as h
+			left join .info.stuffing as i on h.stuffing_id = i.stuffing_id;
 						
 						
 			-- проставляем дату до выхода следующей набивки		
 			update s
 			set s.stuffing_before_next_available_date = l.stuffing_before_next_available_date
-			from project_plan_production_finished_products.data_import.stuffing_fact as s
+			from .data_import.stuffing_fact as s
 			join (
 					select l.stuffing_row_id, isnull(lead(l.stuffing_available_date) over (partition by l.stuffing_id order by l.stuffing_available_date) - 1, '29990101')  as stuffing_before_next_available_date
-					from project_plan_production_finished_products.data_import.stuffing_fact as l
+					from .data_import.stuffing_fact as l
 					) as l on s.stuffing_row_id = l.stuffing_row_id;
 
 
 			-- обновляем уникальный ключ набивки, который будет использоватся для расчетов
-			update project_plan_production_finished_products.data_import.stuffing_fact
+			update .data_import.stuffing_fact
 			set stuffing_sap_id_row_id = stuffing_row_id;
+			
+			-- добавляем данные в общию таблицу, которую выводим на форму
+			exec report.for_form
 
 			-- выгружаем данные в excel
 			select 
@@ -74,12 +70,10 @@ BEGIN
 					,h.stuffing_production_date_to
 					,h.stuffing_available_date
 					,h.stuffing_before_next_available_date
-					,h.stuffing_expiration_date
 					,h.stuffing_kg
 					,ie.path_file
 					,ie.data_on_date
-			from project_plan_production_finished_products.data_import.stuffing_fact as h
-			join project_plan_production_finished_products.data_import.data_type as ie on h.stuffing_data_type = ie.data_type;
+			from .data_import.stuffing_fact as h
+			join .data_import.data_type as ie on h.stuffing_data_type = ie.data_type;
 						
-
 end;

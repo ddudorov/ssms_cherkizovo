@@ -13,15 +13,15 @@ BEGIN
 			if not @path_file is null	 
 			begin
 						-- удаляем данные
-						delete project_plan_production_finished_products.data_import.data_type where data_type = 'shipment_sales_plan';
+						delete data_import.data_type where data_type = 'shipment_sales_plan';
 						
 						-- добавляем данные
-						insert into project_plan_production_finished_products.data_import.data_type
+						insert into data_import.data_type
 							   (			data_type, source_data,  path_file,  data_on_date)
 						values ('shipment_sales_plan',	   'Excel', @path_file, @data_on_date);
 			
 						-- удаляем и выгружаем
-						delete from project_plan_production_finished_products.data_import.shipment where shipment_data_type = 'shipment_sales_plan';
+						delete from data_import.shipment where shipment_data_type = 'shipment_sales_plan';
 
 						return(0);
 			end;
@@ -56,7 +56,7 @@ BEGIN
 					-- ВСТАВЛЯЕМ ДАННЫЕ
 					declare @sql_for_pivot varchar(max); set @sql_for_pivot = '';
 
-						set @sql_for_pivot = 'insert into project_plan_production_finished_products.data_import.shipment
+						set @sql_for_pivot = 'insert into data_import.shipment
 												( ' + @sql_columns_main + '  shipment_data_type,	shipment_with_branch_date,															shipment_kg) 
 											  select	
 												  ' + @sql_columns_main + '''shipment_sales_plan'', convert(datetime, RIGHT(shipment_with_branch_date,8)) as shipment_with_branch_date, shipment_kg																				
@@ -75,18 +75,18 @@ BEGIN
 
 						update c
 						set c.shipment_date = DATEADD(day, -b.to_branch_days, c.shipment_with_branch_date)
-						from project_plan_production_finished_products.data_import.shipment as c
-						join project_plan_production_finished_products.info.branches as b
+						from data_import.shipment as c
+						join info.branches as b
 							on c.shipment_branch_id = b.branch_id
 						where shipment_data_type = 'shipment_sales_plan';
 										
 						-- удаляем отгрузки после даты отгрузки заявок 
 						delete st
-						from project_plan_production_finished_products.data_import.shipment as st
+						from data_import.shipment as st
 						join (
 
 									select max(data_on_date) + 1 as dt_for_delete
-									from project_plan_production_finished_products.data_import.data_type 
+									from data_import.data_type 
 									where data_type in ('shipment_SAP', 'shipment_1C')
 
 							 ) as d on st.shipment_date <= d.dt_for_delete
@@ -102,7 +102,7 @@ BEGIN
 			begin
 
 						---- корректируем название контрагента
-						update project_plan_production_finished_products.data_import.shipment
+						update data_import.shipment
 						set  shipment_promo_status			= trim(shipment_promo_status)
 							,shipment_promo					= trim(shipment_promo)
 							,shipment_promo_kos_listing		= trim(shipment_promo_kos_listing)
@@ -182,14 +182,14 @@ BEGIN
 
 						-- кос и приоритет отгрузки
 						update ts
-						set ts.shipment_priority = c.shipment_priority
+						set ts.shipment_priority = c.manual_shipment_priority
 						   ,ts.shipment_min_KOS	 = c.manual_KOS
-						from project_plan_production_finished_products.data_import.shipment as ts
-						join project_plan_production_finished_products.info.customers as c
+						from data_import.shipment as ts
+						join info.customers as c
 							on ts.shipment_customer_id = c.customer_id
 							and ts.shipment_sales_channel_name = c.sales_channel_name
 						where shipment_data_type = 'shipment_sales_plan'
-						  and not c.shipment_priority is null 
+						  and not c.manual_shipment_priority is null 
 						  and not c.manual_KOS is null;
 
 			
@@ -204,8 +204,8 @@ BEGIN
 								,d.shipment_sales_channel_name	
 								,'План продаж от ' + FORMAT(min(ie.data_on_date),'dd.MM.yyyy') as source_insert		
 						into #customers_from_sap
-						from project_plan_production_finished_products.data_import.shipment as d
-						join project_plan_production_finished_products.data_import.data_type as ie on d.shipment_data_type = ie.data_type
+						from data_import.shipment as d
+						join data_import.data_type as ie on d.shipment_data_type = ie.data_type
 						where not d.shipment_customer_id is null 
 						  and not d.shipment_sales_channel_name is null			
 						  and d.shipment_data_type = 'shipment_sales_plan'	
@@ -218,14 +218,14 @@ BEGIN
 						-- обновляем справочник клиентов, что бы иметь возможность отследить клиента
 						update c
 						set c.source_insert = d.source_insert	
-						from project_plan_production_finished_products.info.customers as c
+						from info.customers as c
 						join #customers_from_sap as d 
 						  on c.customer_id = d.shipment_customer_id
 						 and c.sales_channel_name = d.shipment_sales_channel_name;
 
 
 						-- добавляем новых
-						insert into project_plan_production_finished_products.info.customers
+						insert into info.customers
 						(
 								 customer_id
 								,customer_name
@@ -239,7 +239,7 @@ BEGIN
 								,d.source_insert			
 						from #customers_from_sap as d
 						where not exists (select * 
-											from project_plan_production_finished_products.info.customers as c
+											from info.customers as c
 											where d.shipment_customer_id = c.customer_id
 												and d.shipment_sales_channel_name = c.sales_channel_name); 
 
@@ -258,63 +258,77 @@ BEGIN
 			begin 
 						IF OBJECT_ID('tempdb..#sap_id','U') is not null drop table #sap_id;
 
-						-- ПОДТЯГИВАЕМ SAP ID К ДАННЫМ SAP
+						-- ПОДТЯГИВАЕМ SAP ID К ДАННЫМ SAP select * from #sap_id
 						select 
-								 sm.sap_id 
-								,sm.active_before
-								,sm.article_packaging
+								 sp.sap_id 
+								,sp.need_before_date
+								,sp.sap_id_corrected
 								,sp.expiration_date_in_days
 								,sp.product_status
-								,st.stuffing_id
-								,count(sm.sap_id) over (partition by sm.active_before, sm.article_packaging) as check_double_sap_id
+								,sp.stuffing_id
 						into #sap_id
 						from ( 
 			
 									-- берем таблицу с ручными артикулами где указана дата действия артикула, подтягиваем по исключение другие артикула которые имеют данное исключение
-									select distinct
-											 sm.sap_id
-											,sm.active_before
-											,sp.article_packaging
-									from project_plan_production_finished_products.info.finished_products_sap_id_manual as sm
-									join project_plan_production_finished_products.info.finished_products_sap_id_manual as a on sm.sap_id_shipment_manual = ISNULL(a.sap_id_shipment_manual, a.sap_id)
-									join cherkizovo.info.products_sap as sp on a.sap_id = sp.sap_id
-									where not sm.active_before is null
 
-									union 
-
-									-- берем таблицу с ручными артикулами, подтягиваем варианты артикулов из другой системы и если у нормального артикула указано исключение отображаем ислючение
 									select 
-											 isnull(sm.sap_id_shipment_manual, sm.sap_id) as sap_id
-											,null as active_before
-											,sp.article_packaging
-									from project_plan_production_finished_products.info.finished_products_sap_id_manual as sm
-									join cherkizovo.info.products_sap as sp on sm.sap_id = sp.sap_id
+											 c.sap_id
+											,c.need_before_date
+											,c.sap_id_corrected
+											,sp.expiration_date_in_days
+											,sp.product_status
+											,sp.stuffing_id
+									from (
+											SELECT distinct
+												 max(iif(not need_before_date is null, sap_id_corrected, null)) over (partition by sap_id) as sap_id
+												,max(iif(not need_before_date is null, need_before_date, null)) over (partition by sap_id) as need_before_date
+												,sap_id_corrected
+											FROM info_view.sap_id
+											where sap_id_type in ('Основной', 'Потребность')
+											  and sap_id_corrected_need is null
+										 ) as c
+									join info_view.sap_id as sp on c.sap_id = sp.sap_id_for_join
+									where not c.need_before_date is null
 
-							 ) as sm 
-						join cherkizovo.info.products_sap as sp on sm.sap_id = sp.sap_id
-						join project_plan_production_finished_products.info.finished_products_sap_id_manual as st on sm.sap_id = st.sap_id;
+									union all
+
+									SELECT distinct
+											 c.sap_id
+											,null as need_before_date
+											,c.sap_id_corrected
+											,sp.expiration_date_in_days
+											,sp.product_status
+											,sp.stuffing_id
+
+									FROM info_view.sap_id as c
+									join info_view.sap_id as sp on c.sap_id = sp.sap_id_for_join
+									where c.sap_id_type in ('Основной', 'Потребность')
+									  and c.sap_id_corrected_need is null
+
+
+							 ) as sp;
 
 
 						-- обновляем данные до даты
 						update c
-						set c.shipment_sap_id							= s.SAP_id
+						set c.shipment_sap_id							= s.sap_id
 						   ,c.shipment_stuffing_id						= s.stuffing_id
 						   ,c.shipment_sap_id_expiration_date_in_days	= s.expiration_date_in_days
 						   ,c.shipment_product_status					= s.product_status
-						from project_plan_production_finished_products.data_import.shipment as c
-						join #sap_id as s on c.article_packaging = s.article_packaging and not s.active_before is null and c.shipment_date <= s.active_before 
-						where s.check_double_sap_id = 1 and c.shipment_data_type ='shipment_sales_plan';
+						from data_import.shipment as c
+						join #sap_id as s on c.sap_id_from_sales_plan = s.sap_id_corrected and not s.need_before_date is null and c.shipment_date <= s.need_before_date 
+						where c.shipment_data_type ='shipment_sales_plan';
 
 
 						-- обновляем остальные
 						update c
-						set c.shipment_sap_id							= s.SAP_id
+						set c.shipment_sap_id							= s.sap_id
 						   ,c.shipment_stuffing_id						= s.stuffing_id
 						   ,c.shipment_sap_id_expiration_date_in_days	= s.expiration_date_in_days
 						   ,c.shipment_product_status					= s.product_status
-						from project_plan_production_finished_products.data_import.shipment as c
-						join #sap_id as s on c.article_packaging = s.article_packaging and s.active_before is null
-						where s.check_double_sap_id = 1 and c.shipment_data_type ='shipment_sales_plan' and c.shipment_sap_id is null;
+						from data_import.shipment as c
+						join #sap_id as s on c.sap_id_from_sales_plan = s.sap_id_corrected and  s.need_before_date is null
+						where c.shipment_data_type ='shipment_sales_plan' and c.shipment_sap_id is null;
 
 
 			end;
@@ -330,9 +344,9 @@ BEGIN
 							,s.stuffing_share_box_1 / sum(s.stuffing_share_box_1) over (partition by s.stuffing_id) as stuffing_share_in_box
 					into #stuffing_share_box
 					from (
-							select stuffing_id, stuffing_box_1, stuffing_share_box_1 from project_plan_production_finished_products.info.stuffing where not stuffing_box_1 is null union all
-							select stuffing_id, stuffing_box_2, stuffing_share_box_2 from project_plan_production_finished_products.info.stuffing where not stuffing_box_2 is null union all
-							select stuffing_id, stuffing_box_3, stuffing_share_box_3 from project_plan_production_finished_products.info.stuffing where not stuffing_box_3 is null
+							select stuffing_id, stuffing_box_1, stuffing_share_box_1 from .info.stuffing where not stuffing_box_1 is null union all
+							select stuffing_id, stuffing_box_2, stuffing_share_box_2 from .info.stuffing where not stuffing_box_2 is null union all
+							select stuffing_id, stuffing_box_3, stuffing_share_box_3 from .info.stuffing where not stuffing_box_3 is null
 						 ) as s;
 
 					IF OBJECT_ID('tempdb..#stuffing_box','U') is not null drop table #stuffing_box;
@@ -356,7 +370,7 @@ BEGIN
 							,s.shipment_promo								
 							,s.shipment_promo_kos_listing					
 							
-							,s.sap_id										
+							,s.sap_id_from_sales_plan										
 							,s.position_dependent_id						
 							,s.individual_marking_id						
 							,s.article_nomenclature						
@@ -378,7 +392,7 @@ BEGIN
 							,s.shipment_date	
 							,s.shipment_kg * t.stuffing_share_in_box as shipment_kg
 					into #stuffing_box
-					from project_plan_production_finished_products.data_import.shipment as s
+					from .data_import.shipment as s
 					join #stuffing_share_box as t on s.shipment_stuffing_id = t.stuffing_id_box
 					where s.shipment_data_type ='shipment_sales_plan';
 
@@ -396,11 +410,11 @@ BEGIN
 
 					-- ВСТАВЛЯЕМ ДАННЫЕ
 					declare @sql_insert_stuffing_box varchar(max);
-						set @sql_insert_stuffing_box = 'insert into project_plan_production_finished_products.data_import.shipment ( ' + @sql_columns_stuffing_box + ' )  
+						set @sql_insert_stuffing_box = 'insert into .data_import.shipment ( ' + @sql_columns_stuffing_box + ' )  
 														select ' + @sql_columns_stuffing_box + ' from #stuffing_box'
 						exec(@sql_insert_stuffing_box);
 
-						update project_plan_production_finished_products.data_import.shipment
+						update .data_import.shipment
 						set shipment_stuffing_id_box_type = 1
 						   ,shipment_stuffing_id_box_row_id = shipment_row_id
 						where shipment_row_id in (select shipment_stuffing_id_box_row_id from #stuffing_box);
@@ -418,9 +432,6 @@ BEGIN
 					Set d.shipment_reason_ignore_in_calculate = 
 						nullif(
 									case 
-										when (select top 1 s.check_double_sap_id 
-											  from #sap_id as s
-											  where d.article_packaging = s.article_packaging) > 1	then	'Артикул тары возрощает > 1 SAP ID | '
 										when d.shipment_sap_id is null								then	'Отсутствует sap id | '
 										when d.shipment_stuffing_id is null							then	'Код набивки отсутствует | '
 										when d.shipment_sap_id_expiration_date_in_days is null		then	'Отсутствует срок годности | '
@@ -431,39 +442,45 @@ BEGIN
 								+ iif(d.shipment_min_KOS is null,						'Отсутствует КОС | ', '')
 
 								, '')
-					from project_plan_production_finished_products.data_import.shipment as d
+					from .data_import.shipment as d
 					where d.shipment_data_type ='shipment_sales_plan';
 
 
 			end;
-
+			
+			-- добавляем данные в общию таблицу, которую выводим на форму
+			exec report.for_form
+			
 
 			-- ВЫГРУЖАЕМ РЕЗУЛЬТАТ
 			begin
 
 						select 
-								 h.shipment_reason_ignore_in_calculate
-								,h.shipment_product_status
-								,convert(varchar(24), FORMAT(h.shipment_sap_id, '000000000000000000000000')) as sap_id
-								,sp.product_1C_full_name
-								,h.shipment_stuffing_id
-								,h.article_packaging
-								,h.article_nomenclature
-								,h.shipment_branch_id
-								,h.shipment_branch_name
-								,h.shipment_sales_channel_name
-								,h.shipment_customer_id
-								,h.shipment_customer_name
-								,h.shipment_priority
-								,h.shipment_min_KOS
-								,h.shipment_with_branch_date
-								,h.shipment_date
-								,h.shipment_kg
-								,ie.path_file
-								,ie.data_on_date
-						from project_plan_production_finished_products.data_import.shipment as h
-						join project_plan_production_finished_products.data_import.data_type as ie on h.shipment_data_type = ie.data_type and h.shipment_data_type = 'shipment_sales_plan'
-						left join cherkizovo.info.products_sap as sp on h.shipment_sap_id = sp.sap_id
+								 'Ошибки'					= h.shipment_reason_ignore_in_calculate
+								,'Статус артикула'			= h.shipment_product_status
+								,'SAP ID для расчетов'		= convert(varchar(24), FORMAT(h.shipment_sap_id, '000000000000000000000000'))
+								,'SAP ID из план продаж'	= convert(varchar(24), FORMAT(h.sap_id_from_sales_plan, '000000000000000000000000'))
+								,'1С название'				= sp.product_1C_full_name
+								,'Код набивки'				= h.shipment_stuffing_id
+								,'Артикул номенклатуры'		= h.article_nomenclature
+								,'Артикул тары'				= h.article_packaging
+								,'Код филиала'				= h.shipment_branch_id
+								,'Название филиала'			= h.shipment_branch_name
+								,'Название канала сбыта'	= h.shipment_sales_channel_name
+								,'Код контрагента'			= h.shipment_customer_id
+								,'Название контрагента'		= h.shipment_customer_name
+								,'Приоритет отгрузки'		= h.shipment_priority
+								,'Мин КОС'					= h.shipment_min_KOS
+								,'Дата отгрузки с филиала'	= h.shipment_with_branch_date
+								,'Дата отгрузки из Москвы'	= h.shipment_date
+								,'План, кг'					= h.shipment_kg
+								,'Загружено из файла'		= ie.path_file
+								,'Данные на дату'			= ie.data_on_date
+								
+
+						from data_import.shipment as h
+						join data_import.data_type as ie on h.shipment_data_type = ie.data_type and h.shipment_data_type = 'shipment_sales_plan'
+						left join info_view.sap_id as sp on h.shipment_sap_id = sp.sap_id and sp.sap_id_type = 'Основной'
 						where h.shipment_stuffing_id_box_type in (0, 1);
 
 			end;

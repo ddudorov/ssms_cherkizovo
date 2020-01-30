@@ -188,7 +188,7 @@ BEGIN
 									,@stuffing_marking_kg		= stuffing_marking_kg_1			
 							from #analysis;
 
-							exec project_plan_production_finished_products.calc.distribution_stuffing_marking_and_shipment  
+							exec .calc.distribution_stuffing_marking_and_shipment  
 									 @shipment_id				= @shipment_id					
 									,@shipment_sap_id			= @shipment_sap_id																  								
 									,@shipment_date				= @shipment_date_max																  								
@@ -222,7 +222,7 @@ BEGIN
 									,@stuffing_marking_kg		= stuffing_marking_kg_2		
 							from #analysis;
 
-							exec project_plan_production_finished_products.calc.distribution_stuffing_marking_and_shipment  
+							exec .calc.distribution_stuffing_marking_and_shipment  
 									 @shipment_id				= @shipment_id					
 									,@shipment_sap_id			= @shipment_sap_id																  								
 									,@shipment_date				= @shipment_date_max																  								
@@ -256,7 +256,7 @@ BEGIN
 									,@stuffing_marking_kg		= stuffing_marking_kg_3		
 							from #analysis;
 
-							exec project_plan_production_finished_products.calc.distribution_stuffing_marking_and_shipment  
+							exec .calc.distribution_stuffing_marking_and_shipment  
 									 @shipment_id				= @shipment_id					
 									,@shipment_sap_id			= @shipment_sap_id																  								
 									,@shipment_date				= @shipment_date_max																  								

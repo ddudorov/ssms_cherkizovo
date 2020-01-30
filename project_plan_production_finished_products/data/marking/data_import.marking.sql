@@ -2,9 +2,9 @@
 
 go
 
-select * from project_plan_production_finished_products.data_import.marking
---drop table project_plan_production_finished_products.data_import.marking
-create table project_plan_production_finished_products.data_import.marking
+select * from .data_import.marking
+--drop table .data_import.marking
+create table .data_import.marking
 (
 
 		 marking_row_id							INT					NOT NULL	IDENTITY(1,1)
@@ -33,13 +33,25 @@ create table project_plan_production_finished_products.data_import.marking
 )
 
 
+-- drop table .data_import.marking_save
+create table data_import.marking_save
+(
+		 marking_sap_id				BIGINT				NOT NULL
+		,marking_stuffing_id		VARCHAR(40)				NULL
+		,marking_warehouse_name		VARCHAR(100)		NOT NULL	
+		,marking_production_date	DATETIME			NOT NULL
+		,marking_on_date			DATETIME			NOT NULL
+		,marking_kg					dec(11,5)			NOT NULL
+)
+
+
 
 
 
 --- логи остатки
-select * from project_plan_production_finished_products.data_import.marking_log_calculation
---drop table project_plan_production_finished_products.data_import.marking_log_calculation
-create table project_plan_production_finished_products.data_import.marking_log_calculation
+select * from .data_import.marking_log_calculation
+--drop table .data_import.marking_log_calculation
+create table .data_import.marking_log_calculation
 ( 
 		 sort_id				INT				NOT NULL	
 		,shipment_row_id		INT				NOT NULL		

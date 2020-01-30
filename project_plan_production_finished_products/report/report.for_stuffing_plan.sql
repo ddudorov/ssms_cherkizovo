@@ -2,7 +2,7 @@
 
 go
 
--- exec project_plan_production_finished_products.report.for_stuffing_plan @ProductionDateFrom_Kashira = '20191217',  @ProductionDateFrom_CHMPZ = '20191211' 
+-- exec .report.for_stuffing_plan @ProductionDateFrom_Kashira = '20191217',  @ProductionDateFrom_CHMPZ = '20191211' 
 
 ALTER PROCEDURE report.for_stuffing_plan  @ProductionDateFrom_Kashira datetime
 										 ,@ProductionDateFrom_CHMPZ datetime										 
@@ -16,8 +16,8 @@ BEGIN
 			--declare @ProductionDateFrom_CHMPZ datetime;		set @ProductionDateFrom_CHMPZ = '20191211'
 			--declare @type_report varchar(50);				set @type_report = 'report_for_pivot' --report_for_pivot   report_main
 			
-			declare @report_dt_from datetime;	set @report_dt_from =	(select min(stuffing_production_date_from)	from project_plan_production_finished_products.data_import.stuffing_fact);	
-			declare @report_dt_to datetime;		set @report_dt_to =		(select max(shipment_date)					from project_plan_production_finished_products.data_import.shipment);
+			declare @report_dt_from datetime;	set @report_dt_from =	(select min(stuffing_production_date_from)	from .data_import.stuffing_fact);	
+			declare @report_dt_to datetime;		set @report_dt_to =		(select max(shipment_date)					from .data_import.shipment);
 
 			declare @while_dt_Kashira datetime;
 			declare @while_dt_CHMPZ datetime;
@@ -45,13 +45,13 @@ BEGIN
 								select 
 										 p.shipment_sap_id
 										,p.shipment_stuffing_id
-										,'normative_stock_kg' = iif(p.shipment_date <= min(p.shipment_date) over (partition by p.shipment_sap_id, p.shipment_stuffing_id) + 45, p.shipment_kg, null) / 45 * s.number_days_normative_stock
-								from project_plan_production_finished_products.data_import.shipment as p
-								join project_plan_production_finished_products.info.finished_products_sap_id_manual as s 
-									on p.shipment_sap_id = s.SAP_id 
-									and not s.number_days_normative_stock is null
-									and p.shipment_data_type = 'shipment_sales_plan'
-								where p.shipment_stuffing_id_box_type in (0, 2)
+										,'normative_stock_kg' = iif(p.shipment_date <= min(p.shipment_date) over (partition by p.shipment_sap_id, p.shipment_stuffing_id) + 45, p.shipment_kg, null) / 45 * s.count_days_normative_stock
+								from .data_import.shipment as p
+								join .info_view.sap_id as s 
+									on p.shipment_sap_id = s.sap_id_for_join
+								where  not s.count_days_normative_stock is null
+								  and p.shipment_data_type = 'shipment_sales_plan'
+								  and p.shipment_stuffing_id_box_type in (0, 2)
 							 ) as p
 						where not p.normative_stock_kg is null
 						group by p.shipment_stuffing_id
@@ -88,7 +88,7 @@ BEGIN
 														,iif(not st.stuffing_sap_id is null, isnull(st.stuffing_marking_kg ,0) + ISNULL(st.stuffing_shipment_kg, 0), null) as stuffing_marking_kg
 														,null as shipment_after_stuffing_fact_kg
 														,null as stuffing_count_planned
-												from project_plan_production_finished_products.data_import.stuffing_fact as st
+												from .data_import.stuffing_fact as st
 									
 												union all
 									
@@ -102,16 +102,16 @@ BEGIN
 														,- l.stuffing_shipment_kg as stuffing_shipment_kg
 														,null as shipment_after_stuffing_fact_kg
 														,null as stuffing_count_planned
-												from project_plan_production_finished_products.data_import.stuffing_fact_log_calculation	as l
-												join project_plan_production_finished_products.data_import.stuffing_fact					as st on l.stuffing_row_id = st.stuffing_row_id
-												left join project_plan_production_finished_products.data_import.shipment					as sp on l.shipment_row_id = sp.shipment_row_id 
+												from .data_import.stuffing_fact_log_calculation	as l
+												join .data_import.stuffing_fact					as st on l.stuffing_row_id = st.stuffing_row_id
+												left join .data_import.shipment					as sp on l.shipment_row_id = sp.shipment_row_id 
 												where not l.stuffing_shipment_kg is null
 
 												union all
 
 												-- ЧИСТАЯ ПОТРЕБНОСТЬ ---------------------------
 												select 
-														 s.shipment_date - st.transit_from_production_days - st.maturation_and_packaging_days as stuffing_production_date_from  -- 'это день закладки
+														 s.shipment_date - st.fermentation_and_maturation_days - st.packaging_days - st.transit_days as stuffing_production_date_from  -- 'это день закладки
 														,st.production_name as stuffing_production_name
 														,s.shipment_stuffing_id 
 														,s.shipment_sap_id as stuffing_sap_id	
@@ -119,16 +119,17 @@ BEGIN
 														,null as stuffing_shipment_kg
 														,sum(s.shipment_after_stuffing_fact_kg) as shipment_after_stuffing_fact_kg
 														,null as stuffing_count_planned
-												from project_plan_production_finished_products.data_import.shipment as s	
-												join project_plan_production_finished_products.info.stuffing as st on s.shipment_stuffing_id = st.stuffing_id			   
+												from .data_import.shipment as s	
+												join .info.stuffing as st on s.shipment_stuffing_id = st.stuffing_id			   
 												WHERE s.shipment_delete = 0
 													and s.shipment_stuffing_id_box_type in (0, 2) -- берем не коробки
 													and not s.shipment_after_stuffing_fact_kg is null
 													and s.shipment_exclude_for_stuffing_plan = 0
-													and not st.transit_from_production_days is null	
-													and not st.maturation_and_packaging_days is null
+													and not st.fermentation_and_maturation_days is null	
+													and not st.packaging_days is null
+													and not st.transit_days is null
 												group by 
-														 s.shipment_date - st.transit_from_production_days - st.maturation_and_packaging_days
+														 s.shipment_date - st.fermentation_and_maturation_days - st.packaging_days - st.transit_days
 														,st.production_name
 														,s.shipment_stuffing_id
 														,s.shipment_sap_id
@@ -145,7 +146,7 @@ BEGIN
 														,null as stuffing_shipment_kg
 														,null as shipment_after_stuffing_fact_kg
 														,st.stuffing_count_planned
-												from project_plan_production_finished_products.data_import.stuffing_plan as st												
+												from .data_import.stuffing_plan as st												
 												
 										 ) as st
 									group by 
@@ -258,19 +259,18 @@ BEGIN
 								,t.stuffing_type
 								,t.stuffing_group	
 
-								,t.maturation_days
-								,t.maturation_and_packaging_days
-								,t.transit_from_production_days
+								,t.fermentation_and_maturation_days as  maturation_days
+								,t.fermentation_and_maturation_days + t.packaging_days as maturation_and_packaging_days
+								,t.transit_days as  transit_from_production_days
 
-								,t.count_chamber
-								,t.minimum_preparation_materials_kg
-								,t.minimum_volume_for_chamber_kg
+								,t.chamber_count as count_chamber
+								,t.stuffing_minimum_volume_kg as  minimum_preparation_materials_kg
+								,t.chamber_minimum_volume_kg as minimum_volume_for_chamber_kg
 								
 								,c.stuffing_sap_id as sap_id
 								,convert(varchar(24), FORMAT(c.stuffing_sap_id, '000000000000000000000000')) as  sap_id_text
 								,p.product_1C_full_name
-								,p.product_SAP_full_name
-								,p.production_name as product_production_name
+								,p.production_full_name as product_production_name
 								,s.normative_stock_kg
 
 						into #columns
@@ -280,8 +280,8 @@ BEGIN
 								select distinct stuffing_id, null			 from #data_pivot
 						
 						) as c
-						join project_plan_production_finished_products.info.stuffing as t on c.stuffing_id = t.stuffing_id
-						left join cherkizovo.info.products_sap as p on c.stuffing_sap_id = p.SAP_id
+						join .info.stuffing as t on c.stuffing_id = t.stuffing_id
+						left join info_view.sap_id as p on c.stuffing_sap_id = p.sap_id_for_join
 						left join #normative_stock as s on c.stuffing_sap_id = s.shipment_sap_id and c.stuffing_id = s.shipment_stuffing_id;
 
 						

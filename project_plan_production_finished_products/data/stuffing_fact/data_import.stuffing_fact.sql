@@ -22,17 +22,6 @@ create table project_plan_production_finished_products.data_import.stuffing_fact
 		,stuffing_production_date_to			DATETIME			NOT NULL
 		,stuffing_available_date				DATETIME			NOT NULL
 		,stuffing_before_next_available_date	DATETIME				NULL
-		,stuffing_expiration_date				DATETIME				NULL
-
-		,stuffing_current_KOS					as case when stuffing_production_date_to >= stuffing_expiration_date	then null  
-														when stuffing_production_date_to >  stuffing_available_date		then null
-														when stuffing_expiration_date	 <= stuffing_available_date		then 0.000000
-														when stuffing_production_date_to  = stuffing_available_date		then 1		
-														else DATEDIFF(day, stuffing_available_date, stuffing_expiration_date) * 1.0 / DATEDIFF(day, stuffing_production_date_to, stuffing_expiration_date) end
-
-		,stuffing_KOS_in_day					as case when stuffing_production_date_to >= stuffing_expiration_date then null	
-														when stuffing_production_date_to >  stuffing_available_date	 then null
-														else 1.0 / DATEDIFF(day, stuffing_production_date_to, stuffing_expiration_date) end	
 
 		,stuffing_kg							dec(11,5)				NULL
 		,stuffing_surplus_kg					as nullif(case when stuffing_sap_id is null then stuffing_kg - isnull(stuffing_marking_kg, 0) - isnull(stuffing_shipment_kg, 0) end, 0)
