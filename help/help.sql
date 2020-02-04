@@ -15,7 +15,7 @@ select
 
 
 select ORIGINAL_LOGIN()	
-select @@version						-- версия сервера Microsoft SQL Server 2017 (RTM-CU13-OD) (KB4483666) - 14.0.3049.1 (X64)  on Windows Server 2016 Standard 10.0 <X64> (Build 14393: ) (Hypervisor) 
+select @@version						-- версия сервера Microsoft SQL Server 2017 (RTM-CU15-GDR) (KB4505225) - 14.0.3192.2 (X64)   Jun 15 2019 00:45:05   Copyright (C) 2017 Microsoft Corporation  Enterprise Edition: Core-based Licensing (64-bit) on Windows Server 2016 Standard 10.0 <X64> (Build 14393: ) (Hypervisor) 
 use cherkizovo;							-- подключение к БД
 kill 800								-- завершить № сессию
 

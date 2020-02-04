@@ -1,4 +1,4 @@
-﻿use project_plan_production_finished_products 
+﻿use project_smoked_sausages_production_planning
 
 go
 
@@ -20,9 +20,11 @@ BEGIN
 					create table #union_data
 					(
 								 sap_id							bigint			null														
-								,stuffing_id					varchar(40)		null												
-								,sales_channel_name				varchar(25)		null																				
-								,customer_name					varchar(100)	null								
+								,stuffing_id					varchar(40)		null
+								,customer_id					varchar(20)		null 																				
+								,customer_name					varchar(100)	null												
+								,sales_channel_name				varchar(25)		null											
+								,type_channel_name				varchar(25)		null									
 								,dt								datetime	not null							
 								,dt_shipment_customer			datetime	not null			
 								
@@ -47,8 +49,9 @@ BEGIN
 					(
 							 sap_id
 							,stuffing_id
-							,sales_channel_name
+							,customer_id
 							,customer_name
+							,sales_channel_name
 							,dt
 							,dt_shipment_customer
 							,shipment_kg
@@ -58,8 +61,9 @@ BEGIN
 					select 
 							 s.shipment_sap_id
 							,s.shipment_stuffing_id
-							,s.shipment_sales_channel_name
+							,s.shipment_customer_id
 							,s.shipment_customer_name
+							,s.shipment_sales_channel_name
 							,s.shipment_date
 							,isnull(s.shipment_with_branch_date,s.shipment_date) as shipment_with_branch_date -- для заявок SAP и заявок 1С берем дату отгрузки
 							,s.shipment_after_marking_kg as shipment_kg
@@ -76,8 +80,9 @@ BEGIN
 					(
 							 sap_id
 							,stuffing_id
-							,sales_channel_name
+							,customer_id
 							,customer_name
+							,sales_channel_name
 							,dt
 							,dt_shipment_customer
 							,shipment_kg
@@ -85,8 +90,9 @@ BEGIN
 					select 
 							 st.stock_sap_id
 							,st.stock_stuffing_id
-							,sh.shipment_sales_channel_name
+							,sh.shipment_customer_id
 							,sh.shipment_customer_name
+							,sh.shipment_sales_channel_name
 							,l.shipment_date
 							,isnull(sh.shipment_with_branch_date,sh.shipment_date) as shipment_with_branch_date -- для заявок SAP и заявок 1С берем дату отгрузки
 							,l.stock_shipment_kg
@@ -100,8 +106,9 @@ BEGIN
 					select 
 							 st.marking_sap_id
 							,st.marking_stuffing_id
-							,sh.shipment_sales_channel_name
+							,sh.shipment_customer_id
 							,sh.shipment_customer_name
+							,sh.shipment_sales_channel_name
 							,l.shipment_date
 							,isnull(sh.shipment_with_branch_date,sh.shipment_date) as shipment_with_branch_date -- для заявок SAP и заявок 1С берем дату отгрузки
 							,l.marking_shipment_kg
@@ -249,6 +256,15 @@ BEGIN
 			end;
 			
 
+			begin -- добавляем канал
+					
+					update ud
+					set ud.type_channel_name = isnull(ic.type_channel_name,'Канал отсутствует')
+					from #union_data as ud 
+					left join info.customers as ic on ud.customer_id = ic.customer_id and ud.sales_channel_name = ic.sales_channel_name;
+				
+			end;
+
 			begin --выгружаем отчет 
 
 					--declare @level_date varchar(10); set @level_date='week'
@@ -261,9 +277,12 @@ BEGIN
 									,'Наименование набивки'	= st.stuffing_name						
 									,'Наименование SKU'		= ps.product_1C_full_name									
 									,'Контрагент'			= isnull(ud.customer_name,' остатки')
+									,'Канал'				= ud.type_channel_name
 									,'Канал сбыта'			= isnull(ud.sales_channel_name,' остатки')
+
 									,'Наименование SKU ->'	= ps.product_1C_full_name
 									,'Контрагент ->'		= ud.customer_name
+									,'Канал ->'				= ud.type_channel_name
 									,'Канал сбыта ->'		= ud.sales_channel_name
 
 									,'ДТ'					= ud.dt
@@ -279,7 +298,7 @@ BEGIN
 									,'Ост КОС 80%-99%'		= sum(ud.stock_KOS_80_99_kg)													
 									,'Ост КОС 100%'			= sum(ud.stock_KOS___100_kg)			
 								
-									,'Заявка/план'			= sum(ud.shipment_kg)																
+									,'Продажи'				= sum(ud.shipment_kg)																
 									,'Дефицит'				= sum(ud.deficit_kg)																
 									,'Профицит'				= sum(ud.surplus_kg)															
 							from #union_data as ud
@@ -289,6 +308,7 @@ BEGIN
 									 st.stuffing_name
 									,ps.product_1C_full_name
 									,ud.customer_name
+									,ud.type_channel_name
 									,ud.sales_channel_name
 									,ud.dt
 									,ud.dt_shipment_customer;
@@ -302,9 +322,13 @@ BEGIN
 									,'Наименование набивки'	= st.stuffing_name						
 									,'Наименование SKU'		= ps.product_1C_full_name									
 									,'Контрагент'			= isnull(ud.customer_name,' остатки')
+									,'Канал'				= ud.type_channel_name
 									,'Канал сбыта'			= isnull(ud.sales_channel_name,' остатки')
+
+
 									,'Наименование SKU ->'	= ps.product_1C_full_name
 									,'Контрагент ->'		= ud.customer_name
+									,'Канал ->'				= ud.type_channel_name
 									,'Канал сбыта ->'		= ud.sales_channel_name
 
 									,'ДТ'					= left(cl1.year_week_number, 4) + '|' + RIGHT(cl1.year_week_number, 2)
@@ -320,7 +344,7 @@ BEGIN
 									,'Ост КОС 80%-99%'		= sum(iif(cl1.week_day = 1, ud.stock_KOS_80_99_kg, null))													
 									,'Ост КОС 100%'			= sum(iif(cl1.week_day = 1, ud.stock_KOS___100_kg, null))			
 								
-									,'Заявка/план'			= sum(ud.shipment_kg)																
+									,'Продажи'				= sum(ud.shipment_kg)																
 									,'Дефицит'				= sum(ud.deficit_kg)																
 									,'Профицит'				= sum(iif(cl1.week_day = 1, ud.surplus_kg, null))																
 							from #union_data as ud
@@ -332,6 +356,7 @@ BEGIN
 									 st.stuffing_name
 									,ps.product_1C_full_name
 									,ud.customer_name
+									,ud.type_channel_name
 									,ud.sales_channel_name
 									,left(cl1.year_week_number, 4) + '|' + RIGHT(cl1.year_week_number, 2)
 									,left(cl2.year_week_number, 4) + '|' + RIGHT(cl2.year_week_number, 2);

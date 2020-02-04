@@ -12,8 +12,8 @@ BEGIN
 			SET NOCOUNT ON;
 			
 			-- для теста
-			--declare @ProductionDateFrom_Kashira datetime;	set @ProductionDateFrom_Kashira = '20191217'
-			--declare @ProductionDateFrom_CHMPZ datetime;		set @ProductionDateFrom_CHMPZ = '20191211'
+			--declare @ProductionDateFrom_Kashira datetime;	set @ProductionDateFrom_Kashira = '20200205'
+			--declare @ProductionDateFrom_CHMPZ datetime;		set @ProductionDateFrom_CHMPZ ='20200203'
 			--declare @type_report varchar(50);				set @type_report = 'report_for_pivot' --report_for_pivot   report_main
 			
 			declare @report_dt_from datetime;	set @report_dt_from =	(select min(stuffing_production_date_from)	from .data_import.stuffing_fact);	
@@ -276,8 +276,32 @@ BEGIN
 						into #columns
 						from (
 								select distinct stuffing_id, stuffing_sap_id from #data_pivot
+
 								union 
+
 								select distinct stuffing_id, null			 from #data_pivot
+
+								union
+								 
+								select 
+										 sp.stuffing_id	  
+										,sp.sap_id 
+								from info_view.sap_id as sp	
+								where not isnull(sp.product_status,'') in ('БлокирДляЗаготов/Склада','Устаревший')
+								  and sp.sap_id_corrected_need is null
+								  and sp.sap_id_type in ('Основной','Полуфабрикат')
+								  and ISNUMERIC(sp.stuffing_id) = 1 
+
+								union 
+
+								select 
+										 sp.stuffing_id	  
+										,null
+								from info_view.sap_id as sp	
+								where not isnull(sp.product_status,'') in ('БлокирДляЗаготов/Склада','Устаревший')
+								  and sp.sap_id_corrected_need is null
+								  and sp.sap_id_type in ('Основной','Полуфабрикат')
+								  and ISNUMERIC(sp.stuffing_id) = 1 
 						
 						) as c
 						join .info.stuffing as t on c.stuffing_id = t.stuffing_id
@@ -382,6 +406,8 @@ BEGIN
 			-- ДОПОЛНИТЕЛЬНЫЙ ОТЧЕТ
 			if @type_report = 'report_for_pivot'
 			begin
+
+
 					select 
 						 'Код набивки'				= cl.stuffing_id
 						,'MML набивки'				= cl.mml

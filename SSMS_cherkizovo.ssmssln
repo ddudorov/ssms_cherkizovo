@@ -16,77 +16,77 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "monitoring", "monitoring", 
 		monitoring\dbo.user_activity.sql = monitoring\dbo.user_activity.sql
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "project_plan_production_finished_products", "project_plan_production_finished_products", "{820DD553-DFD8-4F36-8B53-BFF441C22E95}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "project_smoked_sausages_production_planning", "project_smoked_sausages_production_planning", "{820DD553-DFD8-4F36-8B53-BFF441C22E95}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "info", "info", "{375E7F4C-F7BA-4BAC-880B-A349846855AB}"
 	ProjectSection(SolutionItems) = preProject
-		project_plan_production_finished_products\info\info.branches.sql = project_plan_production_finished_products\info\info.branches.sql
-		project_plan_production_finished_products\info\info.customers.sql = project_plan_production_finished_products\info\info.customers.sql
-		project_plan_production_finished_products\info\info.finished_products_sap_id_manual.sql = project_plan_production_finished_products\info\info.finished_products_sap_id_manual.sql
-		project_plan_production_finished_products\info\info.sap_id.sql = project_plan_production_finished_products\info\info.sap_id.sql
-		project_plan_production_finished_products\info\info.stuffing.sql = project_plan_production_finished_products\info\info.stuffing.sql
-		project_plan_production_finished_products\info\info_view.sap_id.sql = project_plan_production_finished_products\info\info_view.sap_id.sql
+		project_smoked_sausages_production_planning\info\info.branches.sql = project_smoked_sausages_production_planning\info\info.branches.sql
+		project_smoked_sausages_production_planning\info\info.customers.sql = project_smoked_sausages_production_planning\info\info.customers.sql
+		project_smoked_sausages_production_planning\info\info.finished_products_sap_id_manual.sql = project_smoked_sausages_production_planning\info\info.finished_products_sap_id_manual.sql
+		project_smoked_sausages_production_planning\info\info.sap_id.sql = project_smoked_sausages_production_planning\info\info.sap_id.sql
+		project_smoked_sausages_production_planning\info\info.stuffing.sql = project_smoked_sausages_production_planning\info\info.stuffing.sql
+		project_smoked_sausages_production_planning\info\info_view.sap_id.sql = project_smoked_sausages_production_planning\info\info_view.sap_id.sql
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "data", "data", "{6BAF1633-51A7-4D43-AB85-981299F91516}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "report", "report", "{D60E8A76-9A4B-4D19-93EC-E7C72455D88F}"
 	ProjectSection(SolutionItems) = preProject
-		project_plan_production_finished_products\report\report.for_analytics_movement.sql = project_plan_production_finished_products\report\report.for_analytics_movement.sql
-		project_plan_production_finished_products\report\report.for_analytics_movement_week.sql = project_plan_production_finished_products\report\report.for_analytics_movement_week.sql
-		project_plan_production_finished_products\report\report.for_analytics_total.sql = project_plan_production_finished_products\report\report.for_analytics_total.sql
-		project_plan_production_finished_products\report\report.for_form.sql = project_plan_production_finished_products\report\report.for_form.sql
-		project_plan_production_finished_products\report\report.for_marking_plan.sql = project_plan_production_finished_products\report\report.for_marking_plan.sql
-		project_plan_production_finished_products\report\report.for_sales_plan_exclude_stuffing_plan.sql = project_plan_production_finished_products\report\report.for_sales_plan_exclude_stuffing_plan.sql
-		project_plan_production_finished_products\report\report.for_SAP_sales_plan_select.sql = project_plan_production_finished_products\report\report.for_SAP_sales_plan_select.sql
-		project_plan_production_finished_products\report\report.for_stuffing_plan.sql = project_plan_production_finished_products\report\report.for_stuffing_plan.sql
-		project_plan_production_finished_products\report\report.log_distribution.sql = project_plan_production_finished_products\report\report.log_distribution.sql
-		project_plan_production_finished_products\report\report.surplus_with_production_date.sql = project_plan_production_finished_products\report\report.surplus_with_production_date.sql
+		project_smoked_sausages_production_planning\report\report.for_analytics_movement.sql = project_smoked_sausages_production_planning\report\report.for_analytics_movement.sql
+		project_smoked_sausages_production_planning\report\report.for_analytics_total.sql = project_smoked_sausages_production_planning\report\report.for_analytics_total.sql
+		project_smoked_sausages_production_planning\report\report.for_form.sql = project_smoked_sausages_production_planning\report\report.for_form.sql
+		project_smoked_sausages_production_planning\report\report.for_marking_plan.sql = project_smoked_sausages_production_planning\report\report.for_marking_plan.sql
+		project_smoked_sausages_production_planning\report\report.for_marking_plan_SSRS.sql = project_smoked_sausages_production_planning\report\report.for_marking_plan_SSRS.sql
+		project_smoked_sausages_production_planning\report\report.for_sales_plan_exclude_stuffing_plan.sql = project_smoked_sausages_production_planning\report\report.for_sales_plan_exclude_stuffing_plan.sql
+		project_smoked_sausages_production_planning\report\report.for_SAP_sales_plan_select.sql = project_smoked_sausages_production_planning\report\report.for_SAP_sales_plan_select.sql
+		project_smoked_sausages_production_planning\report\report.for_stuffing_plan.sql = project_smoked_sausages_production_planning\report\report.for_stuffing_plan.sql
+		project_smoked_sausages_production_planning\report\report.log_distribution.sql = project_smoked_sausages_production_planning\report\report.log_distribution.sql
+		project_smoked_sausages_production_planning\report\report.surplus_with_production_date.sql = project_smoked_sausages_production_planning\report\report.surplus_with_production_date.sql
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "marking", "marking", "{C43266B9-F0B5-4F8A-9903-4EF934F0FA81}"
 	ProjectSection(SolutionItems) = preProject
-		project_plan_production_finished_products\data\marking\check_import.marking.sql = project_plan_production_finished_products\data\marking\check_import.marking.sql
-		project_plan_production_finished_products\data\marking\data_import.marking.sql = project_plan_production_finished_products\data\marking\data_import.marking.sql
+		project_smoked_sausages_production_planning\data\marking\check_import.marking.sql = project_smoked_sausages_production_planning\data\marking\check_import.marking.sql
+		project_smoked_sausages_production_planning\data\marking\data_import.marking.sql = project_smoked_sausages_production_planning\data\marking\data_import.marking.sql
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "stuffing_plan", "stuffing_plan", "{15767FDA-B672-4E3B-B012-750A8EC5FD48}"
 	ProjectSection(SolutionItems) = preProject
-		project_plan_production_finished_products\data\stuffing_plan\check_import.stuffing_plan.sql = project_plan_production_finished_products\data\stuffing_plan\check_import.stuffing_plan.sql
-		project_plan_production_finished_products\data\stuffing_plan\data_import.stuffing_plan.sql = project_plan_production_finished_products\data\stuffing_plan\data_import.stuffing_plan.sql
+		project_smoked_sausages_production_planning\data\stuffing_plan\check_import.stuffing_plan.sql = project_smoked_sausages_production_planning\data\stuffing_plan\check_import.stuffing_plan.sql
+		project_smoked_sausages_production_planning\data\stuffing_plan\data_import.stuffing_plan.sql = project_smoked_sausages_production_planning\data\stuffing_plan\data_import.stuffing_plan.sql
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "stuffing_fact", "stuffing_fact", "{B4FBA6CC-0190-4316-A212-3DA3BAC2469C}"
 	ProjectSection(SolutionItems) = preProject
-		project_plan_production_finished_products\data\stuffing_fact\check_import.stuffing_fact.sql = project_plan_production_finished_products\data\stuffing_fact\check_import.stuffing_fact.sql
-		project_plan_production_finished_products\data\stuffing_fact\data_import.stuffing_fact.sql = project_plan_production_finished_products\data\stuffing_fact\data_import.stuffing_fact.sql
+		project_smoked_sausages_production_planning\data\stuffing_fact\check_import.stuffing_fact.sql = project_smoked_sausages_production_planning\data\stuffing_fact\check_import.stuffing_fact.sql
+		project_smoked_sausages_production_planning\data\stuffing_fact\data_import.stuffing_fact.sql = project_smoked_sausages_production_planning\data\stuffing_fact\data_import.stuffing_fact.sql
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "stock", "stock", "{D2EF198A-F335-4F11-9821-EB1D938A654E}"
 	ProjectSection(SolutionItems) = preProject
-		project_plan_production_finished_products\data\stock\check_import.stock.sql = project_plan_production_finished_products\data\stock\check_import.stock.sql
-		project_plan_production_finished_products\data\stock\check_import.transit.sql = project_plan_production_finished_products\data\stock\check_import.transit.sql
-		project_plan_production_finished_products\data\stock\data_import.stock.sql = project_plan_production_finished_products\data\stock\data_import.stock.sql
+		project_smoked_sausages_production_planning\data\stock\check_import.stock.sql = project_smoked_sausages_production_planning\data\stock\check_import.stock.sql
+		project_smoked_sausages_production_planning\data\stock\check_import.transit.sql = project_smoked_sausages_production_planning\data\stock\check_import.transit.sql
+		project_smoked_sausages_production_planning\data\stock\data_import.stock.sql = project_smoked_sausages_production_planning\data\stock\data_import.stock.sql
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "data_type", "data_type", "{B79A3BE2-DD2F-4D2A-BBDC-8DD02295AE30}"
 	ProjectSection(SolutionItems) = preProject
-		project_plan_production_finished_products\data\data_type\data_import.data_type.sql = project_plan_production_finished_products\data\data_type\data_import.data_type.sql
+		project_smoked_sausages_production_planning\data\data_type\data_import.data_type.sql = project_smoked_sausages_production_planning\data\data_type\data_import.data_type.sql
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "distribution", "distribution", "{AA1A981B-4C1A-4788-A516-6EE058B7EADE}"
 	ProjectSection(SolutionItems) = preProject
-		project_plan_production_finished_products\distribution\calc.distribution_marking.sql = project_plan_production_finished_products\distribution\calc.distribution_marking.sql
-		project_plan_production_finished_products\distribution\calc.distribution_stock.sql = project_plan_production_finished_products\distribution\calc.distribution_stock.sql
-		project_plan_production_finished_products\distribution\calc.distribution_stuffing old.sql = project_plan_production_finished_products\distribution\calc.distribution_stuffing old.sql
+		project_smoked_sausages_production_planning\distribution\calc.distribution_marking.sql = project_smoked_sausages_production_planning\distribution\calc.distribution_marking.sql
+		project_smoked_sausages_production_planning\distribution\calc.distribution_stock.sql = project_smoked_sausages_production_planning\distribution\calc.distribution_stock.sql
+		project_smoked_sausages_production_planning\distribution\calc.distribution_stuffing old.sql = project_smoked_sausages_production_planning\distribution\calc.distribution_stuffing old.sql
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "distribution_stuffing", "distribution_stuffing", "{BBCD301B-09BD-4E87-8A79-5A20CAAC4BDB}"
 	ProjectSection(SolutionItems) = preProject
-		project_plan_production_finished_products\distribution\distribution_stuffing\calc.distribution_stuffing.sql = project_plan_production_finished_products\distribution\distribution_stuffing\calc.distribution_stuffing.sql
-		project_plan_production_finished_products\distribution\distribution_stuffing\calc.distribution_stuffing_marking_and_shipment.sql = project_plan_production_finished_products\distribution\distribution_stuffing\calc.distribution_stuffing_marking_and_shipment.sql
-		project_plan_production_finished_products\distribution\distribution_stuffing\calc.distribution_stuffing_select_for_box.sql = project_plan_production_finished_products\distribution\distribution_stuffing\calc.distribution_stuffing_select_for_box.sql
-		project_plan_production_finished_products\distribution\distribution_stuffing\calc.distribution_stuffing_select_for_no_box.sql = project_plan_production_finished_products\distribution\distribution_stuffing\calc.distribution_stuffing_select_for_no_box.sql
+		project_smoked_sausages_production_planning\distribution\distribution_stuffing\calc.distribution_stuffing.sql = project_smoked_sausages_production_planning\distribution\distribution_stuffing\calc.distribution_stuffing.sql
+		project_smoked_sausages_production_planning\distribution\distribution_stuffing\calc.distribution_stuffing_marking_and_shipment.sql = project_smoked_sausages_production_planning\distribution\distribution_stuffing\calc.distribution_stuffing_marking_and_shipment.sql
+		project_smoked_sausages_production_planning\distribution\distribution_stuffing\calc.distribution_stuffing_select_for_box.sql = project_smoked_sausages_production_planning\distribution\distribution_stuffing\calc.distribution_stuffing_select_for_box.sql
+		project_smoked_sausages_production_planning\distribution\distribution_stuffing\calc.distribution_stuffing_select_for_no_box.sql = project_smoked_sausages_production_planning\distribution\distribution_stuffing\calc.distribution_stuffing_select_for_no_box.sql
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cherkizovo", "cherkizovo", "{5E2D2B2B-F23C-49D5-9000-A5C9DFCAB56A}"
@@ -100,10 +100,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "info", "info", "{5E0A723A-9
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shipment", "shipment", "{4111D899-0799-4751-BD5B-8399E2F00014}"
 	ProjectSection(SolutionItems) = preProject
-		project_plan_production_finished_products\data\shipment\check_import.shipment_1C.sql = project_plan_production_finished_products\data\shipment\check_import.shipment_1C.sql
-		project_plan_production_finished_products\data\shipment\check_import.shipment_sales_plan.sql = project_plan_production_finished_products\data\shipment\check_import.shipment_sales_plan.sql
-		project_plan_production_finished_products\data\shipment\check_import.shipment_SAP.sql = project_plan_production_finished_products\data\shipment\check_import.shipment_SAP.sql
-		project_plan_production_finished_products\data\shipment\data_import.shipment.sql = project_plan_production_finished_products\data\shipment\data_import.shipment.sql
+		project_smoked_sausages_production_planning\data\shipment\check_import.shipment_1C.sql = project_smoked_sausages_production_planning\data\shipment\check_import.shipment_1C.sql
+		project_smoked_sausages_production_planning\data\shipment\check_import.shipment_sales_plan.sql = project_smoked_sausages_production_planning\data\shipment\check_import.shipment_sales_plan.sql
+		project_smoked_sausages_production_planning\data\shipment\check_import.shipment_SAP.sql = project_smoked_sausages_production_planning\data\shipment\check_import.shipment_SAP.sql
+		project_smoked_sausages_production_planning\data\shipment\data_import.shipment.sql = project_smoked_sausages_production_planning\data\shipment\data_import.shipment.sql
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "project_export_quotation", "project_export_quotation", "{D4823DAF-014E-4269-880D-07DBF1617083}"
@@ -121,7 +121,7 @@ Global
 		Default|Default = Default|Default
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{32B8AE9E-99B7-4695-8852-BAD0193963A9}.Default|Default.ActiveCfg = Default
+		{744DA75F-4D81-438F-B344-25287E31172B}.Default|Default.ActiveCfg = Default
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

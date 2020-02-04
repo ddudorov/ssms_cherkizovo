@@ -53,7 +53,8 @@ BEGIN
 			-- ДОБАВЛЯЕМ ИНФОРМАЦИЮ ПО КЛИЕНТАМ
 			begin
 					update c
-					set c.shipment_sales_channel_name = r.[Название канала сбыта]
+					set  c.shipment_customer_id = r.[Код контрагента]
+					    ,c.shipment_sales_channel_name = r.[Название канала сбыта]
 						,c.shipment_priority = r.[Ручной приор отгрузки]
 						,c.shipment_min_KOS = r.[ручной КОС]
 					from data_import.shipment as c

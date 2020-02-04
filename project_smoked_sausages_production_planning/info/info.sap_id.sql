@@ -1,4 +1,4 @@
-﻿use project_plan_production_finished_products
+﻿use project_smoked_sausages_production_planning
 
 --select * from info.finished_products_sap_id_manual
 --select * from info.sap_id
@@ -166,13 +166,14 @@ BEGIN
 							,'Потребность до'		= si.need_before_date
 							,'Дни норм ост'			= si.count_days_normative_stock					
 							,'Набивка'				= si.stuffing_id_manual	
-							,'Группа набивок'		= si.stuffing_id_group	
+							--,'Группа набивок'		= si.stuffing_id_group	
 							,'Доля набивки'			= si.stuffing_id_share	
 
 
 							,'Ошибки в справочнике' = case
 														when si.sap_id_type = 'Полуфабрикат' and isnull(si.product_status, '') in ('БлокирДляЗаготов/Склада', 'Устаревший')		then 'ПФ заблокирован'
 														when si.sap_id_type = 'Полуфабрикат' and ISNUMERIC(si.stuffing_id) = 0													then 'ПФ укажите корретный номер набивки'
+														when si.sap_id_type = 'Полуфабрикат' and not isnull(si.stuffing_id_share,0) between 0.1 and 1 							then 'ПФ укажите долю набивки'
 														when si.sap_id_type = 'Основной'	 and isnull(si.stuffing_id, '') in ('Укажите код набивки')							then 'Укажите код набивки'
 														when si.sap_id_type = 'Основной'	 and ISNUMERIC(si.stuffing_id) = 1 and isnull(si.count_days_normative_stock,0) = 0	then 'Укажите кол-во дней для норматива остатков'
 													  end
@@ -197,12 +198,12 @@ BEGIN
 					where iif(@CheckBoxHideSapIdCorrected = 0, null, si.sap_id_corrected_need) is null
 					order by 
 							 si.sap_id
-							,iif(si.sap_id_type <> 'Основной', si.sap_id_corrected, null)
 							,case  si.sap_id_type	
 									when 'Основной'		then 1
 									when 'Потребность'	then 2
 									when 'Полуфабрикат' then 3
-							 end;
+							 end
+							,iif(si.sap_id_type <> 'Основной', si.sap_id_corrected, null);
 
 			end;	
 				
