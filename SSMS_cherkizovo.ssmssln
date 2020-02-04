@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# SQL Server Management Studio Solution File, Format Version 14.00
-VisualStudioVersion = 14.0.23107.0
+# SQL Server Management Studio Solution File, Format Version 18.00
+VisualStudioVersion = 15.0.28307.421
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "help", "help", "{40B9C307-EC75-4DA8-AC58-7ADCB2D5868E}"
 	ProjectSection(SolutionItems) = preProject
@@ -107,12 +107,29 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "distribution_stuffing", "di
 		project_plan_production_finished_products\distribution\distribution_stuffing\calc.distribution_stuffing_shipment del.sql = project_plan_production_finished_products\distribution\distribution_stuffing\calc.distribution_stuffing_shipment del.sql
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "import_from_KITL", "import_from_KITL", "{80CADDD2-01F6-4458-B2C7-83F085D626B2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SSIS", "SSIS", "{76DDD1CA-3C05-4C50-8003-F9BFBDBA7A09}"
+	ProjectSection(SolutionItems) = preProject
+		import_from_KITL\SSIS\ssis_import.stock.sql = import_from_KITL\SSIS\ssis_import.stock.sql
+		import_from_KITL\SSIS\ssis_project_sql.sql = import_from_KITL\SSIS\ssis_project_sql.sql
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "old", "old", "{84388E17-266D-4D70-9A59-2100A7AACDAB}"
+	ProjectSection(SolutionItems) = preProject
+		import_from_KITL\SSIS\old\ssis_import.stock_history.sql = import_from_KITL\SSIS\old\ssis_import.stock_history.sql
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "hist", "hist", "{D8C9C87D-D5C2-45F2-AA7E-C1BC1940B96A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "info", "info", "{BE8AC669-C89A-4D9A-BD20-C8E44B71ACEE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Default|Default = Default|Default
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{525C4D16-9D32-412D-9B34-146580ED0AD0}.Default|Default.ActiveCfg = Default
+		{7C2B5EE7-F516-4075-854B-1EB0E23E6239}.Default|Default.ActiveCfg = Default
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -132,5 +149,12 @@ Global
 		{B79A3BE2-DD2F-4D2A-BBDC-8DD02295AE30} = {6BAF1633-51A7-4D43-AB85-981299F91516}
 		{AA1A981B-4C1A-4788-A516-6EE058B7EADE} = {820DD553-DFD8-4F36-8B53-BFF441C22E95}
 		{BBCD301B-09BD-4E87-8A79-5A20CAAC4BDB} = {AA1A981B-4C1A-4788-A516-6EE058B7EADE}
+		{76DDD1CA-3C05-4C50-8003-F9BFBDBA7A09} = {80CADDD2-01F6-4458-B2C7-83F085D626B2}
+		{84388E17-266D-4D70-9A59-2100A7AACDAB} = {76DDD1CA-3C05-4C50-8003-F9BFBDBA7A09}
+		{D8C9C87D-D5C2-45F2-AA7E-C1BC1940B96A} = {80CADDD2-01F6-4458-B2C7-83F085D626B2}
+		{BE8AC669-C89A-4D9A-BD20-C8E44B71ACEE} = {80CADDD2-01F6-4458-B2C7-83F085D626B2}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {20B5B231-3CEF-4F12-B2D6-678A37D8C85F}
 	EndGlobalSection
 EndGlobal
