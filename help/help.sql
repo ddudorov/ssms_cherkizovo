@@ -15,10 +15,12 @@ select
 
 
 select ORIGINAL_LOGIN()	
-select @@version						-- версия сервера Microsoft SQL Server 2017 (RTM-CU13-OD) (KB4483666) - 14.0.3049.1 (X64)  on Windows Server 2016 Standard 10.0 <X64> (Build 14393: ) (Hypervisor) 
+select @@version						-- версия сервера Microsoft SQL Server 2017 (RTM-CU15-GDR) (KB4505225) - 14.0.3192.2 (X64)   Jun 15 2019 00:45:05   Copyright (C) 2017 Microsoft Corporation  Enterprise Edition: Core-based Licensing (64-bit) on Windows Server 2016 Standard 10.0 <X64> (Build 14393: ) (Hypervisor) 
 use cherkizovo;							-- подключение к БД
 kill 800								-- завершить № сессию
 
+select STRING_AGG(convert(varchar(max),id),',')
+from cherkizovo.info.products_sap
 
 
 --------------------
@@ -39,7 +41,7 @@ begin
 				,dt_tm							datetime			not null 	default getdate()
 				,year_from_dt_tm												as datepart(year,dt_tm) 
 				 PRIMARY KEY (id)
-				,UNIQUE (id_text) 
+				,CONSTRAINT [AK #test | id_text] UNIQUE(id_text)
 			);
 			
 			TRUNCATE TABLE #table											-- очистить таблицу всю без условий -- работает быстрее чем delete from [table]
@@ -109,3 +111,38 @@ begin
 		
 
 end;
+
+
+
+----------------------------------------
+-- ПРИМЕВЕР ВОЗРАТА ЗНАЧЕНИЯ ИЗ ХРАНИМКИ
+----------------------------------------
+create procedure #ttt @t int, @t_out int OUTPUT
+as
+BEGIN
+		set @t_out = @t + 1
+end;
+
+declare @t int 
+set @t = 100
+exec #ttt @t = @t, @t_out = @t out
+
+select @t
+
+
+
+--------------------------------
+-- КАК ПОЛУЧИТЬ ВРЕМЯ ВЫПОЛНЕНИЯ 
+--------------------------------
+declare @start_tm time(0); set @start_tm = getdate() ;
+declare @stop_tm time(0); set @stop_tm = getdate() + 0.12569 ;
+
+
+select format( DATEDIFF(second,	@start_tm, @stop_tm) / 3600 		,'00') + ':' + 
+	   format( DATEDIFF(second, @start_tm, @stop_tm) % 3600 / 60 	,'00') + ':' + 
+	   format( DATEDIFF(second, @start_tm, @stop_tm) % 60 			,'00');
+
+
+select format(5,'00')
+
+select convert(time(0),'12:23:43') + 0.1

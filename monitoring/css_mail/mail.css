@@ -1,0 +1,6 @@
+html,body{margin: 0;padding: 0;font-size: 12px;font-family: Verdana, Geneva, Tahoma, sans-serif; }
+hr{height: 2px; border: 0px; background: #B22222;}
+a{color: #B22222;}
+table, tr, th, td{border: 1px solid #B22222;border-collapse: collapse ;margin: 3px;}
+
+#select_row{background: rgb(170, 255, 168);}
